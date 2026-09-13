@@ -1,3 +1,11 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/glomancy-mark-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="./assets/glomancy-mark-light.svg">
+    <img alt="Glomancy" src="./assets/glomancy-mark-light.svg" width="110">
+  </picture>
+</p>
+
 # Glomancy Protocol
 
 [![CI](https://github.com/charman-07/glomancy-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/charman-07/glomancy-protocol/actions/workflows/ci.yml)
