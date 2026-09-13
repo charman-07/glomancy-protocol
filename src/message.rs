@@ -77,6 +77,20 @@ impl Component {
             Self::TestHarness => "test-harness",
         }
     }
+
+    #[must_use]
+    pub fn from_wire(value: &str) -> Option<Self> {
+        match value {
+            "desktop" => Some(Self::Desktop),
+            "bridge" => Some(Self::Bridge),
+            "agent-runtime" => Some(Self::AgentRuntime),
+            "policy-engine" => Some(Self::PolicyEngine),
+            "validation-engine" => Some(Self::ValidationEngine),
+            "provider" => Some(Self::Provider),
+            "test-harness" => Some(Self::TestHarness),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -99,6 +113,18 @@ impl RiskLevel {
             Self::R4 => "R4",
         }
     }
+
+    #[must_use]
+    pub fn from_wire(value: &str) -> Option<Self> {
+        match value {
+            "R0" => Some(Self::R0),
+            "R1" => Some(Self::R1),
+            "R2" => Some(Self::R2),
+            "R3" => Some(Self::R3),
+            "R4" => Some(Self::R4),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -117,6 +143,16 @@ impl ExecutionMode {
             Self::Execute => "execute",
         }
     }
+
+    #[must_use]
+    pub fn from_wire(value: &str) -> Option<Self> {
+        match value {
+            "dry-run" => Some(Self::DryRun),
+            "simulate" => Some(Self::Simulate),
+            "execute" => Some(Self::Execute),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -130,4 +166,106 @@ pub enum TaskStatus {
     Failed,
     Cancelled,
     RolledBack,
+}
+
+impl TaskStatus {
+    #[must_use]
+    pub const fn as_wire(self) -> &'static str {
+        match self {
+            Self::Accepted => "accepted",
+            Self::Planning => "planning",
+            Self::AwaitingApproval => "awaiting_approval",
+            Self::Running => "running",
+            Self::Validating => "validating",
+            Self::Succeeded => "succeeded",
+            Self::Failed => "failed",
+            Self::Cancelled => "cancelled",
+            Self::RolledBack => "rolled_back",
+        }
+    }
+
+    #[must_use]
+    pub fn from_wire(value: &str) -> Option<Self> {
+        match value {
+            "accepted" => Some(Self::Accepted),
+            "planning" => Some(Self::Planning),
+            "awaiting_approval" => Some(Self::AwaitingApproval),
+            "running" => Some(Self::Running),
+            "validating" => Some(Self::Validating),
+            "succeeded" => Some(Self::Succeeded),
+            "failed" => Some(Self::Failed),
+            "cancelled" => Some(Self::Cancelled),
+            "rolled_back" => Some(Self::RolledBack),
+            _ => None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Component, ExecutionMode, RiskLevel, TaskStatus};
+
+    #[test]
+    fn component_wire_values_round_trip() {
+        for value in [
+            Component::Desktop,
+            Component::Bridge,
+            Component::AgentRuntime,
+            Component::PolicyEngine,
+            Component::ValidationEngine,
+            Component::Provider,
+            Component::TestHarness,
+        ] {
+            assert_eq!(Component::from_wire(value.as_wire()), Some(value));
+        }
+    }
+
+    #[test]
+    fn risk_level_wire_values_round_trip() {
+        for value in [
+            RiskLevel::R0,
+            RiskLevel::R1,
+            RiskLevel::R2,
+            RiskLevel::R3,
+            RiskLevel::R4,
+        ] {
+            assert_eq!(RiskLevel::from_wire(value.as_wire()), Some(value));
+        }
+    }
+
+    #[test]
+    fn execution_mode_wire_values_round_trip() {
+        for value in [
+            ExecutionMode::DryRun,
+            ExecutionMode::Simulate,
+            ExecutionMode::Execute,
+        ] {
+            assert_eq!(ExecutionMode::from_wire(value.as_wire()), Some(value));
+        }
+    }
+
+    #[test]
+    fn task_status_wire_values_round_trip() {
+        for value in [
+            TaskStatus::Accepted,
+            TaskStatus::Planning,
+            TaskStatus::AwaitingApproval,
+            TaskStatus::Running,
+            TaskStatus::Validating,
+            TaskStatus::Succeeded,
+            TaskStatus::Failed,
+            TaskStatus::Cancelled,
+            TaskStatus::RolledBack,
+        ] {
+            assert_eq!(TaskStatus::from_wire(value.as_wire()), Some(value));
+        }
+    }
+
+    #[test]
+    fn unknown_wire_enum_values_fail_closed() {
+        assert_eq!(Component::from_wire("unknown"), None);
+        assert_eq!(RiskLevel::from_wire("R5"), None);
+        assert_eq!(ExecutionMode::from_wire("unsafe-execute"), None);
+        assert_eq!(TaskStatus::from_wire("done"), None);
+    }
 }

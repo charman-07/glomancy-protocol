@@ -40,6 +40,25 @@ impl ErrorCategory {
             Self::Internal => "internal",
         }
     }
+
+    #[must_use]
+    pub fn from_wire(value: &str) -> Option<Self> {
+        match value {
+            "invalid_request" => Some(Self::InvalidRequest),
+            "unsupported_version" => Some(Self::UnsupportedVersion),
+            "schema_validation" => Some(Self::SchemaValidation),
+            "policy_denied" => Some(Self::PolicyDenied),
+            "approval_required" => Some(Self::ApprovalRequired),
+            "execution_failed" => Some(Self::ExecutionFailed),
+            "validation_failed" => Some(Self::ValidationFailed),
+            "conflict" => Some(Self::Conflict),
+            "not_found" => Some(Self::NotFound),
+            "timeout" => Some(Self::Timeout),
+            "cancelled" => Some(Self::Cancelled),
+            "internal" => Some(Self::Internal),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -67,5 +86,35 @@ impl ProtocolErrorCode {
             Self::InvalidIdentifier => "GLM-PROTO-1007",
             Self::Internal => "GLM-PROTO-1999",
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ErrorCategory;
+
+    #[test]
+    fn error_category_wire_values_round_trip() {
+        for value in [
+            ErrorCategory::InvalidRequest,
+            ErrorCategory::UnsupportedVersion,
+            ErrorCategory::SchemaValidation,
+            ErrorCategory::PolicyDenied,
+            ErrorCategory::ApprovalRequired,
+            ErrorCategory::ExecutionFailed,
+            ErrorCategory::ValidationFailed,
+            ErrorCategory::Conflict,
+            ErrorCategory::NotFound,
+            ErrorCategory::Timeout,
+            ErrorCategory::Cancelled,
+            ErrorCategory::Internal,
+        ] {
+            assert_eq!(ErrorCategory::from_wire(value.as_wire()), Some(value));
+        }
+    }
+
+    #[test]
+    fn unknown_error_category_fails_closed() {
+        assert_eq!(ErrorCategory::from_wire("unknown"), None);
     }
 }
