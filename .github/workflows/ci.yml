@@ -65,6 +65,9 @@ jobs:
       - name: Validate language-neutral consumer vectors
         run: python3 scripts/validate_consumer_vectors.py
 
+      - name: Run independent Python consumer example
+        run: python3 examples/consumers/python/reference_consumer.py
+
       - name: Validate published compatibility snapshots
         run: python3 scripts/validate_compatibility_snapshots.py
 
