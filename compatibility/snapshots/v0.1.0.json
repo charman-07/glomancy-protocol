@@ -1,0 +1,88 @@
+{
+  "id": "v0.1.0",
+  "source_tag": "v0.1.0",
+  "source_commit": "26bd84d36cefedecd18852139188ae719ee41ff9",
+  "crate_version": "0.1.0",
+  "wire_protocol_version": "0.4.0",
+  "schema_dialect": "https://json-schema.org/draft/2020-12/schema",
+  "support_schemas": [
+    {
+      "schema_id": "urn:glomancy:protocol:common:1.0.0",
+      "version": "1.0.0",
+      "sha256": "2197dd465ecf3847f95d180b328009f4be5c363c6dee82ef8d379bc85f053162"
+    },
+    {
+      "schema_id": "urn:glomancy:protocol:envelope:1.0.0",
+      "version": "1.0.0",
+      "sha256": "1db0d031d1fe89d714a66d811646ef40ef29538aabadf110865756085272b46e"
+    }
+  ],
+  "message_schemas": [
+    {
+      "message_kind": "handshake.request",
+      "schema_id": "urn:glomancy:protocol:handshake.request:1.0.0",
+      "version": "1.0.0",
+      "sha256": "7b3cc6a4d734ae5627a792cea901a7e65d06b00c1446af237df8a56f823358da"
+    },
+    {
+      "message_kind": "handshake.response",
+      "schema_id": "urn:glomancy:protocol:handshake.response:1.0.0",
+      "version": "1.0.0",
+      "sha256": "d0c81dc9c26bbcc4d80c01a7a829b9f27762774369ad690a4258861f40125259"
+    },
+    {
+      "message_kind": "task.submit",
+      "schema_id": "urn:glomancy:protocol:task.submit:1.0.0",
+      "version": "1.0.0",
+      "sha256": "a2ba46e277a00f24e4c1217ae649dee21d71aa245e3d9cf2c0fc13425ef5af18"
+    },
+    {
+      "message_kind": "task.progress",
+      "schema_id": "urn:glomancy:protocol:task.progress:1.0.0",
+      "version": "1.0.0",
+      "sha256": "26587e2facbd55e6e04825ef15add3e9ea43f4bfba3e4c9fd3474c105f388cc0"
+    },
+    {
+      "message_kind": "task.result",
+      "schema_id": "urn:glomancy:protocol:task.result:1.0.0",
+      "version": "1.0.0",
+      "sha256": "67fc56c85621884daa50a3de1abe51475fc1d02b75fe2f25e1b9710263302edd"
+    },
+    {
+      "message_kind": "task.error",
+      "schema_id": "urn:glomancy:protocol:task.error:1.0.0",
+      "version": "1.0.0",
+      "sha256": "1e5a63f42a38bc976c3a1d3c5871e5afc9c7d98b65a7b9db82bbac305c47e2e2"
+    },
+    {
+      "message_kind": "task.cancel",
+      "schema_id": "urn:glomancy:protocol:task.cancel:1.0.0",
+      "version": "1.0.0",
+      "sha256": "296be64e181f7a33eec6c8715559f3e56b053c57a620cfda3b2c2ee57aec9f66"
+    },
+    {
+      "message_kind": "approval.request",
+      "schema_id": "urn:glomancy:protocol:approval.request:1.0.0",
+      "version": "1.0.0",
+      "sha256": "77746ba4d7fd68d232b2ee035daa62b740970374fccd231df244f6f11e5414f1"
+    },
+    {
+      "message_kind": "approval.decision",
+      "schema_id": "urn:glomancy:protocol:approval.decision:1.0.0",
+      "version": "1.0.0",
+      "sha256": "e80af553eccfae239b36192e4c37cd3b87da7754edc5ae484807402a6d3ee9a4"
+    },
+    {
+      "message_kind": "evidence.record",
+      "schema_id": "urn:glomancy:protocol:evidence.record:1.0.0",
+      "version": "1.0.0",
+      "sha256": "151f5d93b9f1ca7d9b068891503d8f921cdf94b0827725fedb59d6297e0dbbc1"
+    },
+    {
+      "message_kind": "heartbeat",
+      "schema_id": "urn:glomancy:protocol:heartbeat:1.0.0",
+      "version": "1.0.0",
+      "sha256": "77b116c96e9b83cdb1ed6c4e3121b68b669d50f23994e5d8635e501a9be658c4"
+    }
+  ]
+}

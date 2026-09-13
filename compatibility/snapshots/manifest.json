@@ -1,0 +1,16 @@
+{
+  "snapshot_format_version": "1.0.0",
+  "description": "Published public protocol snapshots used for compatibility regression checks.",
+  "snapshots": [
+    {
+      "id": "v0.1.0",
+      "source_tag": "v0.1.0",
+      "source_commit": "26bd84d36cefedecd18852139188ae719ee41ff9",
+      "crate_version": "0.1.0",
+      "wire_protocol_version": "0.4.0",
+      "schema_line": "1.0.0",
+      "file": "v0.1.0.json",
+      "expected_current_compatibility": "exact"
+    }
+  ]
+}

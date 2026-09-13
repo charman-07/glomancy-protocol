@@ -11,12 +11,15 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Versioned, language-neutral consumer conformance vectors in plain JSON for message-kind lookup, wire compatibility, capability negotiation, task-time capability gating, explicit advertised-version selection, and approval-flow correlation/expiry handling.
 - Dependency-free repository validator for the consumer vectors so CI detects drift between expected outcomes and the public registry/compatibility/capability/approval rules.
 - External implementer documentation explaining how non-Rust consumers can run the same expected-outcome suite without depending on the Rust crate or private Glomancy runtime.
+- Published compatibility snapshots that pin real release metadata and public schema hashes, starting with the actual `v0.1.0` release, plus CI regression checks against the current contract.
+- Snapshot compatibility documentation describing how maintainers add future real release baselines without fabricating historical states.
 - Unreal Engine product-context documentation clarifying that Glomancy is currently developed primarily for Unreal Engine while Glomancy Protocol remains editor-agnostic, transport-neutral, and provider-neutral.
 
 ### Clarified
 
 - Handshake version selection is distinct from compatibility classification: consumers select the highest exact version explicitly advertised by both peers and fail closed when no shared advertised version exists.
 - Approval decisions are correlated by both `approval_id` and `task_id`; expired or mismatched decisions are rejected, while a valid deny decision is accepted as a decision but never authorizes execution.
+- Published schema IDs are immutable identities: a compatible current contract may not silently change the SHA-256 content or message-kind mapping behind a pinned release schema ID.
 
 ## [0.1.0] — 2026-09-13
 
