@@ -84,6 +84,9 @@ jobs:
       - name: Protocol error catalog parity
         run: python3 scripts/validate_error_catalog.py
 
+      - name: Release support policy
+        run: python3 scripts/validate_support_policy.py
+
       - name: Capability negotiation profile
         run: python3 scripts/validate_capability_profile.py
 

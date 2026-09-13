@@ -1,0 +1,23 @@
+{
+  "policy_version": "1.0.0",
+  "project_maturity": "pre-1.0",
+  "support_model": "best-effort",
+  "response_time_sla": null,
+  "fixed_support_window_days": null,
+  "lts_program": false,
+  "backport_policy": "not-guaranteed",
+  "security_reporting": "private-first",
+  "supported_releases": [
+    {
+      "crate_line": "0.1.x",
+      "latest_release": "0.1.0",
+      "source_tag": "v0.1.0",
+      "wire_line": "0.4.x",
+      "schema_line": "1.0.0",
+      "status": "current",
+      "bug_fixes": "best-effort",
+      "security_fixes": "best-effort",
+      "backports": "not-guaranteed"
+    }
+  ]
+}

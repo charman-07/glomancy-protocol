@@ -4,7 +4,11 @@ Glomancy Protocol sits at a trust boundary between AI-originated instructions an
 
 ## Supported code
 
-Security fixes are made on the current `main` branch and should be included in the next appropriate tagged release. Because the project is pre-1.0, older snapshots may not receive backports unless a release note explicitly says otherwise.
+The current public release/security support posture is defined in [`docs/RELEASE_SUPPORT_POLICY.md`](docs/RELEASE_SUPPORT_POLICY.md) and mirrored in `support/v1/policy.json`.
+
+Security fixes are developed against the current codebase and are included in an appropriate tagged release when a fix is ready. Because the project is pre-1.0, the currently supported published release line receives security fixes on a best-effort basis; backports to historical tags or superseded lines are not guaranteed unless release notes explicitly say otherwise.
+
+The project does not promise a fixed vulnerability-response SLA, remediation deadline, LTS window, or automatic backport policy.
 
 ## Reporting a vulnerability
 

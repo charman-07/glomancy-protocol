@@ -2,6 +2,8 @@
 
 Glomancy Protocol is a public open-source protocol project maintained on a best-effort basis. This repository does not provide a commercial SLA, guaranteed response time, guaranteed backport policy, or certification service.
 
+The authoritative pre-1.0 release-maintenance expectations are documented in [`docs/RELEASE_SUPPORT_POLICY.md`](docs/RELEASE_SUPPORT_POLICY.md) and mirrored for automation in `support/v1/policy.json`.
+
 ## Questions and integration help
 
 Use GitHub Issues for reproducible protocol questions, compatibility questions, documentation gaps, and integration problems that can be discussed publicly.
@@ -35,6 +37,8 @@ Product-specific features may be declined when they do not belong in a transport
 ## Supported release context
 
 The project is pre-1.0 and currently has a small public release history. The latest tagged release is the primary stable reference point for external consumers, while `main` represents active development and may contain unreleased changes documented under `CHANGELOG.md`.
+
+The current supported public release line, security-fix posture, backport posture, and end-of-support transition rules are defined in `docs/RELEASE_SUPPORT_POLICY.md`. The machine-readable policy is validated against real published compatibility snapshots so active development on `main` is not confused with a published supported release.
 
 Questions about older public tags are welcome, but the project does not promise indefinite maintenance or automatic backports for every historical pre-1.0 release. Security/correctness fixes and backports are evaluated case by case based on impact and feasibility.
 
