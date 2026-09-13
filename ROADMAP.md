@@ -14,10 +14,10 @@ This roadmap describes the intended direction of Glomancy Protocol. It is delibe
 
 ## v0.2 — Integration ergonomics
 
-- [ ] Add a small conformance command-line tool for validating fixture directories.
-- [ ] Add more boundary and malformed-input test vectors.
+- [x] Add a small conformance command-line tool for validating public protocol payloads and fixtures.
+- [x] Add more boundary and malformed-input test vectors.
 - [ ] Add reference integration examples that remain transport-neutral.
-- [ ] Define a machine-readable capability negotiation profile.
+- [x] Define a machine-readable capability negotiation profile.
 - [ ] Add a documented deprecation process for pre-1.0 schema changes.
 
 ## v0.3 — Interoperability
