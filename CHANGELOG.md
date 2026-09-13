@@ -12,6 +12,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Dependency-free repository validator for the consumer vectors so CI detects drift between expected outcomes and the public registry/compatibility/capability/approval rules.
 - External implementer documentation explaining how non-Rust consumers can run the same expected-outcome suite without depending on the Rust crate or private Glomancy runtime.
 - Stable, versioned machine-readable `--json` output for the public conformance CLI commands `validate`, `fixtures`, and `list-schemas`, while preserving the existing exit-code contract.
+- Draft 2020-12 JSON Schema contract for conformance CLI JSON output version `1.0.0`, plus CI validation of representative real CLI results against that schema.
 - Dependency-free independent Python consumer example that implements public version-selection, capability, task-gate, and approval decisions without importing the Rust crate or repository vector validator.
 - Dependency-free independent JavaScript/Node.js consumer example that executes the same public decisions without delegating to Python or Rust.
 - Published compatibility snapshots that pin real release metadata and public schema hashes, starting with the actual `v0.1.0` release, plus CI regression checks against the current contract.
