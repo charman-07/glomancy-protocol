@@ -20,7 +20,7 @@ Confirm the intended versions are internally consistent across their own contrac
 - JSON Schema versions/IDs and registry hashes;
 - capability-profile version when changed;
 - consumer-vector version when changed;
-- machine-readable catalog versions when changed;
+- machine-readable catalog versions when changed, including the security-invariant catalog;
 - release/security support-policy metadata when the supported public release line changes;
 - deterministic public-contract fingerprint after any canonical contract-surface change.
 
@@ -36,14 +36,14 @@ From the repository Actions UI:
 2. run the workflow;
 3. set `ref` to the exact branch, tag, or commit SHA being audited;
 4. optionally set `expected_version` (for example `0.2.0`) to require `Cargo.toml` and the CHANGELOG release heading to match that version;
-5. wait for Rust quality, repository-contract, support-policy/fingerprint/evidence-contract, and Linux/Windows/macOS portability gates to complete;
+5. wait for Rust quality, repository-contract, support-policy/fingerprint/security-invariant/evidence-contract, and Linux/Windows/macOS portability gates to complete;
 6. review the generated workflow summary and audited commit SHA;
 7. download the `release-evidence-<run-id>-<attempt>` artifact and verify `SHA256SUMS`;
 8. confirm `evidence.json` records the expected ref/SHA, gate outcomes, contract fingerprint, and support-policy line before tagging.
 
 The workflow is read-only with respect to repository contents. It does **not** create a tag, publish a GitHub release, sign artifacts, certify the build, create provenance, or grant permission to release.
 
-The audit includes dependency-free metadata validation covering the Rust package, Rust `PROTOCOL_VERSION`, canonical registry, capability profile, consumer vectors, error catalog, public schema-version set, machine-readable support policy, and public-contract fingerprint. The summary job also emits the bounded-retention evidence bundle described in [`docs/RELEASE_AUDIT.md`](docs/RELEASE_AUDIT.md).
+The audit includes dependency-free metadata validation covering the Rust package, Rust `PROTOCOL_VERSION`, canonical registry, capability profile, consumer vectors, error catalog, security-invariant catalog, public schema-version set, machine-readable support policy, and public-contract fingerprint. The summary job also emits the bounded-retention evidence bundle described in [`docs/RELEASE_AUDIT.md`](docs/RELEASE_AUDIT.md).
 
 ### Local/manual equivalent
 
@@ -60,6 +60,7 @@ python3 scripts/validate_repository.py
 python3 scripts/validate_rust_registry.py
 python3 scripts/validate_wire_enums.py
 python3 scripts/validate_error_catalog.py
+python3 scripts/validate_security_invariants.py
 python3 scripts/validate_support_policy.py
 python3 scripts/public_contract_fingerprint.py --check
 python3 scripts/validate_release_evidence.py
@@ -87,6 +88,7 @@ Review every public-contract change for:
 - capability negotiation changes;
 - approval/task-lifecycle/evidence semantics;
 - new or changed error codes/categories;
+- security-invariant catalog changes and their executable vector references;
 - public limits and malformed-input behavior;
 - conformance-vector expectations;
 - deprecations/removals;
@@ -113,10 +115,11 @@ Update `CHANGELOG.md` and prepare release notes that clearly describe:
 - migration steps;
 - support-policy changes, if any;
 - public-contract fingerprint changes when contract surfaces changed;
+- security-invariant changes when fail-closed public behavior changed;
 - security-relevant behavior changes when safe to disclose;
 - maturity/status wording supported by evidence.
 
-Do not describe a release as stable, production-proven, certified, broadly adopted, signed, reproducible, LTS, provenance-attested, or supply-chain verified unless those properties are actually implemented and demonstrable for that release.
+Do not describe a release as stable, production-proven, certified, broadly adopted, signed, reproducible, LTS, provenance-attested, formally verified, or supply-chain verified unless those properties are actually implemented and demonstrable for that release.
 
 ## 7. Tag and GitHub release
 
@@ -139,7 +142,7 @@ After publication:
 - add a compatibility snapshot for the real release when required by the compatibility-snapshot policy;
 - update `support/v1/policy.json` and `docs/RELEASE_SUPPORT_POLICY.md` when the newly published release changes the current supported line;
 - regenerate/check `contracts/v1/fingerprint.json` if any canonical fingerprint input changed during release preparation;
-- re-run `python3 scripts/validate_support_policy.py`, `python3 scripts/public_contract_fingerprint.py --check`, and `python3 scripts/validate_release_evidence.py` after the real release snapshot/support update;
+- re-run `python3 scripts/validate_security_invariants.py`, `python3 scripts/validate_support_policy.py`, `python3 scripts/public_contract_fingerprint.py --check`, and `python3 scripts/validate_release_evidence.py` after the real release snapshot/support update;
 - open follow-up issues for deferred work rather than silently changing a published historical contract.
 
 ## Security releases
