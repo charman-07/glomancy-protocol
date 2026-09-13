@@ -4,6 +4,8 @@ Glomancy is currently being developed primarily as an **AI-assisted copilot and 
 
 This document explains that concrete product context while keeping a clear boundary between the private commercial Glomancy implementation and the public, editor-agnostic Glomancy Protocol.
 
+For a more technical view of how the public protocol can sit between an AI/planning layer and an Unreal editor integration, see [Unreal Engine Integration Boundary](UNREAL_INTEGRATION_BOUNDARY.md).
+
 ## Why Unreal Engine is the first product target
 
 Unreal Engine is a useful proving ground for an AI-to-editor system because meaningful work often spans many kinds of project state at once: Actors, Components, Blueprints, assets, materials, animation systems, AI systems, C++ code, editor state, build/compile results, and validation output.
@@ -86,6 +88,8 @@ Unreal Engine can modify valuable project state, so a protocol message passing v
 A consuming implementation still needs its own authentication, authorization, policy, approval, sandboxing or isolation strategy, editor permissions, rollback/recovery decisions, and validation logic.
 
 Glomancy Protocol contributes structure to that boundary; it does not replace those controls.
+
+The [Unreal Engine Integration Boundary](UNREAL_INTEGRATION_BOUNDARY.md) document expands this into a concrete reference flow covering stale editor state, destructive asset mutations, Blueprint/C++ compile failures, partial multi-step changes, long-running operations, verification, and evidence.
 
 ## Project maturity
 
