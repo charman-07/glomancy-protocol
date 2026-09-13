@@ -3,6 +3,7 @@
 
 #![forbid(unsafe_code)]
 
+mod capability;
 mod header;
 mod identifiers;
 mod message;
@@ -10,6 +11,10 @@ mod policy;
 mod registry;
 mod version;
 
+pub use capability::{
+    Capability, CapabilityNegotiationError, CapabilityRequirement, is_capability_name,
+    negotiate_capabilities, task_capabilities_are_selected,
+};
 pub use header::{HeaderValidationError, MessageHeader};
 pub use identifiers::{is_lower_hex, is_rfc3339_utc_shape, is_schema_urn, is_sha256, is_uuid};
 pub use message::{Component, ExecutionMode, MessageKind, RiskLevel, TaskStatus};
