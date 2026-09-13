@@ -22,6 +22,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Pinned external-adoption guidance for consuming release tags, verifying registry hashes, vendoring non-Rust protocol assets, and upgrading pre-1.0 integrations deliberately.
 - Structured integration-feedback path for genuine external implementers without implying adoption that has not occurred.
 - Stdlib-only Rust/JSON registry parity validation that fails CI if public message kinds, schema IDs, schema versions, hashes, or schema paths drift between the canonical JSON registry and the Rust crate snapshot.
+- Fail-closed Rust `from_wire` helpers for public component, risk-level, execution-mode, task-status, and error-category enums, plus CI parity checks against the canonical enum values in `common.schema.json`.
 
 ### Clarified
 
