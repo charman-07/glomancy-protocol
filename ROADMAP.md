@@ -23,7 +23,7 @@ This roadmap describes the intended direction of Glomancy Protocol. It is delibe
 ## v0.3 — Interoperability
 
 - [x] Add language-neutral conformance vectors suitable for non-Rust consumers.
-- [ ] Add reference vectors for version negotiation and approval flows.
+- [x] Add reference vectors for version negotiation and approval flows.
 - [ ] Add compatibility tests across supported protocol snapshots.
 - [ ] Collect integration feedback and document implementation pitfalls.
 

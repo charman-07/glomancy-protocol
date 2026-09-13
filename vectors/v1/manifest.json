@@ -1,5 +1,5 @@
 {
-  "vector_version": "1.0.0",
+  "vector_version": "1.1.0",
   "wire_protocol_version": "0.4.0",
   "description": "Language-neutral expected outcomes for core public Glomancy Protocol consumer behavior.",
   "files": [
@@ -12,12 +12,20 @@
       "file": "wire-compatibility.json"
     },
     {
+      "area": "version-negotiation",
+      "file": "version-negotiation.json"
+    },
+    {
       "area": "capability-negotiation",
       "file": "capabilities.json"
     },
     {
       "area": "task-capability-gate",
       "file": "task-capability-gate.json"
+    },
+    {
+      "area": "approval-flow",
+      "file": "approval-flow.json"
     }
   ]
 }

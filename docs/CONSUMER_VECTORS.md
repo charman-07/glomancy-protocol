@@ -4,9 +4,9 @@ The files under `vectors/v1/` provide machine-readable expected outcomes for cor
 
 ## Purpose
 
-The JSON Schemas validate message payload shape. These vectors test a different layer: the deterministic decisions a consumer makes around message-kind lookup, wire compatibility, capability negotiation, and task-time capability gating.
+The JSON Schemas validate message payload shape. These vectors test a different layer: deterministic consumer decisions around message-kind lookup, wire compatibility, advertised-version selection, capability negotiation, task-time capability gating, and approval correlation/expiry handling.
 
-They are intended to reduce situations where two implementations both claim protocol support but interpret the same negotiation input differently.
+They are intended to reduce situations where two implementations both claim protocol support but interpret the same negotiation or approval input differently.
 
 ## Layout
 
@@ -15,8 +15,10 @@ vectors/v1/
   manifest.json
   message-kinds.json
   wire-compatibility.json
+  version-negotiation.json
   capabilities.json
   task-capability-gate.json
+  approval-flow.json
 ```
 
 `manifest.json` identifies the vector version, the wire protocol line the vectors target, and the files in the suite.
@@ -51,6 +53,14 @@ The vectors cover:
 
 The normative explanation remains in `docs/COMPATIBILITY.md`.
 
+### Version negotiation
+
+Handshake peers explicitly advertise `supported_versions`. The reference vectors use a conservative rule: select the highest semantic version that is **explicitly present in both advertised sets**.
+
+A consumer must not invent support for an unadvertised wire version merely because two versions would otherwise be classified as patch- or major-compatible. Compatibility classification and version selection are separate decisions. If there is no exact shared advertised version, negotiation fails closed.
+
+The vectors also reject malformed and duplicate advertised versions.
+
 ### Capability negotiation
 
 The vectors cover:
@@ -71,6 +81,19 @@ The vectors verify that a task may request only valid capability names selected 
 
 Passing this gate does **not** grant authorization.
 
+### Approval flow
+
+The approval vectors define conservative consumer-side correlation semantics for `approval.request` and `approval.decision`:
+
+- both `approval_id` and `task_id` must match the outstanding request;
+- only `approve` and `deny` decisions are valid;
+- a decision made after `expires_at` is rejected;
+- a decision exactly at the expiry timestamp is still accepted;
+- a valid `deny` decision is accepted as a decision but does not authorize execution;
+- a valid `approve` decision may satisfy the approval gate, but still does not bypass the consumer's authentication, authorization, policy, sandbox, capability, or editor-permission checks.
+
+These vectors deliberately distinguish **decision acceptance** from **execution authorization**.
+
 ## Repository validator
 
 The repository includes a dependency-free consistency validator:
@@ -79,7 +102,7 @@ The repository includes a dependency-free consistency validator:
 python3 scripts/validate_consumer_vectors.py
 ```
 
-It checks the vector expectations against the public registry and documented compatibility/capability rules. CI runs it on every change to catch drift between vectors and the rest of the public contract.
+It checks the vector expectations against the public registry and documented compatibility/capability/approval rules. CI runs it on every change to catch drift between vectors and the rest of the public contract.
 
 ## Versioning
 
@@ -89,7 +112,7 @@ Vector versions are separate from:
 - the wire protocol version;
 - individual JSON Schema versions.
 
-A vector change that changes an expected protocol decision must be reviewed together with the corresponding compatibility, capability, schema, documentation, and migration implications. Do not silently rewrite historical expected outcomes for a published protocol snapshot.
+A vector change that changes an expected protocol decision must be reviewed together with the corresponding compatibility, capability, approval, schema, documentation, and migration implications. Do not silently rewrite historical expected outcomes for a published protocol snapshot.
 
 ## What these vectors do not prove
 

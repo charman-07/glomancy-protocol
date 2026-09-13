@@ -1,0 +1,151 @@
+{
+  "cases": [
+    {
+      "id": "approve-matching-request",
+      "input": {
+        "request": {
+          "approval_id": "11111111-1111-4111-8111-111111111111",
+          "task_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "expires_at": "2026-09-13T12:00:00Z"
+        },
+        "decision": {
+          "approval_id": "11111111-1111-4111-8111-111111111111",
+          "task_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "decision": "approve",
+          "decided_at": "2026-09-13T11:59:00Z"
+        }
+      },
+      "expected": {
+        "accepted": true,
+        "authorized": true,
+        "reason": null
+      }
+    },
+    {
+      "id": "deny-matching-request",
+      "input": {
+        "request": {
+          "approval_id": "22222222-2222-4222-8222-222222222222",
+          "task_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "expires_at": "2026-09-13T12:00:00Z"
+        },
+        "decision": {
+          "approval_id": "22222222-2222-4222-8222-222222222222",
+          "task_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "decision": "deny",
+          "decided_at": "2026-09-13T11:59:00Z"
+        }
+      },
+      "expected": {
+        "accepted": true,
+        "authorized": false,
+        "reason": "denied"
+      }
+    },
+    {
+      "id": "mismatched-approval-id",
+      "input": {
+        "request": {
+          "approval_id": "33333333-3333-4333-8333-333333333333",
+          "task_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+          "expires_at": "2026-09-13T12:00:00Z"
+        },
+        "decision": {
+          "approval_id": "44444444-4444-4444-8444-444444444444",
+          "task_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+          "decision": "approve",
+          "decided_at": "2026-09-13T11:50:00Z"
+        }
+      },
+      "expected": {
+        "accepted": false,
+        "authorized": false,
+        "reason": "approval-id-mismatch"
+      }
+    },
+    {
+      "id": "mismatched-task-id",
+      "input": {
+        "request": {
+          "approval_id": "55555555-5555-4555-8555-555555555555",
+          "task_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+          "expires_at": "2026-09-13T12:00:00Z"
+        },
+        "decision": {
+          "approval_id": "55555555-5555-4555-8555-555555555555",
+          "task_id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          "decision": "approve",
+          "decided_at": "2026-09-13T11:50:00Z"
+        }
+      },
+      "expected": {
+        "accepted": false,
+        "authorized": false,
+        "reason": "task-id-mismatch"
+      }
+    },
+    {
+      "id": "decision-after-expiry",
+      "input": {
+        "request": {
+          "approval_id": "66666666-6666-4666-8666-666666666666",
+          "task_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+          "expires_at": "2026-09-13T12:00:00Z"
+        },
+        "decision": {
+          "approval_id": "66666666-6666-4666-8666-666666666666",
+          "task_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+          "decision": "approve",
+          "decided_at": "2026-09-13T12:00:01Z"
+        }
+      },
+      "expected": {
+        "accepted": false,
+        "authorized": false,
+        "reason": "expired"
+      }
+    },
+    {
+      "id": "decision-at-expiry-boundary",
+      "input": {
+        "request": {
+          "approval_id": "77777777-7777-4777-8777-777777777777",
+          "task_id": "12121212-1212-4212-8212-121212121212",
+          "expires_at": "2026-09-13T12:00:00Z"
+        },
+        "decision": {
+          "approval_id": "77777777-7777-4777-8777-777777777777",
+          "task_id": "12121212-1212-4212-8212-121212121212",
+          "decision": "approve",
+          "decided_at": "2026-09-13T12:00:00Z"
+        }
+      },
+      "expected": {
+        "accepted": true,
+        "authorized": true,
+        "reason": null
+      }
+    },
+    {
+      "id": "invalid-decision-value",
+      "input": {
+        "request": {
+          "approval_id": "88888888-8888-4888-8888-888888888888",
+          "task_id": "34343434-3434-4434-8434-343434343434",
+          "expires_at": "2026-09-13T12:00:00Z"
+        },
+        "decision": {
+          "approval_id": "88888888-8888-4888-8888-888888888888",
+          "task_id": "34343434-3434-4434-8434-343434343434",
+          "decision": "later",
+          "decided_at": "2026-09-13T11:00:00Z"
+        }
+      },
+      "expected": {
+        "accepted": false,
+        "authorized": false,
+        "reason": "invalid-decision"
+      }
+    }
+  ]
+}
