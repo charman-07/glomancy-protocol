@@ -1,0 +1,9 @@
+{
+  "cases": [
+    {"id":"exact-pre1","input":{"local":"0.4.0","remote":"0.4.0"},"expected":{"result":"exact","accepted":true}},
+    {"id":"patch-compatible-pre1","input":{"local":"0.4.0","remote":"0.4.9"},"expected":{"result":"patch-compatible","accepted":true}},
+    {"id":"minor-mismatch-pre1","input":{"local":"0.4.0","remote":"0.5.0"},"expected":{"result":"incompatible","accepted":false}},
+    {"id":"stable-same-major","input":{"local":"1.2.0","remote":"1.9.0"},"expected":{"result":"major-compatible","accepted":true}},
+    {"id":"stable-major-mismatch","input":{"local":"1.2.0","remote":"2.0.0"},"expected":{"result":"incompatible","accepted":false}}
+  ]
+}
