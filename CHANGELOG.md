@@ -28,6 +28,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Versioned machine-readable protocol error-code catalog with fail-closed Rust parsing, round-trip tests, and CI parity checks between `errors/v1/catalog.json` and `ProtocolErrorCode`.
 - Formal protocol-change governance with change classes, structured proposal requirements, a dedicated GitHub Issue form, and explicit compatibility/security/migration/conformance review expectations.
 - Public `MAINTAINERS.md` register and release-quality gate documentation covering source quality, cross-platform portability, contract integrity, security review, release metadata, and post-release verification.
+- Manually runnable release-readiness audit workflow with exact-ref checkout, Rust/repository-contract/cross-platform gates, deterministic release-facing metadata validation, and an audited ref/SHA summary without publishing or certifying a release.
 
 ### Clarified
 
