@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://glomancy.dev/protocol/evidence/v1/release-evidence.schema.json",
+  "title": "Glomancy Protocol release-readiness evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evidence_format_version",
+    "project",
+    "audited_ref",
+    "audited_sha",
+    "audit_status",
+    "gates",
+    "package",
+    "wire_protocol_version",
+    "public_contract_fingerprint",
+    "support",
+    "bundle",
+    "claims"
+  ],
+  "properties": {
+    "evidence_format_version": {
+      "const": "1.0.0"
+    },
+    "project": {
+      "const": "glomancy-protocol"
+    },
+    "audited_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "audited_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "audit_status": {
+      "enum": ["passed", "failed"]
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rust_quality", "repository_contract", "portability"],
+      "properties": {
+        "rust_quality": {"$ref": "#/$defs/gateResult"},
+        "repository_contract": {"$ref": "#/$defs/gateResult"},
+        "portability": {"$ref": "#/$defs/gateResult"}
+      }
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "rust_version"],
+      "properties": {
+        "name": {"const": "glomancy-protocol"},
+        "version": {"type": "string", "minLength": 1},
+        "rust_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "wire_protocol_version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "public_contract_fingerprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format_version", "aggregate_sha256", "source_file"],
+      "properties": {
+        "format_version": {"type": "string", "minLength": 1},
+        "aggregate_sha256": {"$ref": "#/$defs/sha256"},
+        "source_file": {"const": "public-contract-fingerprint.json"}
+      }
+    },
+    "support": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy_version", "release_lines", "source_file"],
+      "properties": {
+        "policy_version": {"type": "string", "minLength": 1},
+        "release_lines": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["crate_line", "latest_release", "source_tag", "wire_line", "schema_line", "status"],
+            "properties": {
+              "crate_line": {"type": "string", "minLength": 1},
+              "latest_release": {"type": "string", "minLength": 1},
+              "source_tag": {"type": "string", "minLength": 1},
+              "wire_line": {"type": "string", "minLength": 1},
+              "schema_line": {"type": "string", "minLength": 1},
+              "status": {"enum": ["current", "maintenance"]}
+            }
+          }
+        },
+        "source_file": {"const": "release-support-policy.json"}
+      }
+    },
+    "bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checksum_file", "checksum_algorithm", "payload_files"],
+      "properties": {
+        "checksum_file": {"const": "SHA256SUMS"},
+        "checksum_algorithm": {"const": "sha256"},
+        "payload_files": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "evidence.json",
+              "public-contract-fingerprint.json",
+              "release-support-policy.json"
+            ]
+          }
+        }
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signed", "provenance", "attestation", "certification", "release_authorization"],
+      "properties": {
+        "signed": {"const": false},
+        "provenance": {"const": false},
+        "attestation": {"const": false},
+        "certification": {"const": false},
+        "release_authorization": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "gateResult": {
+      "enum": [
+        "success",
+        "failure",
+        "cancelled",
+        "skipped",
+        "timed_out",
+        "action_required",
+        "neutral",
+        "unknown"
+      ]
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}
