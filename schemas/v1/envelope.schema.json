@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:protocol:envelope:1.0.0",
+  "title": "Glomancy Protocol Envelope",
+  "type": "object",
+  "required": [
+    "schema_id",
+    "protocol_version",
+    "message_id",
+    "sent_at",
+    "sender",
+    "trace",
+    "kind",
+    "payload"
+  ],
+  "properties": {
+    "schema_id": {
+      "type": "string",
+      "pattern": "^urn:glomancy:protocol:[a-z0-9.-]+:[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "protocol_version": {
+      "$ref": "common.schema.json#/$defs/semver"
+    },
+    "message_id": {
+      "$ref": "common.schema.json#/$defs/uuid"
+    },
+    "correlation_id": {
+      "$ref": "common.schema.json#/$defs/uuid"
+    },
+    "causation_id": {
+      "$ref": "common.schema.json#/$defs/uuid"
+    },
+    "sent_at": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "sender": {
+      "$ref": "common.schema.json#/$defs/sender"
+    },
+    "trace": {
+      "$ref": "common.schema.json#/$defs/trace"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "handshake.request",
+        "handshake.response",
+        "task.submit",
+        "task.progress",
+        "task.result",
+        "task.error",
+        "task.cancel",
+        "approval.request",
+        "approval.decision",
+        "evidence.record",
+        "heartbeat"
+      ]
+    },
+    "payload": {
+      "type": "object"
+    },
+    "extensions": {
+      "type": "object",
+      "maxProperties": 32,
+      "propertyNames": {
+        "pattern": "^x-[a-z0-9]+(?:-[a-z0-9]+)*$"
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

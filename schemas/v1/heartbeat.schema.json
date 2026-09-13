@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:protocol:heartbeat:1.0.0",
+  "title": "Heartbeat",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    },
+    {
+      "properties": {
+        "schema_id": {
+          "const": "urn:glomancy:protocol:heartbeat:1.0.0"
+        },
+        "kind": {
+          "const": "heartbeat"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "component",
+            "state",
+            "active_task_id",
+            "capabilities_sha256",
+            "observed_at"
+          ],
+          "properties": {
+            "component": {
+              "$ref": "common.schema.json#/$defs/component"
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "ready",
+                "busy",
+                "degraded",
+                "shutting_down"
+              ]
+            },
+            "active_task_id": {
+              "anyOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "capabilities_sha256": {
+              "$ref": "common.schema.json#/$defs/sha256"
+            },
+            "observed_at": {
+              "$ref": "common.schema.json#/$defs/timestamp"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+[package]
+name = "glomancy-protocol"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+authors = ["Glomancy"]
+license = "MIT"
+description = "Transport-neutral protocol types and validation contracts for safe AI-to-editor integrations."
+repository = "https://github.com/charman-07/glomancy-protocol"
+readme = "README.md"
+keywords = ["ai", "protocol", "json-schema", "developer-tools", "unreal-engine"]
+categories = ["development-tools"]
+publish = false
+
+[workspace]
+
+[lints.rust]
+unsafe_code = "forbid"
+unused_must_use = "deny"
+
+[lints.clippy]
+all = "deny"
+pedantic = "allow"
+nursery = "allow"

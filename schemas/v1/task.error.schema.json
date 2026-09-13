@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:protocol:task.error:1.0.0",
+  "title": "Task Error",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    },
+    {
+      "properties": {
+        "schema_id": {
+          "const": "urn:glomancy:protocol:task.error:1.0.0"
+        },
+        "kind": {
+          "const": "task.error"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "task_id",
+            "status",
+            "error",
+            "recoverable",
+            "rollback_attempted",
+            "evidence_ids"
+          ],
+          "properties": {
+            "task_id": {
+              "$ref": "common.schema.json#/$defs/uuid"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "failed",
+                "cancelled",
+                "rolled_back"
+              ]
+            },
+            "error": {
+              "$ref": "common.schema.json#/$defs/error"
+            },
+            "recoverable": {
+              "type": "boolean"
+            },
+            "rollback_attempted": {
+              "type": "boolean"
+            },
+            "evidence_ids": {
+              "type": "array",
+              "maxItems": 256,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "common.schema.json#/$defs/uuid"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

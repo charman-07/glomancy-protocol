@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:protocol:task.result:1.0.0",
+  "title": "Task Result",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    },
+    {
+      "properties": {
+        "schema_id": {
+          "const": "urn:glomancy:protocol:task.result:1.0.0"
+        },
+        "kind": {
+          "const": "task.result"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "task_id",
+            "status",
+            "summary",
+            "artifacts",
+            "evidence_ids",
+            "read_back_verified"
+          ],
+          "properties": {
+            "task_id": {
+              "$ref": "common.schema.json#/$defs/uuid"
+            },
+            "status": {
+              "const": "succeeded"
+            },
+            "summary": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            "artifacts": {
+              "type": "array",
+              "maxItems": 64,
+              "items": {
+                "$ref": "common.schema.json#/$defs/artifact_ref"
+              }
+            },
+            "evidence_ids": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 256,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "common.schema.json#/$defs/uuid"
+              }
+            },
+            "read_back_verified": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:protocol:handshake.request:1.0.0",
+  "title": "Handshake Request",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    },
+    {
+      "properties": {
+        "schema_id": {
+          "const": "urn:glomancy:protocol:handshake.request:1.0.0"
+        },
+        "kind": {
+          "const": "handshake.request"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "component",
+            "supported_versions",
+            "capabilities",
+            "max_message_bytes",
+            "locale"
+          ],
+          "properties": {
+            "component": {
+              "$ref": "common.schema.json#/$defs/component"
+            },
+            "supported_versions": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "common.schema.json#/$defs/semver"
+              }
+            },
+            "capabilities": {
+              "type": "array",
+              "maxItems": 256,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "common.schema.json#/$defs/capability"
+              }
+            },
+            "max_message_bytes": {
+              "type": "integer",
+              "minimum": 4096,
+              "maximum": 1048576
+            },
+            "locale": {
+              "type": "string",
+              "enum": [
+                "tr-TR",
+                "en-US"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

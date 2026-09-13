@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:protocol:task.cancel:1.0.0",
+  "title": "Task Cancel",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    },
+    {
+      "properties": {
+        "schema_id": {
+          "const": "urn:glomancy:protocol:task.cancel:1.0.0"
+        },
+        "kind": {
+          "const": "task.cancel"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "task_id",
+            "reason",
+            "requested_by",
+            "force"
+          ],
+          "properties": {
+            "task_id": {
+              "$ref": "common.schema.json#/$defs/uuid"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "requested_by": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "force": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

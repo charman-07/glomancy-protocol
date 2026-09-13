@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:protocol:evidence.record:1.0.0",
+  "title": "Evidence Record",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    },
+    {
+      "properties": {
+        "schema_id": {
+          "const": "urn:glomancy:protocol:evidence.record:1.0.0"
+        },
+        "kind": {
+          "const": "evidence.record"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "evidence_id",
+            "task_id",
+            "evidence_type",
+            "captured_at",
+            "producer",
+            "sha256",
+            "artifacts",
+            "claims"
+          ],
+          "properties": {
+            "evidence_id": {
+              "$ref": "common.schema.json#/$defs/uuid"
+            },
+            "task_id": {
+              "$ref": "common.schema.json#/$defs/uuid"
+            },
+            "evidence_type": {
+              "type": "string",
+              "enum": [
+                "log",
+                "screenshot",
+                "asset-registry",
+                "read-back",
+                "build",
+                "test",
+                "diff",
+                "rollback"
+              ]
+            },
+            "captured_at": {
+              "$ref": "common.schema.json#/$defs/timestamp"
+            },
+            "producer": {
+              "$ref": "common.schema.json#/$defs/sender"
+            },
+            "sha256": {
+              "$ref": "common.schema.json#/$defs/sha256"
+            },
+            "artifacts": {
+              "type": "array",
+              "maxItems": 64,
+              "items": {
+                "$ref": "common.schema.json#/$defs/artifact_ref"
+              }
+            },
+            "claims": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 128,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1024
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

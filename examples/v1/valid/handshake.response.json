@@ -1,0 +1,30 @@
+{
+  "protocol_version": "0.4.0",
+  "message_id": "11111111-1111-4111-8111-111111111111",
+  "sent_at": "2026-07-27T09:00:00Z",
+  "sender": {
+    "component": "desktop",
+    "instance_id": "desktop-main",
+    "build_version": "0.4.0"
+  },
+  "trace": {
+    "trace_id": "0123456789abcdef0123456789abcdef",
+    "span_id": "0123456789abcdef",
+    "sampled": true
+  },
+  "correlation_id": "11111111-1111-4111-8111-111111111111",
+  "schema_id": "urn:glomancy:protocol:handshake.response:1.0.0",
+  "kind": "handshake.response",
+  "payload": {
+    "accepted": true,
+    "selected_version": "0.4.0",
+    "selected_capabilities": [
+      {
+        "name": "task.submit",
+        "version": "1.0.0",
+        "required": true
+      }
+    ],
+    "max_message_bytes": 1048576
+  }
+}

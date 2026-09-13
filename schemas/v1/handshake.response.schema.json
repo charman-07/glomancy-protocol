@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:protocol:handshake.response:1.0.0",
+  "title": "Handshake Response",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    },
+    {
+      "properties": {
+        "schema_id": {
+          "const": "urn:glomancy:protocol:handshake.response:1.0.0"
+        },
+        "kind": {
+          "const": "handshake.response"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "accepted",
+            "selected_version",
+            "selected_capabilities",
+            "max_message_bytes"
+          ],
+          "properties": {
+            "accepted": {
+              "type": "boolean"
+            },
+            "selected_version": {
+              "anyOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/semver"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "selected_capabilities": {
+              "type": "array",
+              "maxItems": 256,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "common.schema.json#/$defs/capability"
+              }
+            },
+            "max_message_bytes": {
+              "type": "integer",
+              "minimum": 4096,
+              "maximum": 1048576
+            },
+            "rejection": {
+              "$ref": "common.schema.json#/$defs/error"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

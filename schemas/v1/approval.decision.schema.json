@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:protocol:approval.decision:1.0.0",
+  "title": "Approval Decision",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    },
+    {
+      "properties": {
+        "schema_id": {
+          "const": "urn:glomancy:protocol:approval.decision:1.0.0"
+        },
+        "kind": {
+          "const": "approval.decision"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "approval_id",
+            "task_id",
+            "decision",
+            "decided_by",
+            "decided_at",
+            "constraints"
+          ],
+          "properties": {
+            "approval_id": {
+              "$ref": "common.schema.json#/$defs/uuid"
+            },
+            "task_id": {
+              "$ref": "common.schema.json#/$defs/uuid"
+            },
+            "decision": {
+              "type": "string",
+              "enum": [
+                "approve",
+                "deny"
+              ]
+            },
+            "decided_by": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "decided_at": {
+              "$ref": "common.schema.json#/$defs/timestamp"
+            },
+            "constraints": {
+              "type": "object",
+              "maxProperties": 32,
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "valid": [
+    {
+      "file": "valid/handshake.request.json",
+      "schema": "../../schemas/v1/handshake.request.schema.json"
+    },
+    {
+      "file": "valid/handshake.response.json",
+      "schema": "../../schemas/v1/handshake.response.schema.json"
+    },
+    {
+      "file": "valid/task.submit.json",
+      "schema": "../../schemas/v1/task.submit.schema.json"
+    },
+    {
+      "file": "valid/task.progress.json",
+      "schema": "../../schemas/v1/task.progress.schema.json"
+    },
+    {
+      "file": "valid/task.result.json",
+      "schema": "../../schemas/v1/task.result.schema.json"
+    },
+    {
+      "file": "valid/task.error.json",
+      "schema": "../../schemas/v1/task.error.schema.json"
+    },
+    {
+      "file": "valid/task.cancel.json",
+      "schema": "../../schemas/v1/task.cancel.schema.json"
+    },
+    {
+      "file": "valid/approval.request.json",
+      "schema": "../../schemas/v1/approval.request.schema.json"
+    },
+    {
+      "file": "valid/approval.decision.json",
+      "schema": "../../schemas/v1/approval.decision.schema.json"
+    },
+    {
+      "file": "valid/evidence.record.json",
+      "schema": "../../schemas/v1/evidence.record.schema.json"
+    },
+    {
+      "file": "valid/heartbeat.json",
+      "schema": "../../schemas/v1/heartbeat.schema.json"
+    }
+  ],
+  "invalid": [
+    {
+      "file": "invalid/unknown-top-level-property.json",
+      "schema": "../../schemas/v1/task.submit.schema.json",
+      "expected_keyword": "additionalProperties"
+    },
+    {
+      "file": "invalid/bad-semver.json",
+      "schema": "../../schemas/v1/task.submit.schema.json",
+      "expected_keyword": "pattern"
+    },
+    {
+      "file": "invalid/unsupported-language.json",
+      "schema": "../../schemas/v1/task.submit.schema.json",
+      "expected_keyword": "enum"
+    },
+    {
+      "file": "invalid/progress-over-100.json",
+      "schema": "../../schemas/v1/task.progress.schema.json",
+      "expected_keyword": "maximum"
+    },
+    {
+      "file": "invalid/result-without-evidence.json",
+      "schema": "../../schemas/v1/task.result.schema.json",
+      "expected_keyword": "minItems"
+    },
+    {
+      "file": "invalid/unknown-error-category.json",
+      "schema": "../../schemas/v1/task.error.schema.json",
+      "expected_keyword": "enum"
+    },
+    {
+      "file": "invalid/approval-below-r2.json",
+      "schema": "../../schemas/v1/approval.request.schema.json",
+      "expected_keyword": "enum"
+    },
+    {
+      "file": "invalid/message-limit-too-large.json",
+      "schema": "../../schemas/v1/handshake.request.schema.json",
+      "expected_keyword": "maximum"
+    },
+    {
+      "file": "invalid/bad-sha256.json",
+      "schema": "../../schemas/v1/heartbeat.schema.json",
+      "expected_keyword": "pattern"
+    },
+    {
+      "file": "invalid/missing-task-id.json",
+      "schema": "../../schemas/v1/task.submit.schema.json",
+      "expected_keyword": "required"
+    }
+  ]
+}

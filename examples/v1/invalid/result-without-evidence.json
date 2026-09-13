@@ -1,0 +1,33 @@
+{
+  "protocol_version": "0.4.0",
+  "message_id": "11111111-1111-4111-8111-111111111111",
+  "sent_at": "2026-07-27T09:00:00Z",
+  "sender": {
+    "component": "desktop",
+    "instance_id": "desktop-main",
+    "build_version": "0.4.0"
+  },
+  "trace": {
+    "trace_id": "0123456789abcdef0123456789abcdef",
+    "span_id": "0123456789abcdef",
+    "sampled": true
+  },
+  "schema_id": "urn:glomancy:protocol:task.result:1.0.0",
+  "kind": "task.result",
+  "payload": {
+    "task_id": "22222222-2222-4222-8222-222222222222",
+    "status": "succeeded",
+    "summary": "Plan oluşturuldu ve read-back ile doğrulandı.",
+    "artifacts": [
+      {
+        "artifact_id": "44444444-4444-4444-8444-444444444444",
+        "media_type": "application/json",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "size_bytes": 512,
+        "uri": "glomancy://artifacts/44444444-4444-4444-8444-444444444444"
+      }
+    ],
+    "evidence_ids": [],
+    "read_back_verified": true
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:protocol:task.submit:1.0.0",
+  "title": "Task Submit",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    },
+    {
+      "properties": {
+        "schema_id": {
+          "const": "urn:glomancy:protocol:task.submit:1.0.0"
+        },
+        "kind": {
+          "const": "task.submit"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "task_id",
+            "user_instruction",
+            "language",
+            "execution_mode",
+            "risk_ceiling",
+            "requested_capabilities",
+            "context_refs",
+            "idempotency_key"
+          ],
+          "properties": {
+            "task_id": {
+              "$ref": "common.schema.json#/$defs/uuid"
+            },
+            "user_instruction": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20000
+            },
+            "language": {
+              "type": "string",
+              "enum": [
+                "tr-TR",
+                "en-US",
+                "auto"
+              ]
+            },
+            "execution_mode": {
+              "$ref": "common.schema.json#/$defs/execution_mode"
+            },
+            "risk_ceiling": {
+              "$ref": "common.schema.json#/$defs/risk_level"
+            },
+            "requested_capabilities": {
+              "type": "array",
+              "maxItems": 128,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9.-]*$"
+              }
+            },
+            "context_refs": {
+              "type": "array",
+              "maxItems": 256,
+              "items": {
+                "$ref": "common.schema.json#/$defs/source_ref"
+              }
+            },
+            "idempotency_key": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9._:-]+$"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

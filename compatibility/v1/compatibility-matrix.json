@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "current_protocol_version": "0.4.0",
+  "rules": [
+    {
+      "id": "exact",
+      "condition": "versions equal",
+      "result": "exact"
+    },
+    {
+      "id": "pre-1.0-patch",
+      "condition": "major=0 and minor equal",
+      "result": "patch-compatible"
+    },
+    {
+      "id": "pre-1.0-minor-break",
+      "condition": "major=0 and minor differs",
+      "result": "incompatible"
+    },
+    {
+      "id": "stable-major",
+      "condition": "major>=1 and major equal",
+      "result": "major-compatible"
+    },
+    {
+      "id": "major-break",
+      "condition": "major differs",
+      "result": "incompatible"
+    }
+  ],
+  "negotiation": {
+    "select_highest_common_version": true,
+    "empty_intersection": "reject-handshake",
+    "unknown_schema_id": "fail-closed",
+    "unknown_message_kind": "fail-closed"
+  }
+}

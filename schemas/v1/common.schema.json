@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:protocol:common:1.0.0",
+  "title": "Glomancy Protocol Common Definitions",
+  "type": "object",
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "component": {
+      "type": "string",
+      "enum": [
+        "desktop",
+        "bridge",
+        "agent-runtime",
+        "policy-engine",
+        "validation-engine",
+        "provider",
+        "test-harness"
+      ]
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "R0",
+        "R1",
+        "R2",
+        "R3",
+        "R4"
+      ]
+    },
+    "execution_mode": {
+      "type": "string",
+      "enum": [
+        "dry-run",
+        "simulate",
+        "execute"
+      ]
+    },
+    "task_status": {
+      "type": "string",
+      "enum": [
+        "accepted",
+        "planning",
+        "awaiting_approval",
+        "running",
+        "validating",
+        "succeeded",
+        "failed",
+        "cancelled",
+        "rolled_back"
+      ]
+    },
+    "error_category": {
+      "type": "string",
+      "enum": [
+        "invalid_request",
+        "unsupported_version",
+        "schema_validation",
+        "policy_denied",
+        "approval_required",
+        "execution_failed",
+        "validation_failed",
+        "conflict",
+        "not_found",
+        "timeout",
+        "cancelled",
+        "internal"
+      ]
+    },
+    "sender": {
+      "type": "object",
+      "required": [
+        "component",
+        "instance_id"
+      ],
+      "properties": {
+        "component": {
+          "$ref": "#/$defs/component"
+        },
+        "instance_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "build_version": {
+          "$ref": "#/$defs/semver"
+        }
+      },
+      "additionalProperties": false
+    },
+    "trace": {
+      "type": "object",
+      "required": [
+        "trace_id",
+        "span_id",
+        "sampled"
+      ],
+      "properties": {
+        "trace_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$"
+        },
+        "span_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{16}$"
+        },
+        "sampled": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "capability": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-z][a-z0-9.-]*$"
+        },
+        "version": {
+          "$ref": "#/$defs/semver"
+        },
+        "required": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifact_ref": {
+      "type": "object",
+      "required": [
+        "artifact_id",
+        "media_type",
+        "sha256",
+        "size_bytes",
+        "uri"
+      ],
+      "properties": {
+        "artifact_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "media_type": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[a-z0-9.+-]+/[a-z0-9.+-]+$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10737418240
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "additionalProperties": false
+    },
+    "source_ref": {
+      "type": "object",
+      "required": [
+        "source_type",
+        "uri"
+      ],
+      "properties": {
+        "source_type": {
+          "type": "string",
+          "enum": [
+            "project",
+            "asset",
+            "file",
+            "memory",
+            "artifact",
+            "web"
+          ]
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "required": [
+        "code",
+        "category",
+        "message",
+        "retryable"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^GLM-PROTO-[0-9]{4}$"
+        },
+        "category": {
+          "$ref": "#/$defs/error_category"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "details": {
+          "type": "object",
+          "maxProperties": 32,
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:protocol:task.progress:1.0.0",
+  "title": "Task Progress",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    },
+    {
+      "properties": {
+        "schema_id": {
+          "const": "urn:glomancy:protocol:task.progress:1.0.0"
+        },
+        "kind": {
+          "const": "task.progress"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "task_id",
+            "status",
+            "progress_percent",
+            "stage",
+            "detail",
+            "evidence_ids"
+          ],
+          "properties": {
+            "task_id": {
+              "$ref": "common.schema.json#/$defs/uuid"
+            },
+            "status": {
+              "$ref": "common.schema.json#/$defs/task_status"
+            },
+            "progress_percent": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "stage": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "evidence_ids": {
+              "type": "array",
+              "maxItems": 128,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "common.schema.json#/$defs/uuid"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}
