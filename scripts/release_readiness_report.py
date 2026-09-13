@@ -139,6 +139,7 @@ def collect(expected_version: str | None) -> dict[str, Any]:
     capability = load_json(ROOT / "capabilities" / "v1" / "profile.json")
     vectors = load_json(ROOT / "vectors" / "v1" / "manifest.json")
     errors = load_json(ROOT / "errors" / "v1" / "catalog.json")
+    security = load_json(ROOT / "security" / "v1" / "invariants.json")
     support = load_json(ROOT / "support" / "v1" / "policy.json")
     fingerprint = load_json(ROOT / "contracts" / "v1" / "fingerprint.json")
 
@@ -155,6 +156,9 @@ def collect(expected_version: str | None) -> dict[str, Any]:
     error_wire = require_semver(
         "error catalog wire_protocol_version", errors.get("wire_protocol_version"), core_only=True
     )
+    security_wire = require_semver(
+        "security invariant wire_protocol_version", security.get("wire_protocol_version"), core_only=True
+    )
 
     wire_versions = {
         "rust": rust_wire,
@@ -162,6 +166,7 @@ def collect(expected_version: str | None) -> dict[str, Any]:
         "capability_profile": capability_wire,
         "consumer_vectors": vector_wire,
         "error_catalog": error_wire,
+        "security_invariants": security_wire,
     }
     if len(set(wire_versions.values())) != 1:
         raise ReadinessError(f"wire protocol version drift: {wire_versions}")
@@ -169,6 +174,9 @@ def collect(expected_version: str | None) -> dict[str, Any]:
     profile_version = require_semver("capability profile_version", capability.get("profile_version"))
     vector_version = require_semver("consumer vector_version", vectors.get("vector_version"))
     catalog_version = require_semver("error catalog_version", errors.get("catalog_version"))
+    security_catalog_version = require_semver(
+        "security invariant catalog_version", security.get("catalog_version")
+    )
     support_policy_version = require_semver("support policy_version", support.get("policy_version"))
     fingerprint_format_version = require_semver(
         "fingerprint fingerprint_format_version", fingerprint.get("fingerprint_format_version")
@@ -183,6 +191,7 @@ def collect(expected_version: str | None) -> dict[str, Any]:
     support_schemas = registry.get("support_schemas")
     vector_files = vectors.get("files")
     error_codes = errors.get("codes")
+    security_invariants = security.get("invariants")
     fingerprint_entries = fingerprint.get("entries")
     if not isinstance(message_schemas, list):
         raise ReadinessError("registry message_schemas must be an array")
@@ -192,6 +201,8 @@ def collect(expected_version: str | None) -> dict[str, Any]:
         raise ReadinessError("consumer vector files must be an array")
     if not isinstance(error_codes, list):
         raise ReadinessError("error catalog codes must be an array")
+    if not isinstance(security_invariants, list) or not security_invariants:
+        raise ReadinessError("security invariant catalog invariants must be a non-empty array")
     if not isinstance(fingerprint_entries, list) or not fingerprint_entries:
         raise ReadinessError("fingerprint entries must be a non-empty array")
 
@@ -213,6 +224,7 @@ def collect(expected_version: str | None) -> dict[str, Any]:
         "capability_profile_version": profile_version,
         "consumer_vector_version": vector_version,
         "error_catalog_version": catalog_version,
+        "security_invariant_catalog_version": security_catalog_version,
         "support_policy_version": support_policy_version,
         "fingerprint_format_version": fingerprint_format_version,
         "public_contract_fingerprint": public_contract_fingerprint,
@@ -222,6 +234,7 @@ def collect(expected_version: str | None) -> dict[str, Any]:
             "support_schemas": len(support_schemas),
             "vector_areas": len(vector_files),
             "protocol_error_codes": len(error_codes),
+            "security_invariants": len(security_invariants),
             "supported_release_lines": len(supported_lines),
             "fingerprinted_contract_files": len(fingerprint_entries),
         },
@@ -250,6 +263,8 @@ def as_markdown(data: dict[str, Any], ref: str | None, sha: str | None) -> str:
         f"- **Capability profile:** `{data['capability_profile_version']}`",
         f"- **Consumer vectors:** `{data['consumer_vector_version']}`",
         f"- **Error catalog:** `{data['error_catalog_version']}`",
+        f"- **Security invariant catalog:** `{data['security_invariant_catalog_version']}`",
+        f"- **Security invariants:** `{counts['security_invariants']}`",
         f"- **Support policy:** `{data['support_policy_version']}`",
         f"- **Contract fingerprint format:** `{data['fingerprint_format_version']}`",
         f"- **Public contract fingerprint:** `{data['public_contract_fingerprint']}`",
@@ -260,7 +275,7 @@ def as_markdown(data: dict[str, Any], ref: str | None, sha: str | None) -> str:
         f"- **Protocol error codes:** `{counts['protocol_error_codes']}`",
         f"- **Fingerprinted contract files:** `{counts['fingerprinted_contract_files']}`",
         "",
-        "> This report validates release-facing metadata consistency only. The workflow's quality, contract, support-policy, fingerprint, and portability jobs provide the remaining release-gate evidence. The fingerprint is integrity metadata, not a signature or authenticity proof. The audit does not sign, publish, certify, or authorize a release.",
+        "> This report validates release-facing metadata consistency only. The workflow's quality, contract, security-invariant, support-policy, fingerprint, and portability jobs provide the remaining release-gate evidence. Vector-backed invariants are regression assurance, not formal verification. The fingerprint is integrity metadata, not a signature or authenticity proof. The audit does not sign, publish, certify, or authorize a release.",
     ]
     return "\n".join(lines)
 
@@ -301,6 +316,7 @@ def main() -> int:
             f"schemas={','.join(data['schema_versions'])} "
             f"vectors={data['consumer_vector_version']} "
             f"errors={data['error_catalog_version']} "
+            f"security={data['security_invariant_catalog_version']} "
             f"support={data['support_policy_version']} "
             f"fingerprint={data['public_contract_fingerprint']}"
         )
