@@ -1,7 +1,19 @@
 * @charman-07
 
+# Public protocol contracts
 /schemas/ @charman-07
 /registry/ @charman-07
 /compatibility/ @charman-07
+/capabilities/ @charman-07
+/vectors/ @charman-07
+/errors/ @charman-07
+
+# Security, governance, release, and CI surfaces
 /.github/workflows/ @charman-07
+/.github/CODEOWNERS @charman-07
 /SECURITY.md @charman-07
+/GOVERNANCE.md @charman-07
+/MAINTAINERS.md @charman-07
+/RELEASING.md @charman-07
+/docs/PROTOCOL_CHANGE_PROCESS.md @charman-07
+/docs/RELEASE_GATES.md @charman-07
