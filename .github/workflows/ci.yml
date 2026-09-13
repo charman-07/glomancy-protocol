@@ -71,6 +71,9 @@ jobs:
       - name: Validate release support policy
         run: python3 scripts/validate_support_policy.py
 
+      - name: Validate public contract fingerprint
+        run: python3 scripts/public_contract_fingerprint.py --check
+
       - name: Validate release-facing metadata
         run: python3 scripts/release_readiness_report.py --json
 
