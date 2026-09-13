@@ -34,14 +34,16 @@ A consumer should:
 
 1. validate the handshake envelope against its registered schema;
 2. reject an unknown schema ID or message kind;
-3. compare supported wire protocol versions;
-4. select the highest compatible common version when one exists;
-5. reject the handshake when no compatible version exists;
+3. validate every advertised `supported_versions` entry;
+4. select the highest exact semantic version explicitly advertised by both peers;
+5. reject the handshake when there is no shared advertised version;
 6. record the selected version for the connection/session.
 
-Current compatibility rules are defined by `compatibility/v1/compatibility-matrix.json` and explained in `docs/COMPATIBILITY.md`.
+Compatibility classification and version selection are deliberately separate. The compatibility rules explain whether two concrete versions belong to a compatible line, but a handshake must not silently invent or select a version that one peer did not advertise.
 
-For the current pre-1.0 line, patch differences within the same minor version are compatible, while a different minor version is treated as incompatible.
+Current compatibility rules are defined by `compatibility/v1/compatibility-matrix.json` and explained in `docs/COMPATIBILITY.md`. Executable expected outcomes for selection are in `vectors/v1/version-negotiation.json`.
+
+For the current pre-1.0 line, patch differences within the same minor version may be classified as compatible, while a different minor version is treated as incompatible. That classification does not replace explicit supported-version advertisement.
 
 ## 3. Schema resolution
 
@@ -78,9 +80,11 @@ task.submit
       -> denied: do not execute; return an appropriate task outcome
 ```
 
+A consumer should correlate a decision to the outstanding request using both `approval_id` and `task_id`, validate the decision value, and reject decisions made after the request expiry. The language-neutral expected outcomes are in `vectors/v1/approval-flow.json`.
+
 The protocol makes approval state explicit, but it does not define an organization's risk policy. Integrations decide which operations require approval and must enforce the decision locally.
 
-Do not interpret the presence of an `approval.decision` message as proof of identity by itself. Authentication and authorization are integration responsibilities.
+Do not interpret the presence of an `approval.decision` message as proof of identity by itself. Authentication and authorization are integration responsibilities. A valid approval can satisfy an approval gate; it does not override other execution controls.
 
 ## 6. Evidence and results
 
@@ -95,7 +99,7 @@ Consumers should reject rather than reinterpret:
 - unknown message kinds;
 - unknown schema IDs;
 - malformed identifiers;
-- unsupported protocol versions;
+- unsupported or unadvertised protocol versions;
 - messages that violate the selected schema;
 - inputs outside locally enforced protocol/resource limits.
 
@@ -115,11 +119,11 @@ A simplified successful flow looks like this:
 
 ```text
 A -> B  handshake.request
-B -> A  handshake.response  (compatible version selected)
+B -> A  handshake.response  (shared advertised version selected)
 
 A -> B  task.submit
 B -> A  approval.request     (only when local policy requires it)
-A -> B  approval.decision    (approved)
+A -> B  approval.decision    (approved and correlated)
 B -> A  task.progress
 B -> A  evidence.record
 B -> A  task.result
@@ -152,17 +156,17 @@ See `docs/REFERENCE_CONSUMER.md` for the annotated flow and extension guidance.
 
 ## 11. Rejection example
 
-A safe incompatible-version path is:
+A safe incompatible or unadvertised-version path is:
 
 ```text
-A -> B  handshake.request  (supports only an incompatible line)
+A -> B  handshake.request  (no exact shared advertised version)
 B       validates the handshake
-B       finds no compatible protocol version
+B       finds no shared advertised wire version
 B -> A  handshake rejection / unsupported-version outcome
-B       does not accept task traffic for that incompatible session
+B       does not accept task traffic for that session
 ```
 
-The receiver should not silently choose a version outside the declared compatibility rules.
+The receiver should not silently choose a version that was not explicitly advertised by both peers.
 
 ## 12. Minimal production checklist
 
@@ -172,7 +176,7 @@ Before accepting task execution in a real integration, verify that you have:
 - [ ] JSON parsing with bounded resource use;
 - [ ] known-schema resolution and schema validation;
 - [ ] fail-closed message-kind handling;
-- [ ] explicit version negotiation;
+- [ ] explicit advertised-version negotiation;
 - [ ] authenticated peer/session identity;
 - [ ] authorization independent of schema validity;
 - [ ] local risk/policy evaluation;
@@ -188,8 +192,17 @@ Glomancy Protocol intentionally does not provide transport encryption, user auth
 
 Those controls belong to the integrating system.
 
+## 14. Integration pitfalls
+
+Before implementing a consumer, read [Integration Pitfalls and Implementation Notes](INTEGRATION_PITFALLS.md). It records concrete mistakes that the public protocol/conformance work is designed to prevent, including version-selection ambiguity, approval mis-correlation, validation/authorization confusion, schema-ID mutation, capability drift, and permissive unknown-kind handling.
+
+The pitfalls document explicitly separates maintainer-derived notes from future genuine external integration feedback; the project does not claim third-party production feedback that has not occurred.
+
 ## Related documents
 
+- `docs/INTEGRATION_PITFALLS.md` — practical implementation pitfalls and feedback status
+- `docs/CONSUMER_VECTORS.md` — language-neutral expected outcomes
+- `docs/SNAPSHOT_COMPATIBILITY.md` — published contract regression baselines
 - `docs/REFERENCE_CONSUMER.md` — executable transport-neutral consumer example
 - `docs/ARCHITECTURE.md` — protocol layers and design constraints
 - `docs/COMPATIBILITY.md` — wire/schema version rules

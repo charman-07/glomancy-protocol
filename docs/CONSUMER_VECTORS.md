@@ -114,6 +114,10 @@ Vector versions are separate from:
 
 A vector change that changes an expected protocol decision must be reviewed together with the corresponding compatibility, capability, approval, schema, documentation, and migration implications. Do not silently rewrite historical expected outcomes for a published protocol snapshot.
 
+## Implementation notes
+
+For practical mistakes to avoid when implementing these decisions, read [Integration Pitfalls and Implementation Notes](INTEGRATION_PITFALLS.md). That document records maintainer-derived lessons separately from future genuine external feedback, so conformance guidance does not imply adoption that has not been demonstrated.
+
 ## What these vectors do not prove
 
 Passing the vector suite does not prove that an implementation is secure or production-ready. It does not test authentication, authorization, sandboxing, transport security, editor permissions, provider credentials, or private Glomancy runtime behavior.
