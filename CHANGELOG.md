@@ -11,6 +11,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Public OSS governance, roadmap, support, release, architecture, compatibility, and security-model documentation.
 - Comprehensive Glomancy product/protocol overview explaining the broader product goal, public protocol purpose, benefits, example workflows, intended audiences, maturity, and public/private boundary.
 - README guidance for first-time visitors covering what Glomancy is, why the protocol exists, who benefits, and how the protocol supports safety, auditability, interoperability, testing, and evolution.
+- Pre-1.0 deprecation and schema-evolution policy defining proposal, migration, deprecated-but-recognized, and removal stages, plus security exceptions and versioning expectations.
 - GitHub issue forms, pull-request template, CODEOWNERS, and Dependabot configuration.
 - Repository-integrity validation for JSON files, schema hashes, fixture references, and version consistency.
 - Executable JSON Schema conformance checks for the public valid/invalid fixture corpus, including format validation and expected-failure keywords.
@@ -30,6 +31,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Updated the immutable `actions/checkout` pin from v4 to upstream v7.0.1 after verifying the release tag's commit SHA.
 - Release checklist expanded to include conformance and supply-chain review requirements.
 - Required capability mismatches and task requests for non-selected capabilities now have explicit fail-closed public helper semantics.
+- Pre-1.0 evolution policy permits shortened deprecation windows when retaining a contract would create unreasonable security or correctness risk, while requiring explicit release/migration notes.
 
 ## 0.1.0 source baseline — 2026-09-13
 
