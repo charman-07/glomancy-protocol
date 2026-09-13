@@ -35,6 +35,65 @@ python3 scripts/glomancy_conformance.py validate payload.json --kind task.submit
 
 If `schema_id` and `kind` resolve to different registry entries, validation fails closed rather than guessing.
 
+## Machine-readable JSON output
+
+`validate`, `fixtures`, and `list-schemas` support `--json` for CI systems and other tools that should not parse human terminal text.
+
+Examples:
+
+```bash
+python3 scripts/glomancy_conformance.py validate message.json --json
+python3 scripts/glomancy_conformance.py fixtures --json
+python3 scripts/glomancy_conformance.py list-schemas --json
+```
+
+Each invocation emits exactly one JSON object to stdout. The top-level fields are:
+
+| Field | Meaning |
+| --- | --- |
+| `output_version` | version of the CLI JSON output contract; currently `1.0.0` |
+| `command` | `validate`, `fixtures`, or `list-schemas` |
+| `ok` | whether the command succeeded for its requested operation |
+| `exit_code` | the same stable process exit code returned by the CLI |
+
+Additional fields are command-specific.
+
+### `validate --json`
+
+A valid payload includes its resolved `schema_id`, optional registered `kind`, `valid: true`, and an empty `errors` array.
+
+An invalid payload keeps exit code `2` and returns structured validation errors. Each returned error includes:
+
+- `keyword` — JSON Schema keyword associated with the error where available;
+- `path` — payload path as an array of components;
+- `path_text` — human-readable slash-joined path;
+- `message` — validation message.
+
+`error_count` reports the complete number of validation errors, while `errors` is capped by `--max-errors` and `truncated_error_count` reports how many were omitted.
+
+Configuration/schema-selection failures keep exit code `3` and return an `error` object with `type: "configuration"`.
+
+### `fixtures --json`
+
+A successful run reports:
+
+- `valid_fixtures_accepted`;
+- `invalid_fixtures_rejected`;
+- `total_fixtures`;
+- `passed: true`.
+
+Fixture conformance failure keeps exit code `2` and emits a structured error object.
+
+### `list-schemas --json`
+
+The result contains `schema_count` and a `schemas` array. Each entry includes `kind`, `schema_id`, and `version` from the canonical registry.
+
+### Stability
+
+The `output_version` field allows future tooling to detect incompatible JSON-output changes. Within output version `1.x`, new additive fields may appear, but existing fields should not silently change meaning. A breaking output-shape change requires a new output major version and release notes.
+
+Human-readable output remains the default, and process exit codes are identical in human and JSON modes.
+
 ## Execute the fixture corpus
 
 ```bash
@@ -50,7 +109,7 @@ This catches cases where an invalid fixture still fails, but for a different rea
 
 ## Language-neutral consumer vectors
 
-JSON Schema answers whether a payload matches a wire contract. Consumer integrations also need deterministic answers for decisions such as version compatibility, capability negotiation, message-kind lookup, and task-time capability gating.
+JSON Schema answers whether a payload matches a wire contract. Consumer integrations also need deterministic answers for decisions such as version compatibility, explicit advertised-version selection, capability negotiation, approval correlation, message-kind lookup, and task-time capability gating.
 
 Those expected outcomes live under `vectors/v1/` as plain JSON so non-Rust implementations can run the same cases using their own code.
 
@@ -63,6 +122,16 @@ python3 scripts/validate_consumer_vectors.py
 External implementations should not copy the Python validator as their production implementation. Instead, implement the documented public rules in the target language and use the JSON vectors as input/expected output. That provides a more meaningful interoperability test.
 
 See `docs/CONSUMER_VECTORS.md` for the layout, versioning rules, covered behavior, and integration guidance.
+
+## Published compatibility snapshots
+
+Real published public contract baselines are pinned under `compatibility/snapshots/` and checked with:
+
+```bash
+python3 scripts/validate_compatibility_snapshots.py
+```
+
+The suite begins with the actual `v0.1.0` release and checks that a compatible current line does not silently mutate bytes or message-kind mappings behind an already published schema ID. See `docs/SNAPSHOT_COMPATIBILITY.md`.
 
 ## List registered message schemas
 
@@ -80,7 +149,7 @@ The command prints message kind, schema ID, and schema version from the canonica
 | `2` | payload or fixture validation failed |
 | `3` | configuration, schema selection, registry, or input-file error |
 
-These exit codes are stable for the `0.1.x` public line and are intended for CI usage.
+These exit codes are stable for the `0.1.x` public line and are intended for CI usage. JSON mode preserves the same codes and also includes the code inside the emitted JSON object.
 
 ## Example CI usage
 
@@ -88,11 +157,12 @@ A non-Rust consumer can vendor or check out this repository and run:
 
 ```bash
 python3 -m pip install -r requirements-conformance.txt
-python3 scripts/glomancy_conformance.py validate path/to/generated-message.json
+python3 scripts/glomancy_conformance.py validate path/to/generated-message.json --json
 python3 scripts/validate_consumer_vectors.py
+python3 scripts/validate_compatibility_snapshots.py
 ```
 
-A failing payload returns exit code `2`, while a consumer-vector consistency failure returns non-zero, so ordinary CI shells will fail the step automatically.
+A failing payload returns exit code `2`, while consumer-vector or snapshot consistency failures return non-zero, so ordinary CI shells will fail the step automatically. Automation can parse the CLI JSON object for structured diagnostics without changing the process-code contract.
 
 ## Fail-closed expectations
 
@@ -101,13 +171,14 @@ A conforming consumer should not silently accept or downgrade:
 - unknown `schema_id` values;
 - unknown message kinds;
 - mismatched `schema_id` / `kind` pairs;
-- unsupported wire-version combinations;
+- unsupported or unadvertised wire-version selections;
 - unsupported required capabilities;
 - task capability names not selected for the session;
+- malformed or mis-correlated approval decisions;
 - malformed identifiers, timestamps, URIs, hashes, or bounded fields;
 - messages that fail the declared JSON Schema.
 
-Protocol validation is still not authorization. Passing a schema, compatibility check, or capability gate only establishes agreement with the public protocol contract; product policy, user approval, authentication, authorization, and execution safety remain separate responsibilities.
+Protocol validation is still not authorization. Passing a schema, compatibility check, capability gate, or approval-correlation check only establishes agreement with the public protocol contract; product policy, user approval, authentication, authorization, and execution safety remain separate responsibilities.
 
 ## Adding fixtures or vectors
 
@@ -125,6 +196,6 @@ When adding a consumer vector:
 2. add it to the correct `vectors/v1/*.json` file;
 3. make the expected decision explicit;
 4. run `python3 scripts/validate_consumer_vectors.py`;
-5. update normative compatibility/capability documentation if the rule itself changed.
+5. update normative compatibility/capability/approval documentation if the rule itself changed.
 
-Do not add fixtures or vectors containing credentials, customer data, private infrastructure details, proprietary source, or machine-specific paths.
+Do not add fixtures, vectors, or CLI output containing credentials, customer data, private infrastructure details, proprietary source, or machine-specific paths.
