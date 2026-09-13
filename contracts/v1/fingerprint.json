@@ -1,0 +1,40 @@
+{
+  "fingerprint_format_version": "1.0.0",
+  "hash_algorithm": "sha256",
+  "aggregate_algorithm": "SHA-256 of UTF-8 records '<path>\\t<sha256>\\n' for the exact canonical entry set sorted lexicographically by path",
+  "entries": [
+    {
+      "path": "capabilities/v1/profile.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "path": "compatibility/snapshots/manifest.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "path": "compatibility/v1/compatibility-matrix.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "path": "conformance/v1/cli-output.schema.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "path": "errors/v1/catalog.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "path": "registry/v1/manifest.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "path": "support/v1/policy.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "path": "vectors/v1/manifest.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "aggregate_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+}
