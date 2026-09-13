@@ -28,6 +28,10 @@
       "sha256": "b17fee2a6e78ca67a7f1942383102c7727f86e664a2151bbed69f9936ffa2166"
     },
     {
+      "path": "security/v1/invariants.json",
+      "sha256": "2b89744f22774ba42c3f7cf8841764607f30da7fc8ff3c8fff008054fd820ec4"
+    },
+    {
       "path": "support/v1/policy.json",
       "sha256": "f4cb50af5e5275e87128fb437642edf0dfffe8bf70a08c0ab6e195ad49de3671"
     },
@@ -36,5 +40,5 @@
       "sha256": "0af2f57c26e8f85d33ac96c4301c4fbb286a5b0b7fb3dc4970f7306201517c8e"
     }
   ],
-  "aggregate_sha256": "c4c105349cb021e5c939abb3590990a6cc7066f86a041cd164eefa63087936f8"
+  "aggregate_sha256": "fedf58c9d16f37ca691bf241894dbfac0c7d7c74d4b8ad6c87a668bdc34c3015"
 }

@@ -64,6 +64,18 @@ Public constants define upper bounds for message size, payload depth, extensions
 
 Headers carry message IDs, timestamps, sender identity fields, trace IDs, and span IDs. These fields improve correlation and auditing but do not authenticate a sender by themselves.
 
+## Machine-readable security invariants
+
+The security-sensitive behavioral subset that currently has executable language-neutral regression evidence is also published in [`security/v1/invariants.json`](../security/v1/invariants.json).
+
+Each invariant has a stable `GLM-SEC-*` ID and references exact public vector cases. Repository CI verifies that those references exist, that the catalog's wire version agrees with the vector suite, and that each invariant includes fail-closed evidence.
+
+The current catalog covers incompatible/unadvertised version handling, task capability selection, approval gating/correlation/expiry/denial, evidence closure, and terminal task ordering.
+
+This catalog is **regression assurance**, not formal verification. It does not prove every implementation secure and does not replace authentication, authorization, policy, sandboxing, editor/tool permissions, security review, or external testing. See [Security Invariants](SECURITY_INVARIANTS.md) for the exact assurance boundary and validation workflow.
+
+The invariant catalog is included in the deterministic public contract fingerprint, so changing a cataloged security expectation changes the aggregate public-contract SHA-256 used by release-readiness reporting.
+
 ## Out of scope / integration responsibilities
 
 The protocol does **not** provide:

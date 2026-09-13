@@ -68,6 +68,9 @@ jobs:
       - name: Validate protocol error code catalog
         run: python3 scripts/validate_error_catalog.py
 
+      - name: Validate protocol security invariants
+        run: python3 scripts/validate_security_invariants.py
+
       - name: Validate release support policy
         run: python3 scripts/validate_support_policy.py
 

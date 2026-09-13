@@ -7,6 +7,7 @@
 /capabilities/ @charman-07
 /vectors/ @charman-07
 /errors/ @charman-07
+/security/ @charman-07
 /support/ @charman-07
 /contracts/ @charman-07
 /evidence/ @charman-07
@@ -24,3 +25,5 @@
 /docs/RELEASE_SUPPORT_POLICY.md @charman-07
 /docs/PUBLIC_CONTRACT_FINGERPRINT.md @charman-07
 /docs/RELEASE_AUDIT.md @charman-07
+/docs/SECURITY_MODEL.md @charman-07
+/docs/SECURITY_INVARIANTS.md @charman-07

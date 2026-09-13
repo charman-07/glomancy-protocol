@@ -15,11 +15,14 @@ This fingerprint is **integrity metadata only**. It is not a digital signature, 
 - `capabilities/v1/profile.json` — capability negotiation profile;
 - `vectors/v1/manifest.json` — language-neutral consumer-vector suite manifest;
 - `errors/v1/catalog.json` — public protocol error-code catalog;
+- `security/v1/invariants.json` — vector-backed public security-invariant catalog;
 - `support/v1/policy.json` — public release/security support policy;
 - `compatibility/snapshots/manifest.json` — published release compatibility snapshots;
 - `conformance/v1/cli-output.schema.json` — machine-readable conformance CLI output contract.
 
 The set is intentionally explicit. Adding or removing a canonical surface requires updating the fingerprint tooling and reviewing the contract impact rather than silently changing the meaning of the aggregate hash.
+
+Security-invariant changes are fingerprinted because they alter the project’s declared fail-closed public behavior even when the underlying wire schema is unchanged.
 
 ## Per-file digest
 
@@ -74,7 +77,7 @@ A consumer can check out a specific public tag or commit and run `--check`. If i
 
 Comparing aggregate hashes is useful for determining whether two refs expose the same canonical contract set. A different fingerprint means at least one covered canonical file changed; it does **not** by itself classify whether the change is compatible, breaking, safe, or malicious.
 
-Use the compatibility matrix, release notes, protocol-change records, and migration guidance to understand the meaning of a changed fingerprint.
+Use the compatibility matrix, release notes, protocol-change records, security-invariant catalog, and migration guidance to understand the meaning of a changed fingerprint.
 
 ## Security boundary
 
@@ -94,5 +97,7 @@ A hostile party that can replace both contract files and the fingerprint manifes
 ## Release-readiness integration
 
 Normal repository CI verifies the tracked fingerprint on every change. The manual Release Readiness audit performs the same verification and includes the aggregate fingerprint in its metadata summary.
+
+The release-readiness metadata also reports the security-invariant catalog version and invariant count, while the fingerprint ensures that a reviewed change to the invariant catalog is visible as a contract-set change.
 
 This makes the fingerprint a reviewable release property without claiming signed releases or certification.

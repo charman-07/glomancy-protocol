@@ -27,6 +27,7 @@ CANONICAL_PATHS = (
     "conformance/v1/cli-output.schema.json",
     "errors/v1/catalog.json",
     "registry/v1/manifest.json",
+    "security/v1/invariants.json",
     "support/v1/policy.json",
     "vectors/v1/manifest.json",
 )
