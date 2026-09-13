@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "profile_id": "urn:glomancy:protocol:capability-negotiation:1.0.0",
+  "profile_version": "1.0.0",
+  "wire_protocol_version": "0.4.0",
+  "identifier_pattern": "^[a-z][a-z0-9.-]*$",
+  "max_identifier_length": 128,
+  "matching": "exact-name-and-version",
+  "wire_version_order": "negotiate-first",
+  "unsupported_required": "reject-handshake",
+  "unsupported_optional": "omit",
+  "task_request_policy": "selected-name-subset",
+  "duplicate_name_policy": "reject-set",
+  "authorization_semantics": "none",
+  "responder_requirement_semantics": "not-defined-in-v1"
+}
