@@ -4,7 +4,7 @@ Glomancy Protocol sits at a trust boundary between AI-originated instructions an
 
 ## Supported code
 
-Security fixes are made on the current `main` branch and should be included in the next appropriate tagged release. Because the project is pre-1.0 and early-stage, older snapshots may not receive backports unless a release note explicitly says otherwise.
+Security fixes are made on the current `main` branch and should be included in the next appropriate tagged release. Because the project is pre-1.0, older snapshots may not receive backports unless a release note explicitly says otherwise.
 
 ## Reporting a vulnerability
 
