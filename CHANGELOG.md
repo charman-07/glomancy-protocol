@@ -23,6 +23,7 @@ First public early-stage release of Glomancy Protocol.
 - Executable JSON Schema conformance checks with UUID/date-time/URI format validation and expected-failure keyword checking.
 - Expanded malformed/boundary vectors for identifiers, timestamps, trace IDs, URIs, duplicate capabilities, and empty instructions.
 - Public `glomancy_conformance.py` CLI for validating payloads, running the fixture corpus, and listing registered schemas without the private Glomancy runtime.
+- Transport-neutral executable reference consumer demonstrating wire compatibility, exact capability negotiation, task capability gating, schema resolution, fail-closed required-capability rejection, and the separate authorization boundary.
 - External implementer conformance guide with stable CI-oriented exit codes.
 - Capability-negotiation profile v1 with exact name/version matching, required/optional semantics, duplicate-name rejection, and task-time selected-capability subset checks.
 - Rust capability-negotiation helpers/tests and machine-readable capability conformance cases.
@@ -32,7 +33,7 @@ First public early-stage release of Glomancy Protocol.
 - GitHub issue forms, pull-request template, CODEOWNERS, and Dependabot configuration.
 - Dependency monitoring for Cargo, Python conformance tooling, and GitHub Actions.
 - Public contract regression tests.
-- Cross-platform CI on Linux, Windows, and macOS plus formatting, Clippy, tests, example execution, Rustdoc, repository-contract, capability-profile, fixture, and conformance CLI checks.
+- Cross-platform CI on Linux, Windows, and macOS plus formatting, Clippy, tests, executable examples, Rustdoc, repository-contract, capability-profile, fixture, and conformance CLI checks.
 
 ### Security
 
