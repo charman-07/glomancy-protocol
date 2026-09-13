@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::identifiers::{is_lower_hex, is_rfc3339_utc_shape, is_schema_urn, is_uuid};
-use crate::{Component, MessageKind, ProtocolVersion};
+use crate::{Component, MessageKind, PROTOCOL_VERSION, ProtocolVersion, schema_for_id};
 
 #[derive(Debug, Clone, Copy)]
 pub struct MessageHeader<'a> {
@@ -37,6 +37,19 @@ impl MessageHeader<'_> {
         if !is_lower_hex(self.span_id, 16) {
             return Err(HeaderValidationError::InvalidSpanId);
         }
+        if !PROTOCOL_VERSION
+            .compatibility_with(self.protocol_version)
+            .is_compatible()
+        {
+            return Err(HeaderValidationError::IncompatibleProtocolVersion);
+        }
+
+        let descriptor =
+            schema_for_id(self.schema_id).ok_or(HeaderValidationError::UnknownSchemaId)?;
+        if descriptor.kind != self.kind {
+            return Err(HeaderValidationError::SchemaKindMismatch);
+        }
+
         Ok(())
     }
 }
@@ -49,4 +62,7 @@ pub enum HeaderValidationError {
     InvalidSenderInstance,
     InvalidTraceId,
     InvalidSpanId,
+    IncompatibleProtocolVersion,
+    UnknownSchemaId,
+    SchemaKindMismatch,
 }
