@@ -43,9 +43,16 @@ Examples of useful reports include:
 - approval/evidence invariants that can be bypassed;
 - registry/hash inconsistencies;
 - malformed input that causes unexpected behavior;
-- unsafe defaults or unexpectedly unbounded processing in the public protocol layer.
+- unsafe defaults or unexpectedly unbounded processing in the public protocol layer;
+- compromised or suspicious dependency/workflow updates.
 
-See `docs/SECURITY_MODEL.md` for the threat model and integration responsibilities.
+See `docs/SECURITY_MODEL.md` for the threat model and integration responsibilities. See `docs/SUPPLY_CHAIN.md` for dependency review, update cadence, immutable Action pinning, and CI expectations.
+
+## Supply-chain changes
+
+Dependency, package-tooling, and GitHub Actions updates are treated as security-relevant maintenance. Automated update pull requests are reviewed rather than auto-approved, and the complete applicable CI suite must remain green before merge.
+
+The project does not currently claim signed releases, formal SLSA compliance, or bit-for-bit reproducible builds. Those properties should only be documented if they are actually implemented and verified.
 
 ## Secrets and sensitive data
 
