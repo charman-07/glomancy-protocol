@@ -87,11 +87,26 @@ impl ProtocolErrorCode {
             Self::Internal => "GLM-PROTO-1999",
         }
     }
+
+    #[must_use]
+    pub fn from_wire(value: &str) -> Option<Self> {
+        match value {
+            "GLM-PROTO-1001" => Some(Self::InvalidEnvelope),
+            "GLM-PROTO-1002" => Some(Self::UnsupportedVersion),
+            "GLM-PROTO-1003" => Some(Self::UnknownSchema),
+            "GLM-PROTO-1004" => Some(Self::UnknownMessageKind),
+            "GLM-PROTO-1005" => Some(Self::PolicyDenied),
+            "GLM-PROTO-1006" => Some(Self::MessageTooLarge),
+            "GLM-PROTO-1007" => Some(Self::InvalidIdentifier),
+            "GLM-PROTO-1999" => Some(Self::Internal),
+            _ => None,
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::ErrorCategory;
+    use super::{ErrorCategory, ProtocolErrorCode};
 
     #[test]
     fn error_category_wire_values_round_trip() {
@@ -116,5 +131,27 @@ mod tests {
     #[test]
     fn unknown_error_category_fails_closed() {
         assert_eq!(ErrorCategory::from_wire("unknown"), None);
+    }
+
+    #[test]
+    fn protocol_error_code_wire_values_round_trip() {
+        for value in [
+            ProtocolErrorCode::InvalidEnvelope,
+            ProtocolErrorCode::UnsupportedVersion,
+            ProtocolErrorCode::UnknownSchema,
+            ProtocolErrorCode::UnknownMessageKind,
+            ProtocolErrorCode::PolicyDenied,
+            ProtocolErrorCode::MessageTooLarge,
+            ProtocolErrorCode::InvalidIdentifier,
+            ProtocolErrorCode::Internal,
+        ] {
+            assert_eq!(ProtocolErrorCode::from_wire(value.as_wire()), Some(value));
+        }
+    }
+
+    #[test]
+    fn unknown_protocol_error_code_fails_closed() {
+        assert_eq!(ProtocolErrorCode::from_wire("GLM-PROTO-0000"), None);
+        assert_eq!(ProtocolErrorCode::from_wire("unknown"), None);
     }
 }
