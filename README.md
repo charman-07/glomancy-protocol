@@ -20,7 +20,13 @@ Glomancy Protocol is a small Rust library plus versioned JSON Schemas for the bo
 
 ## Glomancy in one minute
 
-The broader **Glomancy product** is being built as an AI-assisted editor copilot and automation layer. Its high-level goal is to help turn a natural-language change request into a structured workflow: understand context, plan work, check capabilities and policy, request approval when appropriate, execute through supported editor/tool integrations, validate the result, and return status/evidence.
+The broader **Glomancy product is currently being developed primarily for Unreal Engine** as an AI-assisted editor copilot and automation layer. Its high-level goal is to help turn a natural-language change request into a structured workflow: understand the active project/editor context, plan work, check capabilities and policy, request approval when appropriate, execute through supported Unreal/editor integrations, validate the result, and return status/evidence.
+
+For Unreal Engine, the product direction includes assisting with supported editor workflows around project context, Actors and Components, Blueprints, materials, animation and AI systems, Sequencer-style workflows, and C++-backed editor operations as those integrations mature. The goal is not merely to generate text or code, but to make supported changes through explicit editor/tool interfaces and then verify what actually happened.
+
+**Unreal Engine is the first concrete product target, not a limitation of the protocol.** Glomancy Protocol remains deliberately editor-agnostic, transport-neutral, and provider-neutral so the same public contract can be implemented by other editor/tool integrations without depending on the private commercial Glomancy runtime.
+
+See [Unreal Engine Product Focus](docs/UNREAL_ENGINE_FOCUS.md) for the concrete product context and why Unreal Engine is a useful proving ground for this protocol design.
 
 **Glomancy Protocol** is the public OSS contract layer for that boundary. It does not contain the commercial Glomancy runtime or editor implementation. Instead, it makes AI-originated work easier to validate, test, audit, negotiate, and integrate safely.
 
@@ -191,18 +197,19 @@ For vulnerability reporting, read [SECURITY.md](SECURITY.md). Please do not disc
 
 | Broader Glomancy product | Glomancy Protocol |
 | --- | --- |
-| Commercial/private AI editor experience | Public MIT-licensed contract layer |
-| Natural-language user workflow | Structured machine-readable messages |
+| Commercial/private AI editor experience, currently focused primarily on Unreal Engine | Public MIT-licensed contract layer that remains editor-agnostic |
+| Natural-language Unreal/editor workflow | Structured machine-readable messages |
 | Private planning/orchestration implementation | Public task lifecycle semantics |
-| Private editor integrations | Transport-neutral boundary contracts |
+| Private Unreal/editor integrations and mutation implementations | Transport-neutral boundary contracts |
 | Private model/provider/runtime choices | Provider-neutral schemas and types |
 | Product policy and UX | Approval/capability/error primitives |
 
-This repository intentionally contains **no provider credentials, billing logic, private agent runtime, desktop application, proprietary planner/orchestrator, editor mutation implementation, installer/updater, or signing infrastructure**.
+This repository intentionally contains **no provider credentials, billing logic, private agent runtime, desktop application, proprietary planner/orchestrator, Unreal Engine mutation implementation, installer/updater, or signing infrastructure**.
 
 ## Who is this for?
 
-- AI editor/tool developers building structured AI-to-tool boundaries;
+- Unreal Engine plugin/editor-tooling developers interested in structured AI-to-editor boundaries;
+- AI editor/tool developers building structured AI-to-tool boundaries in other environments;
 - plugin and integration authors that need versioned schemas and compatibility rules;
 - security/platform engineers reviewing validation, approval, capability, and evidence flows;
 - test/infrastructure engineers that want executable conformance in CI;
@@ -220,7 +227,7 @@ examples/             Runnable Rust examples plus public protocol fixtures
 examples/v1/         Valid and invalid protocol fixtures
 compatibility/v1/    Version negotiation rules and cases
 capabilities/v1/     Machine-readable capability profile and cases
-docs/                Product overview, architecture, conformance, compatibility, evolution, security, integration guides
+docs/                Product overview, Unreal product context, architecture, conformance, compatibility, evolution, security, integration guides
 scripts/              Repository integrity, boundary, capability, fixture, and conformance tools
 tests/                Public contract regression tests
 .github/              CI and contribution workflow templates
@@ -235,6 +242,8 @@ Schema versions and wire-protocol versions are separate on purpose: a schema can
 ## Project status
 
 This public repository is newly open-sourced, but the underlying protocol work had already been under active development, testing, debugging, and repeated validation before the public repository was opened. The current public focus is a small, auditable protocol core with executable conformance behavior rather than a large framework.
+
+The broader private Glomancy product is being developed with Unreal Engine as its first primary editor target. That concrete product work gives the protocol a real high-trust editor environment to design against, while the public protocol intentionally avoids depending on Unreal-specific implementation details.
 
 The repository already includes cross-platform tests, JSON Schema validation, public/private boundary checks, capability-negotiation validation, registry hash checks, supply-chain maintenance rules, a public conformance CLI, and an executable reference consumer. It is still pre-1.0; real integration feedback and independent usage are important before stronger stability claims are appropriate.
 
