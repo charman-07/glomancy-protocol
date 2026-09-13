@@ -59,6 +59,9 @@ jobs:
       - name: Validate JSON, registry hashes, fixtures, and versions
         run: python3 scripts/validate_repository.py
 
+      - name: Validate Rust/JSON registry parity
+        run: python3 scripts/validate_rust_registry.py
+
       - name: Validate capability negotiation profile
         run: python3 scripts/validate_capability_profile.py
 
