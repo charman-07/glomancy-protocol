@@ -53,7 +53,7 @@ The v1 schema set covers:
 | Verification | `evidence.record` |
 | Liveness | `heartbeat` |
 
-See [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), and [Security Model](docs/SECURITY_MODEL.md) for the design rationale.
+See the [Consumer Integration Guide](docs/INTEGRATION_GUIDE.md) for an end-to-end language-neutral flow. [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), and [Security Model](docs/SECURITY_MODEL.md) document the design rationale and trust boundaries.
 
 ## Security principles
 
@@ -76,7 +76,7 @@ schemas/v1/          JSON Schema contracts
 registry/v1/         Canonical schema registry and SHA-256 metadata
 examples/v1/         Valid and invalid protocol fixtures
 compatibility/v1/    Version negotiation rules and cases
-docs/                Architecture, compatibility, and security design
+docs/                Architecture, compatibility, security, and integration guides
 scripts/              Repository integrity checks
 tests/                Public contract regression tests
 .github/              CI and contribution workflow templates
