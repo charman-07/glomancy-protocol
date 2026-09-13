@@ -90,6 +90,9 @@ jobs:
       - name: Public contract fingerprint
         run: python3 scripts/public_contract_fingerprint.py --check
 
+      - name: Release evidence bundle contract
+        run: python3 scripts/validate_release_evidence.py
+
       - name: Capability negotiation profile
         run: python3 scripts/validate_capability_profile.py
 
@@ -186,7 +189,34 @@ jobs:
           ref: ${{ inputs.ref }}
           fetch-depth: 1
 
-      - name: Write audit summary
+      - name: Generate release evidence bundle
+        shell: bash
+        run: |
+          audited_sha="$(git rev-parse HEAD)"
+          args=(
+            --out-dir release-evidence
+            --ref "${{ inputs.ref }}"
+            --sha "$audited_sha"
+            --quality-result "${{ needs.quality.result }}"
+            --contract-result "${{ needs.contract.result }}"
+            --portability-result "${{ needs.portability.result }}"
+          )
+          if [ -n "${{ inputs.expected_version }}" ]; then
+            args+=(--expected-version "${{ inputs.expected_version }}")
+          fi
+          python3 scripts/release_evidence_bundle.py "${args[@]}"
+
+      - name: Upload release evidence bundle
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: release-evidence/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Write audit summary and enforce gates
+        if: always()
         shell: bash
         run: |
           audited_sha="$(git rev-parse HEAD)"
@@ -198,6 +228,7 @@ jobs:
             echo "- Rust quality: \`${{ needs.quality.result }}\`"
             echo "- Repository contract: \`${{ needs.contract.result }}\`"
             echo "- Cross-platform portability: \`${{ needs.portability.result }}\`"
+            echo "- Evidence artifact: \`release-evidence-${{ github.run_id }}-${{ github.run_attempt }}\` (30-day retention)"
             echo
           } >> "$GITHUB_STEP_SUMMARY"
 
