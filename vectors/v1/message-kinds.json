@@ -1,0 +1,34 @@
+{
+  "cases": [
+    {
+      "id": "known-task-submit",
+      "input": {
+        "kind": "task.submit"
+      },
+      "expected": {
+        "accepted": true,
+        "schema_id": "urn:glomancy:protocol:task.submit:1.0.0"
+      }
+    },
+    {
+      "id": "known-heartbeat",
+      "input": {
+        "kind": "heartbeat"
+      },
+      "expected": {
+        "accepted": true,
+        "schema_id": "urn:glomancy:protocol:heartbeat:1.0.0"
+      }
+    },
+    {
+      "id": "unknown-kind-fails-closed",
+      "input": {
+        "kind": "unknown.kind"
+      },
+      "expected": {
+        "accepted": false,
+        "schema_id": null
+      }
+    }
+  ]
+}
