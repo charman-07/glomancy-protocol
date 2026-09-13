@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::identifiers::{is_lower_hex, is_rfc3339_utc_shape, is_schema_urn, is_uuid};
-use crate::{
-    Component, MessageKind, PROTOCOL_VERSION, ProtocolVersion, schema_for_id,
-};
+use crate::{Component, MessageKind, PROTOCOL_VERSION, ProtocolVersion, schema_for_id};
 
 #[derive(Debug, Clone, Copy)]
 pub struct MessageHeader<'a> {
