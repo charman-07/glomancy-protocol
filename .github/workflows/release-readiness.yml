@@ -1,0 +1,209 @@
+name: Release readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag, or commit SHA to audit
+        required: true
+        default: main
+        type: string
+      expected_version:
+        description: Optional expected Rust package release version (for example 0.2.0)
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-readiness-${{ inputs.ref }}
+  cancel-in-progress: false
+
+jobs:
+  quality:
+    name: Release audit / Rust quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audited ref
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 1
+
+      - name: Install Rust 1.85
+        run: |
+          rustup toolchain install 1.85.0 --profile minimal --component rustfmt --component clippy
+          rustup override set 1.85.0
+
+      - name: Format
+        run: cargo fmt --check
+
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Tests
+        run: cargo test --all-targets
+
+      - name: Executable examples
+        run: |
+          cargo run --example quick_start
+          cargo run --example reference_consumer
+
+      - name: Rustdoc
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --no-deps
+
+  contract:
+    name: Release audit / Repository contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audited ref
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 1
+
+      - name: Install conformance validator
+        run: python3 -m pip install --disable-pip-version-check -r requirements-ci.txt
+
+      - name: Public/private boundary
+        run: python3 scripts/check_public_boundary.py
+
+      - name: Repository integrity
+        run: python3 scripts/validate_repository.py
+
+      - name: Rust/JSON schema registry parity
+        run: python3 scripts/validate_rust_registry.py
+
+      - name: Rust/JSON wire enum parity
+        run: python3 scripts/validate_wire_enums.py
+
+      - name: Protocol error catalog parity
+        run: python3 scripts/validate_error_catalog.py
+
+      - name: Capability negotiation profile
+        run: python3 scripts/validate_capability_profile.py
+
+      - name: Language-neutral consumer vectors
+        run: python3 scripts/validate_consumer_vectors.py
+
+      - name: Independent Python consumer
+        run: python3 examples/consumers/python/reference_consumer.py
+
+      - name: Independent JavaScript consumer
+        run: node examples/consumers/javascript/reference_consumer.mjs
+
+      - name: Published compatibility snapshots
+        run: python3 scripts/validate_compatibility_snapshots.py
+
+      - name: JSON Schema fixture conformance
+        run: python3 scripts/validate_fixtures.py
+
+      - name: Public conformance CLI smoke tests
+        shell: bash
+        run: |
+          python3 scripts/glomancy_conformance.py list-schemas
+          python3 scripts/glomancy_conformance.py validate examples/v1/valid/task.submit.json
+          python3 scripts/glomancy_conformance.py fixtures
+
+          set +e
+          python3 scripts/glomancy_conformance.py validate examples/v1/invalid/bad-message-id-format.json
+          invalid_code=$?
+          set -e
+          if [ "$invalid_code" -ne 2 ]; then
+            echo "expected invalid payload exit code 2, got $invalid_code" >&2
+            exit 1
+          fi
+
+          set +e
+          python3 scripts/glomancy_conformance.py validate examples/v1/valid/task.submit.json --kind heartbeat
+          mismatch_code=$?
+          set -e
+          if [ "$mismatch_code" -ne 3 ]; then
+            echo "expected schema/kind mismatch exit code 3, got $mismatch_code" >&2
+            exit 1
+          fi
+
+      - name: Conformance CLI JSON output contract
+        run: python3 scripts/validate_cli_output_contract.py
+
+      - name: Release-facing metadata consistency
+        shell: bash
+        run: |
+          args=(--json --ref "${{ inputs.ref }}" --sha "$(git rev-parse HEAD)")
+          if [ -n "${{ inputs.expected_version }}" ]; then
+            args+=(--expected-version "${{ inputs.expected_version }}")
+          fi
+          python3 scripts/release_readiness_report.py "${args[@]}"
+
+  portability:
+    name: Release audit / Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout audited ref
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 1
+
+      - name: Install Rust 1.85
+        run: rustup toolchain install 1.85.0 --profile minimal
+
+      - name: Set Rust override
+        run: rustup override set 1.85.0
+
+      - name: Tests
+        run: cargo test --all-targets
+
+  summary:
+    name: Release audit / Summary
+    if: always()
+    needs:
+      - quality
+      - contract
+      - portability
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audited ref
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 1
+
+      - name: Write audit summary
+        shell: bash
+        run: |
+          audited_sha="$(git rev-parse HEAD)"
+          {
+            echo "# Release readiness audit"
+            echo
+            echo "- Audited ref: \`${{ inputs.ref }}\`"
+            echo "- Audited SHA: \`$audited_sha\`"
+            echo "- Rust quality: \`${{ needs.quality.result }}\`"
+            echo "- Repository contract: \`${{ needs.contract.result }}\`"
+            echo "- Cross-platform portability: \`${{ needs.portability.result }}\`"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          args=(--markdown --ref "${{ inputs.ref }}" --sha "$audited_sha")
+          if [ -n "${{ inputs.expected_version }}" ]; then
+            args+=(--expected-version "${{ inputs.expected_version }}")
+          fi
+          python3 scripts/release_readiness_report.py "${args[@]}" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${{ needs.quality.result }}" != "success" ] || \
+             [ "${{ needs.contract.result }}" != "success" ] || \
+             [ "${{ needs.portability.result }}" != "success" ]; then
+            echo "Release readiness audit failed because one or more required gates did not pass." >&2
+            exit 1
+          fi

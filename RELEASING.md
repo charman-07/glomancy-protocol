@@ -24,9 +24,26 @@ Confirm the intended versions are internally consistent across their own contrac
 
 These version numbers are intentionally independent. Do not bump them mechanically as one bundle.
 
-## 3. Run release verification
+## 3. Run the release-readiness audit
 
-Run at minimum:
+The preferred pre-tag verification path is the manually triggered **Release readiness** GitHub Actions workflow.
+
+From the repository Actions UI:
+
+1. choose **Release readiness**;
+2. run the workflow;
+3. set `ref` to the exact branch, tag, or commit SHA being audited;
+4. optionally set `expected_version` (for example `0.2.0`) to require `Cargo.toml` and the CHANGELOG release heading to match that version;
+5. wait for Rust quality, repository-contract, and Linux/Windows/macOS portability gates to complete;
+6. review the generated workflow summary and audited commit SHA before tagging.
+
+The workflow is read-only. It does **not** create a tag, publish a GitHub release, sign artifacts, certify the build, or grant permission to release.
+
+The audit includes a dependency-free metadata report that verifies consistency among the Rust package, Rust `PROTOCOL_VERSION`, canonical registry, capability profile, consumer vectors, error catalog, and public schema-version set.
+
+### Local/manual equivalent
+
+When reproducing the release audit locally, run at minimum:
 
 ```bash
 cargo fmt --check
@@ -39,6 +56,7 @@ python3 scripts/validate_repository.py
 python3 scripts/validate_rust_registry.py
 python3 scripts/validate_wire_enums.py
 python3 scripts/validate_error_catalog.py
+python3 scripts/release_readiness_report.py --json
 python3 scripts/validate_capability_profile.py
 python3 scripts/validate_consumer_vectors.py
 python3 scripts/validate_compatibility_snapshots.py
