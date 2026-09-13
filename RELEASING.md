@@ -2,7 +2,7 @@
 
 This checklist keeps public releases deliberate, auditable, and aligned with the project’s compatibility/security promises.
 
-Read [`docs/RELEASE_GATES.md`](docs/RELEASE_GATES.md) before preparing a release. The gates define the expected quality evidence; this file defines the maintainer workflow.
+Read [`docs/RELEASE_GATES.md`](docs/RELEASE_GATES.md) before preparing a release. The gates define the expected quality evidence; this file defines the maintainer workflow. Public maintenance expectations are defined separately in [`docs/RELEASE_SUPPORT_POLICY.md`](docs/RELEASE_SUPPORT_POLICY.md).
 
 ## 1. Establish the release candidate
 
@@ -20,7 +20,8 @@ Confirm the intended versions are internally consistent across their own contrac
 - JSON Schema versions/IDs and registry hashes;
 - capability-profile version when changed;
 - consumer-vector version when changed;
-- machine-readable catalog versions when changed.
+- machine-readable catalog versions when changed;
+- release/security support-policy metadata when the supported public release line changes.
 
 These version numbers are intentionally independent. Do not bump them mechanically as one bundle.
 
@@ -34,12 +35,12 @@ From the repository Actions UI:
 2. run the workflow;
 3. set `ref` to the exact branch, tag, or commit SHA being audited;
 4. optionally set `expected_version` (for example `0.2.0`) to require `Cargo.toml` and the CHANGELOG release heading to match that version;
-5. wait for Rust quality, repository-contract, and Linux/Windows/macOS portability gates to complete;
+5. wait for Rust quality, repository-contract, support-policy, and Linux/Windows/macOS portability gates to complete;
 6. review the generated workflow summary and audited commit SHA before tagging.
 
 The workflow is read-only. It does **not** create a tag, publish a GitHub release, sign artifacts, certify the build, or grant permission to release.
 
-The audit includes a dependency-free metadata report that verifies consistency among the Rust package, Rust `PROTOCOL_VERSION`, canonical registry, capability profile, consumer vectors, error catalog, and public schema-version set.
+The audit includes dependency-free metadata validation covering the Rust package, Rust `PROTOCOL_VERSION`, canonical registry, capability profile, consumer vectors, error catalog, public schema-version set, and machine-readable support policy.
 
 ### Local/manual equivalent
 
@@ -56,6 +57,7 @@ python3 scripts/validate_repository.py
 python3 scripts/validate_rust_registry.py
 python3 scripts/validate_wire_enums.py
 python3 scripts/validate_error_catalog.py
+python3 scripts/validate_support_policy.py
 python3 scripts/release_readiness_report.py --json
 python3 scripts/validate_capability_profile.py
 python3 scripts/validate_consumer_vectors.py
@@ -85,6 +87,7 @@ Review every public-contract change for:
 - deprecations/removals;
 - security/trust-boundary implications;
 - dependency and GitHub Actions changes;
+- support-policy impact;
 - private/public boundary risk.
 
 For proposal-driven changes, confirm the implementation still matches the accepted public decision or that the proposal issue was updated before merge.
@@ -102,10 +105,11 @@ Update `CHANGELOG.md` and prepare release notes that clearly describe:
 - user-visible changes;
 - compatibility impact;
 - migration steps;
+- support-policy changes, if any;
 - security-relevant behavior changes when safe to disclose;
 - maturity/status wording supported by evidence.
 
-Do not describe a release as stable, production-proven, certified, broadly adopted, signed, reproducible, or supply-chain verified unless those properties are actually implemented and demonstrable for that release.
+Do not describe a release as stable, production-proven, certified, broadly adopted, signed, reproducible, LTS, or supply-chain verified unless those properties are actually implemented and demonstrable for that release.
 
 ## 7. Tag and GitHub release
 
@@ -126,13 +130,15 @@ After publication:
 - verify key examples and the public conformance CLI against the tagged source;
 - verify source/archive links;
 - add a compatibility snapshot for the real release when required by the compatibility-snapshot policy;
+- update `support/v1/policy.json` and `docs/RELEASE_SUPPORT_POLICY.md` when the newly published release changes the current supported line;
+- re-run `python3 scripts/validate_support_policy.py` after the real release snapshot/support update;
 - open follow-up issues for deferred work rather than silently changing a published historical contract.
 
 ## Security releases
 
 For a sensitive vulnerability, coordinate disclosure through `SECURITY.md`. Do not expose exploit details before affected users have a reasonable opportunity to update.
 
-Security urgency may require a shorter public review window, but it does not remove the need for regression tests, compatibility/migration analysis, and accurate release notes once disclosure is safe.
+Security urgency may require a shorter public review window, but it does not remove the need for regression tests, compatibility/migration analysis, accurate support-policy status, and release notes once disclosure is safe.
 
 ## Repository enforcement
 
