@@ -28,7 +28,10 @@ fn main() {
 
     // 3. A task may only request names that were selected for the session.
     assert!(task_capabilities_are_selected(&["editor.read"], &selected));
-    assert!(!task_capabilities_are_selected(&["editor.write"], &selected));
+    assert!(!task_capabilities_are_selected(
+        &["editor.write"],
+        &selected
+    ));
 
     // 4. Message kinds resolve to a known, registered schema. Unknown kinds must not
     // be reinterpreted as a permissive fallback.
