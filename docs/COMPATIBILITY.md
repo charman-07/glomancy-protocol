@@ -50,7 +50,7 @@ A change is incomplete if code, matrix, fixtures, and documentation disagree.
 
 ## Breaking changes
 
-The project is early-stage, so breaking changes can occur before 1.0. They must be explicit. A breaking proposal should describe:
+The protocol is pre-1.0, so breaking changes can occur before 1.0. They must be explicit. A breaking proposal should describe:
 
 - what stops being accepted or changes meaning;
 - why an additive change is insufficient;
