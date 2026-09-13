@@ -94,6 +94,39 @@ The `output_version` field allows future tooling to detect incompatible JSON-out
 
 Human-readable output remains the default, and process exit codes are identical in human and JSON modes.
 
+### Published JSON output schema
+
+The machine-readable output contract is published separately from wire-protocol message schemas at:
+
+```text
+conformance/v1/cli-output.schema.json
+```
+
+It is a JSON Schema Draft 2020-12 document with ID:
+
+```text
+urn:glomancy:conformance:cli-output:1.0.0
+```
+
+The schema's `1.0.0` contract line corresponds to CLI field `output_version: "1.0.0"`. External automation can vendor this schema and validate CLI results without relying only on prose documentation.
+
+This version is intentionally **independent** from:
+
+- the Rust crate version;
+- the Glomancy wire-protocol version;
+- individual protocol message-schema versions;
+- the language-neutral consumer-vector version.
+
+A CLI-output contract change therefore does not imply a wire-protocol change, and a wire-protocol change does not automatically require a CLI-output major version bump.
+
+Repository CI validates representative real CLI outputs against the published schema with:
+
+```bash
+python3 scripts/validate_cli_output_contract.py
+```
+
+The contract test exercises successful schema listing, successful payload validation, successful fixture execution, invalid-payload output, and a real configuration-error path. The fixture-conformance failure shape is also schema-checked without deliberately corrupting the repository fixture corpus.
+
 ## Execute the fixture corpus
 
 ```bash
@@ -160,9 +193,10 @@ python3 -m pip install -r requirements-conformance.txt
 python3 scripts/glomancy_conformance.py validate path/to/generated-message.json --json
 python3 scripts/validate_consumer_vectors.py
 python3 scripts/validate_compatibility_snapshots.py
+python3 scripts/validate_cli_output_contract.py
 ```
 
-A failing payload returns exit code `2`, while consumer-vector or snapshot consistency failures return non-zero, so ordinary CI shells will fail the step automatically. Automation can parse the CLI JSON object for structured diagnostics without changing the process-code contract.
+A failing payload returns exit code `2`, while consumer-vector, compatibility-snapshot, or CLI-output-contract consistency failures return non-zero, so ordinary CI shells will fail the step automatically. Automation can parse the CLI JSON object for structured diagnostics and validate that object against the published output schema without changing the process-code contract.
 
 ## Fail-closed expectations
 
