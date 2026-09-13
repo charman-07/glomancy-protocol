@@ -5,10 +5,13 @@ from __future__ import annotations
 
 import json
 import sys
+import warnings
 from pathlib import Path
 from typing import Any
 
-from jsonschema import Draft202012Validator, FormatChecker, RefResolver
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    from jsonschema import Draft202012Validator, FormatChecker, RefResolver
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = ROOT / "schemas" / "v1"
@@ -20,11 +23,19 @@ class ConformanceError(RuntimeError):
     pass
 
 
+def display_path(path: Path) -> str:
+    """Render repository paths compactly while supporting external CLI inputs."""
+    try:
+        return str(path.resolve().relative_to(ROOT.resolve()))
+    except ValueError:
+        return str(path)
+
+
 def load_json(path: Path) -> Any:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise ConformanceError(f"invalid JSON: {path.relative_to(ROOT)}: {exc}") from exc
+        raise ConformanceError(f"invalid JSON: {display_path(path)}: {exc}") from exc
 
 
 def build_store() -> dict[str, Any]:
