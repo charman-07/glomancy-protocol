@@ -1,8 +1,8 @@
 # Protocol Conformance
 
-Glomancy Protocol ships a public fixture corpus and a small validation CLI so external implementations can verify protocol behavior without depending on the private commercial Glomancy runtime.
+Glomancy Protocol ships a public fixture corpus, language-neutral expected-outcome vectors, and small validation tools so external implementations can verify protocol behavior without depending on the private commercial Glomancy runtime.
 
-## Install the validator
+## Install the payload validator
 
 From the repository root:
 
@@ -10,7 +10,7 @@ From the repository root:
 python3 -m pip install -r requirements-conformance.txt
 ```
 
-The validator uses JSON Schema Draft 2020-12 with format checking enabled. Schema resolution is local to this repository; the CLI does not fetch schemas from the network.
+The payload validator uses JSON Schema Draft 2020-12 with format checking enabled. Schema resolution is local to this repository; the CLI does not fetch schemas from the network.
 
 ## Validate one payload
 
@@ -48,6 +48,22 @@ The manifest at `examples/v1/manifest.json` has two groups:
 
 This catches cases where an invalid fixture still fails, but for a different reason than the contract intended to test.
 
+## Language-neutral consumer vectors
+
+JSON Schema answers whether a payload matches a wire contract. Consumer integrations also need deterministic answers for decisions such as version compatibility, capability negotiation, message-kind lookup, and task-time capability gating.
+
+Those expected outcomes live under `vectors/v1/` as plain JSON so non-Rust implementations can run the same cases using their own code.
+
+Repository consistency check:
+
+```bash
+python3 scripts/validate_consumer_vectors.py
+```
+
+External implementations should not copy the Python validator as their production implementation. Instead, implement the documented public rules in the target language and use the JSON vectors as input/expected output. That provides a more meaningful interoperability test.
+
+See `docs/CONSUMER_VECTORS.md` for the layout, versioning rules, covered behavior, and integration guidance.
+
 ## List registered message schemas
 
 ```bash
@@ -73,9 +89,10 @@ A non-Rust consumer can vendor or check out this repository and run:
 ```bash
 python3 -m pip install -r requirements-conformance.txt
 python3 scripts/glomancy_conformance.py validate path/to/generated-message.json
+python3 scripts/validate_consumer_vectors.py
 ```
 
-A failing payload returns exit code `2`, so ordinary CI shells will fail the step automatically.
+A failing payload returns exit code `2`, while a consumer-vector consistency failure returns non-zero, so ordinary CI shells will fail the step automatically.
 
 ## Fail-closed expectations
 
@@ -85,14 +102,16 @@ A conforming consumer should not silently accept or downgrade:
 - unknown message kinds;
 - mismatched `schema_id` / `kind` pairs;
 - unsupported wire-version combinations;
+- unsupported required capabilities;
+- task capability names not selected for the session;
 - malformed identifiers, timestamps, URIs, hashes, or bounded fields;
 - messages that fail the declared JSON Schema.
 
-Protocol validation is still not authorization. Passing a schema only establishes that the message matches the public wire contract; product policy, user approval, authentication, and execution safety remain separate responsibilities.
+Protocol validation is still not authorization. Passing a schema, compatibility check, or capability gate only establishes agreement with the public protocol contract; product policy, user approval, authentication, authorization, and execution safety remain separate responsibilities.
 
-## Adding fixtures
+## Adding fixtures or vectors
 
-When adding a fixture:
+When adding a schema fixture:
 
 1. keep it minimal and focused on one contract rule where practical;
 2. add it to `examples/v1/manifest.json`;
@@ -100,4 +119,12 @@ When adding a fixture:
 4. run `python3 scripts/glomancy_conformance.py fixtures`;
 5. run the full repository CI before merging.
 
-Do not add fixtures containing credentials, customer data, private infrastructure details, proprietary source, or machine-specific paths.
+When adding a consumer vector:
+
+1. keep the case transport/provider/editor neutral;
+2. add it to the correct `vectors/v1/*.json` file;
+3. make the expected decision explicit;
+4. run `python3 scripts/validate_consumer_vectors.py`;
+5. update normative compatibility/capability documentation if the rule itself changed.
+
+Do not add fixtures or vectors containing credentials, customer data, private infrastructure details, proprietary source, or machine-specific paths.
