@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,6 +40,66 @@ def compatibility(local: str, remote: str) -> tuple[str, bool]:
     if local_v[0] == remote_v[0]:
         return "major-compatible", True
     return "incompatible", False
+
+
+def select_version(local_supported: list[str], remote_supported: list[str]) -> tuple[bool, str | None, str | None]:
+    if not local_supported:
+        return False, None, "empty-local-version-set"
+    if not remote_supported:
+        return False, None, "empty-remote-version-set"
+
+    for value in local_supported:
+        try:
+            version_tuple(value)
+        except ValueError:
+            return False, None, "invalid-local-version"
+    for value in remote_supported:
+        try:
+            version_tuple(value)
+        except ValueError:
+            return False, None, "invalid-remote-version"
+
+    if len(set(local_supported)) != len(local_supported):
+        return False, None, "duplicate-local-version"
+    if len(set(remote_supported)) != len(remote_supported):
+        return False, None, "duplicate-remote-version"
+
+    shared = set(local_supported).intersection(remote_supported)
+    if not shared:
+        return False, None, "no-shared-advertised-version"
+
+    selected = max(shared, key=version_tuple)
+    return True, selected, None
+
+
+def parse_timestamp(value: str) -> datetime:
+    normalized = value[:-1] + "+00:00" if value.endswith("Z") else value
+    parsed = datetime.fromisoformat(normalized)
+    if parsed.tzinfo is None:
+        raise ValueError(f"timestamp must include timezone: {value}")
+    return parsed
+
+
+def evaluate_approval(
+    request: dict[str, object], decision: dict[str, object]
+) -> tuple[bool, bool, str | None]:
+    if str(request["approval_id"]) != str(decision["approval_id"]):
+        return False, False, "approval-id-mismatch"
+    if str(request["task_id"]) != str(decision["task_id"]):
+        return False, False, "task-id-mismatch"
+
+    decision_value = str(decision["decision"])
+    if decision_value not in {"approve", "deny"}:
+        return False, False, "invalid-decision"
+
+    expires_at = parse_timestamp(str(request["expires_at"]))
+    decided_at = parse_timestamp(str(decision["decided_at"]))
+    if decided_at > expires_at:
+        return False, False, "expired"
+
+    if decision_value == "deny":
+        return True, False, "denied"
+    return True, True, None
 
 
 def valid_capability_name(name: str) -> bool:
@@ -122,6 +183,26 @@ def validate_wire(path: Path) -> int:
     return len(cases)
 
 
+def validate_version_negotiation(path: Path) -> int:
+    data = load_json(path)
+    cases = data["cases"]  # type: ignore[index]
+    for case in cases:
+        accepted, selected_version, reason = select_version(
+            [str(value) for value in case["input"]["local_supported"]],
+            [str(value) for value in case["input"]["remote_supported"]],
+        )
+        require_equal(
+            str(case["id"]),
+            {
+                "accepted": accepted,
+                "selected_version": selected_version,
+                "reason": reason,
+            },
+            case["expected"],
+        )
+    return len(cases)
+
+
 def validate_capabilities(path: Path) -> int:
     data = load_json(path)
     cases = data["cases"]  # type: ignore[index]
@@ -149,6 +230,21 @@ def validate_task_gate(path: Path) -> int:
     return len(cases)
 
 
+def validate_approval_flow(path: Path) -> int:
+    data = load_json(path)
+    cases = data["cases"]  # type: ignore[index]
+    for case in cases:
+        accepted, authorized, reason = evaluate_approval(
+            case["input"]["request"], case["input"]["decision"]
+        )
+        require_equal(
+            str(case["id"]),
+            {"accepted": accepted, "authorized": authorized, "reason": reason},
+            case["expected"],
+        )
+    return len(cases)
+
+
 def main() -> int:
     try:
         manifest = load_json(VECTORS / "manifest.json")
@@ -162,8 +258,10 @@ def main() -> int:
         expected_areas = {
             "message-kind-lookup": validate_message_kinds,
             "wire-compatibility": validate_wire,
+            "version-negotiation": validate_version_negotiation,
             "capability-negotiation": validate_capabilities,
             "task-capability-gate": validate_task_gate,
+            "approval-flow": validate_approval_flow,
         }
         seen: set[str] = set()
         total = 0
