@@ -31,6 +31,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Manually runnable release-readiness audit workflow with exact-ref checkout, Rust/repository-contract/cross-platform gates, deterministic release-facing metadata validation, and an audited ref/SHA summary without publishing or certifying a release.
 - Versioned machine-readable release/security support policy for published pre-1.0 release lines, with best-effort security/bug-fix semantics, explicit non-SLA/non-LTS posture, published-snapshot validation, and release-readiness reporting.
 - Deterministic public-contract fingerprint manifest and dependency-free verifier covering the canonical registry, compatibility, capability, vector, error, support, snapshot, and conformance-output contracts, with aggregate SHA-256 reporting in release-readiness audits.
+- Versioned release-readiness evidence JSON contract and downloadable GitHub Actions evidence bundle containing exact audited ref/SHA metadata, quality/contract/portability gate outcomes, byte-identical public-contract/support-policy copies, and SHA-256 payload checksums with bounded artifact retention.
 
 ### Clarified
 
@@ -43,6 +44,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Project process requirements are distinct from GitHub-enforced repository controls; branch/ruleset protection is not claimed until it is actually configured and verified.
 - Release-support metadata describes published public release lines rather than unreleased `main`; active development may advance before a new release becomes the current supported line.
 - The public contract fingerprint provides deterministic integrity comparison only; it is not a signature, authenticity proof, provenance claim, authorization decision, or certification.
+- Release-readiness evidence artifacts preserve auditable workflow facts and integrity metadata but are not signatures, provenance attestations, certifications, or proof that a release was authorized or published.
 
 ## [0.1.0] — 2026-09-13
 
