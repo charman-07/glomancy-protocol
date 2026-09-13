@@ -74,6 +74,9 @@ jobs:
       - name: Validate public contract fingerprint
         run: python3 scripts/public_contract_fingerprint.py --check
 
+      - name: Validate release evidence bundle contract
+        run: python3 scripts/validate_release_evidence.py
+
       - name: Validate release-facing metadata
         run: python3 scripts/release_readiness_report.py --json
 
