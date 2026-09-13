@@ -10,7 +10,7 @@ This roadmap describes the intended direction of Glomancy Protocol. It is delibe
 - [x] Publish valid and invalid conformance fixtures.
 - [x] Document fail-closed compatibility rules.
 - [x] Add formatting, linting, tests, and CI.
-- [ ] Publish the first tagged GitHub release after release-readiness review.
+- [x] Publish the first tagged GitHub release after release-readiness review: [v0.1.0](https://github.com/charman-07/glomancy-protocol/releases/tag/v0.1.0).
 
 ## v0.2 — Integration ergonomics
 
