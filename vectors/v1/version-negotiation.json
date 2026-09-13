@@ -1,0 +1,88 @@
+{
+  "cases": [
+    {
+      "id": "highest-exact-shared-version",
+      "input": {
+        "local_supported": ["0.3.0", "0.4.0", "0.4.2"],
+        "remote_supported": ["0.4.0", "0.4.2"]
+      },
+      "expected": {
+        "accepted": true,
+        "selected_version": "0.4.2",
+        "reason": null
+      }
+    },
+    {
+      "id": "order-does-not-change-selection",
+      "input": {
+        "local_supported": ["1.2.0", "1.0.0", "1.5.0"],
+        "remote_supported": ["1.0.0", "1.5.0", "1.2.0"]
+      },
+      "expected": {
+        "accepted": true,
+        "selected_version": "1.5.0",
+        "reason": null
+      }
+    },
+    {
+      "id": "single-shared-version",
+      "input": {
+        "local_supported": ["0.4.0", "0.5.0"],
+        "remote_supported": ["0.4.0", "0.6.0"]
+      },
+      "expected": {
+        "accepted": true,
+        "selected_version": "0.4.0",
+        "reason": null
+      }
+    },
+    {
+      "id": "patch-compatible-is-not-implicitly-advertised",
+      "input": {
+        "local_supported": ["0.4.0"],
+        "remote_supported": ["0.4.2"]
+      },
+      "expected": {
+        "accepted": false,
+        "selected_version": null,
+        "reason": "no-shared-advertised-version"
+      }
+    },
+    {
+      "id": "no-shared-version",
+      "input": {
+        "local_supported": ["0.4.0"],
+        "remote_supported": ["0.5.0"]
+      },
+      "expected": {
+        "accepted": false,
+        "selected_version": null,
+        "reason": "no-shared-advertised-version"
+      }
+    },
+    {
+      "id": "invalid-local-version",
+      "input": {
+        "local_supported": ["0.4"],
+        "remote_supported": ["0.4.0"]
+      },
+      "expected": {
+        "accepted": false,
+        "selected_version": null,
+        "reason": "invalid-local-version"
+      }
+    },
+    {
+      "id": "duplicate-remote-version",
+      "input": {
+        "local_supported": ["0.4.0"],
+        "remote_supported": ["0.4.0", "0.4.0"]
+      },
+      "expected": {
+        "accepted": false,
+        "selected_version": null,
+        "reason": "duplicate-remote-version"
+      }
+    }
+  ]
+}
