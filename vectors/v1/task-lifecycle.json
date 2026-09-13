@@ -1,0 +1,405 @@
+{
+  "cases": [
+    {
+      "id": "approval-gated-success-with-evidence",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.read", "version": "1.0.0" },
+          { "name": "editor.write", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "requested_capabilities": ["editor.write"],
+          "approval_required": true
+        },
+        "events": [
+          {
+            "kind": "approval.request",
+            "approval_id": "11111111-1111-4111-8111-111111111111",
+            "task_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            "expires_at": "2026-09-13T12:00:00Z"
+          },
+          {
+            "kind": "approval.decision",
+            "approval_id": "11111111-1111-4111-8111-111111111111",
+            "task_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            "decision": "approve",
+            "decided_at": "2026-09-13T11:59:00Z"
+          },
+          {
+            "kind": "task.progress",
+            "task_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            "status": "running",
+            "evidence_ids": []
+          },
+          {
+            "kind": "evidence.record",
+            "task_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            "evidence_id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"
+          },
+          {
+            "kind": "task.progress",
+            "task_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            "status": "validating",
+            "evidence_ids": ["eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"]
+          },
+          {
+            "kind": "task.result",
+            "task_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            "status": "succeeded",
+            "evidence_ids": ["eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"]
+          }
+        ]
+      },
+      "expected": {
+        "accepted": true,
+        "terminal_status": "succeeded",
+        "evidence_count": 1,
+        "reason": null
+      }
+    },
+    {
+      "id": "read-only-success-without-approval",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.read", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "requested_capabilities": ["editor.read"],
+          "approval_required": false
+        },
+        "events": [
+          {
+            "kind": "task.progress",
+            "task_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+            "status": "planning",
+            "evidence_ids": []
+          },
+          {
+            "kind": "evidence.record",
+            "task_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+            "evidence_id": "12121212-1212-4212-8212-121212121212"
+          },
+          {
+            "kind": "task.result",
+            "task_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+            "status": "succeeded",
+            "evidence_ids": ["12121212-1212-4212-8212-121212121212"]
+          }
+        ]
+      },
+      "expected": {
+        "accepted": true,
+        "terminal_status": "succeeded",
+        "evidence_count": 1,
+        "reason": null
+      }
+    },
+    {
+      "id": "reject-unselected-task-capability",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.read", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+          "requested_capabilities": ["editor.write"],
+          "approval_required": false
+        },
+        "events": []
+      },
+      "expected": {
+        "accepted": false,
+        "terminal_status": null,
+        "evidence_count": 0,
+        "reason": "unselected-capability"
+      }
+    },
+    {
+      "id": "reject-execution-before-required-approval",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.write", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+          "requested_capabilities": ["editor.write"],
+          "approval_required": true
+        },
+        "events": [
+          {
+            "kind": "approval.request",
+            "approval_id": "22222222-2222-4222-8222-222222222222",
+            "task_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+            "expires_at": "2026-09-13T12:00:00Z"
+          },
+          {
+            "kind": "task.progress",
+            "task_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+            "status": "running",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "expected": {
+        "accepted": false,
+        "terminal_status": null,
+        "evidence_count": 0,
+        "reason": "approval-required"
+      }
+    },
+    {
+      "id": "reject-execution-after-denial",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.write", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          "requested_capabilities": ["editor.write"],
+          "approval_required": true
+        },
+        "events": [
+          {
+            "kind": "approval.request",
+            "approval_id": "33333333-3333-4333-8333-333333333333",
+            "task_id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+            "expires_at": "2026-09-13T12:00:00Z"
+          },
+          {
+            "kind": "approval.decision",
+            "approval_id": "33333333-3333-4333-8333-333333333333",
+            "task_id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+            "decision": "deny",
+            "decided_at": "2026-09-13T11:30:00Z"
+          },
+          {
+            "kind": "task.progress",
+            "task_id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+            "status": "running",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "expected": {
+        "accepted": false,
+        "terminal_status": null,
+        "evidence_count": 0,
+        "reason": "approval-denied"
+      }
+    },
+    {
+      "id": "reject-task-id-mismatch",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.read", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+          "requested_capabilities": ["editor.read"],
+          "approval_required": false
+        },
+        "events": [
+          {
+            "kind": "task.progress",
+            "task_id": "99999999-9999-4999-8999-999999999999",
+            "status": "planning",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "expected": {
+        "accepted": false,
+        "terminal_status": null,
+        "evidence_count": 0,
+        "reason": "task-id-mismatch"
+      }
+    },
+    {
+      "id": "reject-duplicate-evidence-id",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.read", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "abababab-abab-4bab-8bab-abababababab",
+          "requested_capabilities": ["editor.read"],
+          "approval_required": false
+        },
+        "events": [
+          {
+            "kind": "evidence.record",
+            "task_id": "abababab-abab-4bab-8bab-abababababab",
+            "evidence_id": "45454545-4545-4545-8545-454545454545"
+          },
+          {
+            "kind": "evidence.record",
+            "task_id": "abababab-abab-4bab-8bab-abababababab",
+            "evidence_id": "45454545-4545-4545-8545-454545454545"
+          }
+        ]
+      },
+      "expected": {
+        "accepted": false,
+        "terminal_status": null,
+        "evidence_count": 1,
+        "reason": "duplicate-evidence-id"
+      }
+    },
+    {
+      "id": "reject-result-with-unknown-evidence",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.read", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "cdcdcdcd-cdcd-4dcd-8dcd-cdcdcdcdcdcd",
+          "requested_capabilities": ["editor.read"],
+          "approval_required": false
+        },
+        "events": [
+          {
+            "kind": "task.result",
+            "task_id": "cdcdcdcd-cdcd-4dcd-8dcd-cdcdcdcdcdcd",
+            "status": "succeeded",
+            "evidence_ids": ["56565656-5656-4656-8656-565656565656"]
+          }
+        ]
+      },
+      "expected": {
+        "accepted": false,
+        "terminal_status": null,
+        "evidence_count": 0,
+        "reason": "missing-evidence"
+      }
+    },
+    {
+      "id": "reject-event-after-terminal-result",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.read", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "dededede-dede-4ede-8ede-dededededede",
+          "requested_capabilities": ["editor.read"],
+          "approval_required": false
+        },
+        "events": [
+          {
+            "kind": "evidence.record",
+            "task_id": "dededede-dede-4ede-8ede-dededededede",
+            "evidence_id": "67676767-6767-4767-8767-676767676767"
+          },
+          {
+            "kind": "task.result",
+            "task_id": "dededede-dede-4ede-8ede-dededededede",
+            "status": "succeeded",
+            "evidence_ids": ["67676767-6767-4767-8767-676767676767"]
+          },
+          {
+            "kind": "task.progress",
+            "task_id": "dededede-dede-4ede-8ede-dededededede",
+            "status": "validating",
+            "evidence_ids": ["67676767-6767-4767-8767-676767676767"]
+          }
+        ]
+      },
+      "expected": {
+        "accepted": false,
+        "terminal_status": "succeeded",
+        "evidence_count": 1,
+        "reason": "event-after-terminal"
+      }
+    },
+    {
+      "id": "reject-expired-approval-decision",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.write", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "efefefef-efef-4fef-8fef-efefefefefef",
+          "requested_capabilities": ["editor.write"],
+          "approval_required": true
+        },
+        "events": [
+          {
+            "kind": "approval.request",
+            "approval_id": "78787878-7878-4878-8878-787878787878",
+            "task_id": "efefefef-efef-4fef-8fef-efefefefefef",
+            "expires_at": "2026-09-13T12:00:00Z"
+          },
+          {
+            "kind": "approval.decision",
+            "approval_id": "78787878-7878-4878-8878-787878787878",
+            "task_id": "efefefef-efef-4fef-8fef-efefefefefef",
+            "decision": "approve",
+            "decided_at": "2026-09-13T12:00:01Z"
+          }
+        ]
+      },
+      "expected": {
+        "accepted": false,
+        "terminal_status": null,
+        "evidence_count": 0,
+        "reason": "expired"
+      }
+    },
+    {
+      "id": "reject-progress-with-unknown-evidence",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.read", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "90909090-9090-4090-8090-909090909090",
+          "requested_capabilities": ["editor.read"],
+          "approval_required": false
+        },
+        "events": [
+          {
+            "kind": "task.progress",
+            "task_id": "90909090-9090-4090-8090-909090909090",
+            "status": "validating",
+            "evidence_ids": ["89898989-8989-4989-8989-898989898989"]
+          }
+        ]
+      },
+      "expected": {
+        "accepted": false,
+        "terminal_status": null,
+        "evidence_count": 0,
+        "reason": "missing-evidence"
+      }
+    },
+    {
+      "id": "reject-decision-before-request",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.write", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "81818181-8181-4181-8181-818181818181",
+          "requested_capabilities": ["editor.write"],
+          "approval_required": true
+        },
+        "events": [
+          {
+            "kind": "approval.decision",
+            "approval_id": "79797979-7979-4979-8979-797979797979",
+            "task_id": "81818181-8181-4181-8181-818181818181",
+            "decision": "approve",
+            "decided_at": "2026-09-13T11:00:00Z"
+          }
+        ]
+      },
+      "expected": {
+        "accepted": false,
+        "terminal_status": null,
+        "evidence_count": 0,
+        "reason": "approval-not-requested"
+      }
+    }
+  ]
+}

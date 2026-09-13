@@ -4,9 +4,9 @@ The files under `vectors/v1/` provide machine-readable expected outcomes for cor
 
 ## Purpose
 
-The JSON Schemas validate message payload shape. These vectors test a different layer: deterministic consumer decisions around message-kind lookup, wire compatibility, advertised-version selection, capability negotiation, task-time capability gating, and approval correlation/expiry handling.
+The JSON Schemas validate message payload shape. These vectors test a different layer: deterministic consumer decisions around message-kind lookup, wire compatibility, advertised-version selection, capability negotiation, task-time capability gating, approval correlation/expiry handling, and cross-message task lifecycle behavior.
 
-They are intended to reduce situations where two implementations both claim protocol support but interpret the same negotiation or approval input differently.
+They are intended to reduce situations where two implementations both claim protocol support but interpret the same negotiation, approval, evidence, or lifecycle input differently.
 
 ## Layout
 
@@ -19,9 +19,10 @@ vectors/v1/
   capabilities.json
   task-capability-gate.json
   approval-flow.json
+  task-lifecycle.json
 ```
 
-`manifest.json` identifies the vector version, the wire protocol line the vectors target, and the files in the suite.
+`manifest.json` identifies the vector version, the wire protocol line the vectors target, and the files in the suite. The current vector suite is versioned independently from the Rust crate, wire protocol, and JSON Schema versions.
 
 ## Expected consumer pattern
 
@@ -94,6 +95,25 @@ The approval vectors define conservative consumer-side correlation semantics for
 
 These vectors deliberately distinguish **decision acceptance** from **execution authorization**.
 
+### Task lifecycle
+
+`task-lifecycle.json` combines several public decisions into ordered task scenarios. It does not define a private Glomancy executor or an Unreal-specific state machine. Instead, it tests a small set of transport-neutral invariants that become important when individually valid messages are processed as one task flow.
+
+The lifecycle vectors cover:
+
+- selected task capabilities are checked before processing the task;
+- approval-gated execution cannot enter `running` or `validating`, or produce a successful result, until a matching unexpired approval has been granted;
+- a valid denial keeps the approval gate closed;
+- every task-scoped event must correlate to the submitted `task_id`;
+- evidence IDs are unique within the scenario;
+- progress or result messages cannot reference evidence that has not been observed for that task in the scenario;
+- a successful `task.result` is terminal for the modeled flow;
+- later task events after that terminal result fail closed.
+
+The successful reference case exercises an approval request, approval decision, running progress, evidence production, validating progress, and a final successful result. Rejection cases cover unselected capabilities, missing approval, denial, task-ID mismatch, duplicate evidence, missing evidence, expired approval, a decision without an outstanding request, and events after a terminal result.
+
+These lifecycle vectors intentionally do **not** claim to provide authentication, local authorization, rollback, transactionality, editor permissions, or execution safety. They only define deterministic conformance behavior for the public protocol boundary. A consuming product remains responsible for all local security and execution policy.
+
 ## Repository validator
 
 The repository includes a dependency-free consistency validator:
@@ -102,7 +122,7 @@ The repository includes a dependency-free consistency validator:
 python3 scripts/validate_consumer_vectors.py
 ```
 
-It checks the vector expectations against the public registry and documented compatibility/capability/approval rules. CI runs it on every change to catch drift between vectors and the rest of the public contract.
+It checks the vector expectations against the public registry and documented compatibility/capability/approval/lifecycle rules. CI runs it on every change to catch drift between vectors and the rest of the public contract.
 
 ## Independent consumer examples
 
@@ -113,7 +133,7 @@ python3 examples/consumers/python/reference_consumer.py
 node examples/consumers/javascript/reference_consumer.mjs
 ```
 
-Both examples load the same public registry and JSON vectors, independently implement advertised-version selection, capability negotiation, task capability gating, and approval correlation/expiry behavior, and fail non-zero if their result differs from the published expectation.
+Both examples load public JSON vectors and independently implement advertised-version selection, capability negotiation, task capability gating, and approval correlation/expiry behavior. They intentionally cover a selected subset of the full vector suite; the repository validator remains responsible for checking every registered vector area in this repository.
 
 They are intentionally small interoperability examples rather than alternate specifications. Neither example imports `scripts/validate_consumer_vectors.py`, delegates to the other language, or depends on the private Glomancy runtime.
 
@@ -125,7 +145,9 @@ Vector versions are separate from:
 - the wire protocol version;
 - individual JSON Schema versions.
 
-A vector change that changes an expected protocol decision must be reviewed together with the corresponding compatibility, capability, approval, schema, documentation, and migration implications. Do not silently rewrite historical expected outcomes for a published protocol snapshot.
+The addition of the task-lifecycle area advances the vector suite to `1.2.0`: existing vector meanings remain intact while the suite gains a new conformance surface.
+
+A vector change that changes an expected protocol decision must be reviewed together with the corresponding compatibility, capability, approval, lifecycle, schema, documentation, and migration implications. Do not silently rewrite historical expected outcomes for a published protocol snapshot.
 
 ## Implementation notes
 
@@ -133,6 +155,6 @@ For practical mistakes to avoid when implementing these decisions, read [Integra
 
 ## What these vectors do not prove
 
-Passing the vector suite does not prove that an implementation is secure or production-ready. It does not test authentication, authorization, sandboxing, transport security, editor permissions, provider credentials, or private Glomancy runtime behavior.
+Passing the vector suite does not prove that an implementation is secure or production-ready. It does not test authentication, authorization, sandboxing, transport security, editor permissions, provider credentials, rollback safety, or private Glomancy runtime behavior.
 
 The vectors demonstrate agreement with specific public protocol decisions only.

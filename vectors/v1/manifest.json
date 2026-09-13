@@ -1,5 +1,5 @@
 {
-  "vector_version": "1.1.0",
+  "vector_version": "1.2.0",
   "wire_protocol_version": "0.4.0",
   "description": "Language-neutral expected outcomes for core public Glomancy Protocol consumer behavior.",
   "files": [
@@ -26,6 +26,10 @@
     {
       "area": "approval-flow",
       "file": "approval-flow.json"
+    },
+    {
+      "area": "task-lifecycle",
+      "file": "task-lifecycle.json"
     }
   ]
 }

@@ -9,7 +9,8 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 ### Added
 
 - Versioned, language-neutral consumer conformance vectors in plain JSON for message-kind lookup, wire compatibility, capability negotiation, task-time capability gating, explicit advertised-version selection, and approval-flow correlation/expiry handling.
-- Dependency-free repository validator for the consumer vectors so CI detects drift between expected outcomes and the public registry/compatibility/capability/approval rules.
+- End-to-end task-lifecycle conformance vectors covering approval-gated success, selected-capability enforcement, task correlation, evidence closure, denial/expiry behavior, and terminal-result ordering; the consumer-vector suite advances to `1.2.0`.
+- Dependency-free repository validator for the consumer vectors so CI detects drift between expected outcomes and the public registry/compatibility/capability/approval/lifecycle rules.
 - External implementer documentation explaining how non-Rust consumers can run the same expected-outcome suite without depending on the Rust crate or private Glomancy runtime.
 - Stable, versioned machine-readable `--json` output for the public conformance CLI commands `validate`, `fixtures`, and `list-schemas`, while preserving the existing exit-code contract.
 - Draft 2020-12 JSON Schema contract for conformance CLI JSON output version `1.0.0`, plus CI validation of representative real CLI results against that schema.
