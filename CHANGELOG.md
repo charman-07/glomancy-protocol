@@ -26,6 +26,8 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Fail-closed Rust `from_wire` helpers for public component, risk-level, execution-mode, task-status, and error-category enums, plus CI parity checks against the canonical enum values in `common.schema.json`.
 - Registry-aware Rust `MessageHeader::validate()` checks for incompatible wire versions, unknown registered schema IDs, and schema-ID/message-kind mismatches while preserving existing structural header validation.
 - Versioned machine-readable protocol error-code catalog with fail-closed Rust parsing, round-trip tests, and CI parity checks between `errors/v1/catalog.json` and `ProtocolErrorCode`.
+- Formal protocol-change governance with change classes, structured proposal requirements, a dedicated GitHub Issue form, and explicit compatibility/security/migration/conformance review expectations.
+- Public `MAINTAINERS.md` register and release-quality gate documentation covering source quality, cross-platform portability, contract integrity, security review, release metadata, and post-release verification.
 
 ### Clarified
 
@@ -35,6 +37,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Maintainer-derived implementation notes are tracked separately from genuine external integration feedback; the project does not claim third-party production adoption or feedback that has not occurred.
 - The `v0.1.0` wording describes the first public pre-1.0 release rather than implying that the underlying Glomancy/protocol work began when the public repository was opened.
 - The generic JSON Schema `error.code` pattern permits future well-formed codes, while the versioned error catalog records the codes currently defined by this protocol package; unknown codes remain unknown and must not be treated as implicitly supported.
+- Project process requirements are distinct from GitHub-enforced repository controls; branch/ruleset protection is not claimed until it is actually configured and verified.
 
 ## [0.1.0] — 2026-09-13
 

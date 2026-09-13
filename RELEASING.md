@@ -1,13 +1,32 @@
 # Releasing
 
-This checklist is intended to keep public releases reproducible and deliberate.
+This checklist keeps public releases deliberate, auditable, and aligned with the project’s compatibility/security promises.
 
-## Before tagging
+Read [`docs/RELEASE_GATES.md`](docs/RELEASE_GATES.md) before preparing a release. The gates define the expected quality evidence; this file defines the maintainer workflow.
 
-1. Confirm `main` is green in GitHub Actions.
-2. Confirm `Cargo.toml` contains the intended package version.
-3. Confirm the wire version in `src/lib.rs`, `registry/v1/manifest.json`, and `compatibility/v1/compatibility-matrix.json` is consistent.
-4. Run locally:
+## 1. Establish the release candidate
+
+1. Select the exact `main` commit intended for release.
+2. Confirm the corresponding GitHub Actions run is green.
+3. Confirm there are no unresolved known blockers for the release scope.
+4. Freeze the intended release candidate while final review is performed; avoid merging unrelated follow-up work into the tag target.
+
+## 2. Verify version metadata
+
+Confirm the intended versions are internally consistent across their own contract surfaces:
+
+- Rust package version in `Cargo.toml`;
+- current wire version in Rust and the canonical registry/compatibility data;
+- JSON Schema versions/IDs and registry hashes;
+- capability-profile version when changed;
+- consumer-vector version when changed;
+- machine-readable catalog versions when changed.
+
+These version numbers are intentionally independent. Do not bump them mechanically as one bundle.
+
+## 3. Run release verification
+
+Run at minimum:
 
 ```bash
 cargo fmt --check
@@ -15,37 +34,90 @@ cargo clippy --all-targets -- -D warnings
 cargo test --all-targets
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
 cargo run --example quick_start
+cargo run --example reference_consumer
 python3 scripts/validate_repository.py
+python3 scripts/validate_rust_registry.py
+python3 scripts/validate_wire_enums.py
+python3 scripts/validate_error_catalog.py
+python3 scripts/validate_capability_profile.py
+python3 scripts/validate_consumer_vectors.py
+python3 scripts/validate_compatibility_snapshots.py
 python3 -m pip install -r requirements-conformance.txt
+python3 scripts/validate_fixtures.py
 python3 scripts/glomancy_conformance.py fixtures
 python3 scripts/glomancy_conformance.py validate examples/v1/valid/task.submit.json
+python3 scripts/validate_cli_output_contract.py
 ```
 
-5. Review all changes since the previous release for:
-   - wire compatibility impact;
-   - schema identifier or hash changes;
-   - security implications;
-   - dependency and GitHub Actions changes;
-   - new public error codes or limits;
-   - documentation and fixture coverage.
-6. Review `docs/SUPPLY_CHAIN.md` and confirm dependency/Action changes were intentional, reviewed, and passed the full applicable CI suite.
-7. Update `CHANGELOG.md`.
-8. Confirm no credentials, private infrastructure details, customer data, signing material, or proprietary runtime code entered the public history.
+Also verify the independent language examples that are part of repository CI.
 
-## Tag and GitHub release
+GitHub Actions remains the canonical cross-platform evidence for Linux, Windows, and macOS.
 
-Use an annotated semantic-version tag such as `v0.1.0`. The GitHub release notes should summarize user-visible changes, compatibility impact, and any migration steps.
+## 4. Review changes since the previous release
 
-Do not describe a release as stable or production-proven unless there is evidence to support that claim. Do not claim signed-release, reproducible-build, or supply-chain certification properties unless they are implemented and independently verifiable for that release.
+Review every public-contract change for:
 
-## After release
+- wire compatibility impact;
+- schema identifier/version/hash changes;
+- capability negotiation changes;
+- approval/task-lifecycle/evidence semantics;
+- new or changed error codes/categories;
+- public limits and malformed-input behavior;
+- conformance-vector expectations;
+- deprecations/removals;
+- security/trust-boundary implications;
+- dependency and GitHub Actions changes;
+- private/public boundary risk.
 
-- verify the tag points to the intended `main` commit;
-- verify the CI status for that commit;
-- verify README links and examples from the tagged source;
-- verify the public conformance CLI against the tagged source;
-- open follow-up issues for deferred work rather than silently changing a published compatibility promise.
+For proposal-driven changes, confirm the implementation still matches the accepted public decision or that the proposal issue was updated before merge.
+
+## 5. Supply-chain and public-boundary review
+
+Review `docs/SUPPLY_CHAIN.md` and confirm dependency/Action changes were intentional and passed the applicable CI suite.
+
+Confirm no credentials, private certificates, customer data, signing material, proprietary runtime/provider/billing/editor-mutation code, or sensitive private infrastructure details entered the public history.
+
+## 6. Changelog and release notes
+
+Update `CHANGELOG.md` and prepare release notes that clearly describe:
+
+- user-visible changes;
+- compatibility impact;
+- migration steps;
+- security-relevant behavior changes when safe to disclose;
+- maturity/status wording supported by evidence.
+
+Do not describe a release as stable, production-proven, certified, broadly adopted, signed, reproducible, or supply-chain verified unless those properties are actually implemented and demonstrable for that release.
+
+## 7. Tag and GitHub release
+
+Prefer an annotated semantic-version tag such as `v0.2.0` when creating tags through Git tooling. If a GitHub UI workflow creates a lightweight tag instead, record that truthfully rather than claiming the tag is annotated.
+
+The tag must resolve to the reviewed release-candidate commit.
+
+Publish the GitHub release only after the tag target and release notes have been reviewed.
+
+## 8. Post-release verification
+
+After publication:
+
+- verify the tag resolves to the intended commit;
+- verify the GitHub release is published with the intended draft/prerelease state;
+- verify CI for the tagged commit;
+- verify README/documentation links from the tagged source;
+- verify key examples and the public conformance CLI against the tagged source;
+- verify source/archive links;
+- add a compatibility snapshot for the real release when required by the compatibility-snapshot policy;
+- open follow-up issues for deferred work rather than silently changing a published historical contract.
 
 ## Security releases
 
-For a sensitive vulnerability, coordinate disclosure through the process in `SECURITY.md`. Do not expose exploit details before affected users have a reasonable opportunity to update.
+For a sensitive vulnerability, coordinate disclosure through `SECURITY.md`. Do not expose exploit details before affected users have a reasonable opportunity to update.
+
+Security urgency may require a shorter public review window, but it does not remove the need for regression tests, compatibility/migration analysis, and accurate release notes once disclosure is safe.
+
+## Repository enforcement
+
+Process compliance and GitHub technical enforcement are distinct. Required checks, pull-request-only changes, force-push blocking, and deletion protection should be configured through repository rules/branch protection when verified administrative access is available.
+
+Do not claim those controls are enforced until they are actually visible in repository settings.

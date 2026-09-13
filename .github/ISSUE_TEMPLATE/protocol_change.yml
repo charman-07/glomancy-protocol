@@ -1,0 +1,107 @@
+name: Protocol change proposal
+description: Propose a change to a public Glomancy Protocol contract or observable behavior.
+title: "proposal: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for compatibility-sensitive protocol changes. For exploitable security vulnerabilities, do **not** use a public issue; follow SECURITY.md instead.
+
+  - type: dropdown
+    id: change_class
+    attributes:
+      label: Change class
+      description: See docs/PROTOCOL_CHANGE_PROCESS.md for definitions.
+      options:
+        - Class 1 — additive compatible
+        - Class 2 — behavioral / compatibility-sensitive
+        - Class 3 — breaking or security-sensitive (non-confidential proposal only)
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What concrete interoperability, correctness, safety, or maintainability problem needs to be solved?
+      placeholder: Describe the problem and who/what is affected.
+    validations:
+      required: true
+
+  - type: textarea
+    id: affected_contract
+    attributes:
+      label: Affected public contract
+      description: Identify the schema, wire behavior, registry, capability rule, approval rule, lifecycle rule, error contract, public API, or other surface involved.
+      placeholder: e.g. approval.decision correlation semantics, registry/v1, MessageHeader validation
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_behavior
+    attributes:
+      label: Proposed observable behavior
+      description: Describe the exact behavior after the change. Avoid implementation-only descriptions.
+    validations:
+      required: true
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility impact
+      description: Which existing consumers/messages/releases remain compatible? What could break or be interpreted differently?
+    validations:
+      required: true
+
+  - type: textarea
+    id: migration
+    attributes:
+      label: Migration plan
+      description: What must implementers change? Can old and new behavior coexist temporarily? State "none" only with an explanation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: security
+    attributes:
+      label: Security and trust-boundary impact
+      description: Address fail-closed behavior, validation, authorization assumptions, approvals, evidence, parsing, resource limits, and other relevant trust boundaries.
+    validations:
+      required: true
+
+  - type: textarea
+    id: conformance
+    attributes:
+      label: Conformance and verification plan
+      description: What tests, fixtures, vectors, parity checks, examples, or snapshots should prove the new behavior?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: List reasonable alternatives and why they are not preferred.
+    validations:
+      required: true
+
+  - type: textarea
+    id: release
+    attributes:
+      label: Release and versioning impact
+      description: Explain expected Rust crate, wire, schema, catalog/vector, deprecation, CHANGELOG, or migration-note implications.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Public project boundaries
+      options:
+        - label: This proposal does not require publishing private Glomancy runtime, provider, billing, credential, signing, installer, or editor-mutation implementation details.
+          required: true
+        - label: I understand that protocol validation/conformance does not by itself grant execution authorization.
+          required: true
+        - label: I have not included secrets, customer data, private credentials, or exploit details that should use the private security-reporting path.
+          required: true
