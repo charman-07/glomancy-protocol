@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "profile_id": "urn:glomancy:protocol:capability-negotiation:1.0.0",
+  "cases": [
+    {
+      "name": "required-exact-match-selected",
+      "remote": [
+        {"name": "result.evidence", "version": "1.0.0", "required": true}
+      ],
+      "local": [
+        {"name": "result.evidence", "version": "1.0.0"},
+        {"name": "asset.read", "version": "1.0.0"}
+      ],
+      "expected": {
+        "accepted": true,
+        "selected": [
+          {"name": "result.evidence", "version": "1.0.0"}
+        ]
+      }
+    },
+    {
+      "name": "optional-unsupported-omitted",
+      "remote": [
+        {"name": "asset.read", "version": "1.0.0", "required": false},
+        {"name": "result.evidence", "version": "1.0.0", "required": false}
+      ],
+      "local": [
+        {"name": "result.evidence", "version": "1.0.0"}
+      ],
+      "expected": {
+        "accepted": true,
+        "selected": [
+          {"name": "result.evidence", "version": "1.0.0"}
+        ]
+      }
+    },
+    {
+      "name": "required-unsupported-rejects",
+      "remote": [
+        {"name": "asset.write", "version": "1.0.0", "required": true}
+      ],
+      "local": [
+        {"name": "asset.read", "version": "1.0.0"}
+      ],
+      "expected": {
+        "accepted": false,
+        "error": "unsupported-required-capability"
+      }
+    },
+    {
+      "name": "same-name-different-version-does-not-match",
+      "remote": [
+        {"name": "result.evidence", "version": "1.1.0", "required": false}
+      ],
+      "local": [
+        {"name": "result.evidence", "version": "1.0.0"}
+      ],
+      "expected": {
+        "accepted": true,
+        "selected": []
+      }
+    },
+    {
+      "name": "required-version-mismatch-rejects",
+      "remote": [
+        {"name": "result.evidence", "version": "1.1.0", "required": true}
+      ],
+      "local": [
+        {"name": "result.evidence", "version": "1.0.0"}
+      ],
+      "expected": {
+        "accepted": false,
+        "error": "unsupported-required-capability"
+      }
+    },
+    {
+      "name": "prefix-similarity-does-not-match",
+      "remote": [
+        {"name": "asset.read.metadata", "version": "1.0.0", "required": false}
+      ],
+      "local": [
+        {"name": "asset.read", "version": "1.0.0"}
+      ],
+      "expected": {
+        "accepted": true,
+        "selected": []
+      }
+    },
+    {
+      "name": "duplicate-remote-name-rejected",
+      "remote": [
+        {"name": "asset.read", "version": "1.0.0", "required": false},
+        {"name": "asset.read", "version": "1.1.0", "required": false}
+      ],
+      "local": [
+        {"name": "asset.read", "version": "1.0.0"}
+      ],
+      "expected": {
+        "accepted": false,
+        "error": "duplicate-remote-capability-name"
+      }
+    },
+    {
+      "name": "duplicate-local-name-rejected",
+      "remote": [
+        {"name": "asset.read", "version": "1.0.0", "required": false}
+      ],
+      "local": [
+        {"name": "asset.read", "version": "1.0.0"},
+        {"name": "asset.read", "version": "1.1.0"}
+      ],
+      "expected": {
+        "accepted": false,
+        "error": "duplicate-local-capability-name"
+      }
+    },
+    {
+      "name": "task-selected-subset-accepted",
+      "selected": [
+        {"name": "asset.read", "version": "1.0.0"},
+        {"name": "result.evidence", "version": "1.0.0"}
+      ],
+      "task_requested": ["asset.read"],
+      "expected": {
+        "task_allowed_by_capability_gate": true
+      }
+    },
+    {
+      "name": "task-non-selected-capability-rejected",
+      "selected": [
+        {"name": "asset.read", "version": "1.0.0"}
+      ],
+      "task_requested": ["asset.write"],
+      "expected": {
+        "task_allowed_by_capability_gate": false
+      }
+    }
+  ]
+}
