@@ -22,6 +22,7 @@ SEMVER_RE = re.compile(
     r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$"
 )
 CORE_SEMVER_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 class ReadinessError(RuntimeError):
@@ -63,6 +64,12 @@ def require_semver(label: str, value: object, *, core_only: bool = False) -> str
     matcher = CORE_SEMVER_RE if core_only else SEMVER_RE
     if matcher.fullmatch(value) is None:
         raise ReadinessError(f"{label} is not a valid semantic version: {value!r}")
+    return value
+
+
+def require_sha256(label: str, value: object) -> str:
+    if not isinstance(value, str) or SHA256_RE.fullmatch(value) is None:
+        raise ReadinessError(f"{label} must be a lowercase 64-character SHA-256")
     return value
 
 
@@ -133,6 +140,7 @@ def collect(expected_version: str | None) -> dict[str, Any]:
     vectors = load_json(ROOT / "vectors" / "v1" / "manifest.json")
     errors = load_json(ROOT / "errors" / "v1" / "catalog.json")
     support = load_json(ROOT / "support" / "v1" / "policy.json")
+    fingerprint = load_json(ROOT / "contracts" / "v1" / "fingerprint.json")
 
     registry_wire = require_semver(
         "registry wire_protocol_version", registry.get("wire_protocol_version"), core_only=True
@@ -162,6 +170,12 @@ def collect(expected_version: str | None) -> dict[str, Any]:
     vector_version = require_semver("consumer vector_version", vectors.get("vector_version"))
     catalog_version = require_semver("error catalog_version", errors.get("catalog_version"))
     support_policy_version = require_semver("support policy_version", support.get("policy_version"))
+    fingerprint_format_version = require_semver(
+        "fingerprint fingerprint_format_version", fingerprint.get("fingerprint_format_version")
+    )
+    public_contract_fingerprint = require_sha256(
+        "fingerprint aggregate_sha256", fingerprint.get("aggregate_sha256")
+    )
     supported_lines = support_release_lines(support)
     schemas = schema_versions(registry)
 
@@ -169,6 +183,7 @@ def collect(expected_version: str | None) -> dict[str, Any]:
     support_schemas = registry.get("support_schemas")
     vector_files = vectors.get("files")
     error_codes = errors.get("codes")
+    fingerprint_entries = fingerprint.get("entries")
     if not isinstance(message_schemas, list):
         raise ReadinessError("registry message_schemas must be an array")
     if not isinstance(support_schemas, list):
@@ -177,6 +192,8 @@ def collect(expected_version: str | None) -> dict[str, Any]:
         raise ReadinessError("consumer vector files must be an array")
     if not isinstance(error_codes, list):
         raise ReadinessError("error catalog codes must be an array")
+    if not isinstance(fingerprint_entries, list) or not fingerprint_entries:
+        raise ReadinessError("fingerprint entries must be a non-empty array")
 
     changelog_has_release = release_heading_exists(package_version)
     if expected_version is not None and not changelog_has_release:
@@ -197,6 +214,8 @@ def collect(expected_version: str | None) -> dict[str, Any]:
         "consumer_vector_version": vector_version,
         "error_catalog_version": catalog_version,
         "support_policy_version": support_policy_version,
+        "fingerprint_format_version": fingerprint_format_version,
+        "public_contract_fingerprint": public_contract_fingerprint,
         "supported_release_lines": supported_lines,
         "counts": {
             "message_schemas": len(message_schemas),
@@ -204,6 +223,7 @@ def collect(expected_version: str | None) -> dict[str, Any]:
             "vector_areas": len(vector_files),
             "protocol_error_codes": len(error_codes),
             "supported_release_lines": len(supported_lines),
+            "fingerprinted_contract_files": len(fingerprint_entries),
         },
         "changelog_has_current_package_release": changelog_has_release,
     }
@@ -231,13 +251,16 @@ def as_markdown(data: dict[str, Any], ref: str | None, sha: str | None) -> str:
         f"- **Consumer vectors:** `{data['consumer_vector_version']}`",
         f"- **Error catalog:** `{data['error_catalog_version']}`",
         f"- **Support policy:** `{data['support_policy_version']}`",
+        f"- **Contract fingerprint format:** `{data['fingerprint_format_version']}`",
+        f"- **Public contract fingerprint:** `{data['public_contract_fingerprint']}`",
         f"- **Supported public release lines:** `{support_lines}`",
         f"- **Message schemas:** `{counts['message_schemas']}`",
         f"- **Support schemas:** `{counts['support_schemas']}`",
         f"- **Vector areas:** `{counts['vector_areas']}`",
         f"- **Protocol error codes:** `{counts['protocol_error_codes']}`",
+        f"- **Fingerprinted contract files:** `{counts['fingerprinted_contract_files']}`",
         "",
-        "> This report validates release-facing metadata consistency only. The workflow's quality, contract, support-policy, and portability jobs provide the remaining release-gate evidence. It does not sign, publish, certify, or authorize a release.",
+        "> This report validates release-facing metadata consistency only. The workflow's quality, contract, support-policy, fingerprint, and portability jobs provide the remaining release-gate evidence. The fingerprint is integrity metadata, not a signature or authenticity proof. The audit does not sign, publish, certify, or authorize a release.",
     ]
     return "\n".join(lines)
 
@@ -278,7 +301,8 @@ def main() -> int:
             f"schemas={','.join(data['schema_versions'])} "
             f"vectors={data['consumer_vector_version']} "
             f"errors={data['error_catalog_version']} "
-            f"support={data['support_policy_version']}"
+            f"support={data['support_policy_version']} "
+            f"fingerprint={data['public_contract_fingerprint']}"
         )
     return 0
 

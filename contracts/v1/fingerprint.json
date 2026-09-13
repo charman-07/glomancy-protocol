@@ -1,0 +1,40 @@
+{
+  "fingerprint_format_version": "1.0.0",
+  "hash_algorithm": "sha256",
+  "aggregate_algorithm": "SHA-256 of UTF-8 records '<path>\\t<sha256>\\n' for the exact canonical entry set sorted lexicographically by path",
+  "entries": [
+    {
+      "path": "capabilities/v1/profile.json",
+      "sha256": "54d7165d0e072fdcc8ed37f4d82edb1993e828ab388c177913465abd975c7449"
+    },
+    {
+      "path": "compatibility/snapshots/manifest.json",
+      "sha256": "504c67244ea7d90d893e9047b417cbbff8b1b4a0f0299f5d41199c359660bf9a"
+    },
+    {
+      "path": "compatibility/v1/compatibility-matrix.json",
+      "sha256": "7e5ae9a37a2885a075115fe5287dd6deff08bf2f4868befb4fbc4a241d581dfc"
+    },
+    {
+      "path": "conformance/v1/cli-output.schema.json",
+      "sha256": "cfed35660badc585a54fe28e6e5f13e46685bc0f2658fb464396e08a876dd553"
+    },
+    {
+      "path": "errors/v1/catalog.json",
+      "sha256": "08739b044f3bb2eba4675f50a51415718498070ad3334c67a316eaee0b2eb1ba"
+    },
+    {
+      "path": "registry/v1/manifest.json",
+      "sha256": "b17fee2a6e78ca67a7f1942383102c7727f86e664a2151bbed69f9936ffa2166"
+    },
+    {
+      "path": "support/v1/policy.json",
+      "sha256": "f4cb50af5e5275e87128fb437642edf0dfffe8bf70a08c0ab6e195ad49de3671"
+    },
+    {
+      "path": "vectors/v1/manifest.json",
+      "sha256": "0af2f57c26e8f85d33ac96c4301c4fbb286a5b0b7fb3dc4970f7306201517c8e"
+    }
+  ],
+  "aggregate_sha256": "c4c105349cb021e5c939abb3590990a6cc7066f86a041cd164eefa63087936f8"
+}
