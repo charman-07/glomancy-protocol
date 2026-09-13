@@ -19,6 +19,8 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Snapshot compatibility documentation describing how maintainers add future real release baselines without fabricating historical states.
 - Maintainer-derived integration pitfalls guide covering version selection, approval correlation, validation vs. authorization, schema identity, capability semantics, evidence handling, bounded inputs, and fail-closed dispatch.
 - Unreal Engine product-context documentation clarifying that Glomancy is currently developed primarily for Unreal Engine while Glomancy Protocol remains editor-agnostic, transport-neutral, and provider-neutral.
+- Pinned external-adoption guidance for consuming release tags, verifying registry hashes, vendoring non-Rust protocol assets, and upgrading pre-1.0 integrations deliberately.
+- Structured integration-feedback path for genuine external implementers without implying adoption that has not occurred.
 
 ### Clarified
 
@@ -26,10 +28,11 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Approval decisions are correlated by both `approval_id` and `task_id`; expired or mismatched decisions are rejected, while a valid deny decision is accepted as a decision but never authorizes execution.
 - Published schema IDs are immutable identities: a compatible current contract may not silently change the SHA-256 content or message-kind mapping behind a pinned release schema ID.
 - Maintainer-derived implementation notes are tracked separately from genuine external integration feedback; the project does not claim third-party production adoption or feedback that has not occurred.
+- The `v0.1.0` wording describes the first public pre-1.0 release rather than implying that the underlying Glomancy/protocol work began when the public repository was opened.
 
 ## [0.1.0] — 2026-09-13
 
-First public early-stage release of Glomancy Protocol.
+First public pre-1.0 release of Glomancy Protocol.
 
 ### Added
 
@@ -76,4 +79,4 @@ First public early-stage release of Glomancy Protocol.
 
 ### Status
 
-This release is pre-1.0 and early-stage. It does not claim broad production adoption, industry-standard status, or long-term compatibility guarantees. The commercial/private Glomancy implementation is not part of this MIT-licensed repository.
+This release is pre-1.0. The public repository was newly open-sourced at this point, while the underlying Glomancy/protocol work had already been under active development, testing, debugging, and repeated validation before publication. It does not claim broad production adoption, industry-standard status, or long-term compatibility guarantees. The commercial/private Glomancy implementation is not part of this MIT-licensed repository.

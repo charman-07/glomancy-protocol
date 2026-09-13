@@ -17,6 +17,8 @@
 Glomancy Protocol is a small Rust library plus versioned JSON Schemas for the boundary between AI systems and editor/tooling runtimes. It defines how integrations negotiate versions and capabilities, submit work, request approvals, report progress, return evidence, surface errors, and stay observable without coupling the protocol to one transport, model provider, or editor implementation.
 
 > New here? Read **[What Glomancy Is and Why the Protocol Exists](docs/GLOMANCY_OVERVIEW.md)** for the product vision, concrete benefits, example workflows, intended audiences, current maturity, and the public/private boundary.
+>
+> Integrating it into another project? Read **[External Adoption Guide](docs/ADOPTION_GUIDE.md)** for release/commit pinning, Rust Git dependencies, schema/hash verification, non-Rust vendoring, conformance, and upgrade discipline.
 
 ## Glomancy in one minute
 
@@ -126,6 +128,8 @@ python3 scripts/validate_repository.py
 
 The repository validator checks JSON integrity, schema-registry hashes, fixture references, and protocol-version consistency.
 
+For an integration that should survive repository changes, do **not** copy commands from mutable `main` without pinning a baseline first. See the [External Adoption Guide](docs/ADOPTION_GUIDE.md).
+
 ### Interoperability quick start
 
 The repository also contains independent, dependency-free consumer examples that implement selected public decisions without importing the Rust crate or the repository vector validator:
@@ -201,7 +205,7 @@ The v1 schema set covers:
 | Verification | `evidence.record` |
 | Liveness | `heartbeat` |
 
-See the [Consumer Integration Guide](docs/INTEGRATION_GUIDE.md) for an end-to-end language-neutral flow and [Consumer Conformance Vectors](docs/CONSUMER_VECTORS.md) for independent implementation guidance. [Capability Negotiation](docs/CAPABILITY_NEGOTIATION.md), [Protocol Conformance](docs/CONFORMANCE.md), [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), [Snapshot Compatibility](docs/SNAPSHOT_COMPATIBILITY.md), [Pre-1.0 Deprecation Policy](docs/DEPRECATION_POLICY.md), and [Security Model](docs/SECURITY_MODEL.md) document the executable contract, design rationale, evolution rules, and trust boundaries.
+See the [External Adoption Guide](docs/ADOPTION_GUIDE.md) for pinned consumption and upgrade guidance, the [Consumer Integration Guide](docs/INTEGRATION_GUIDE.md) for an end-to-end language-neutral flow, and [Consumer Conformance Vectors](docs/CONSUMER_VECTORS.md) for independent implementation guidance. [Capability Negotiation](docs/CAPABILITY_NEGOTIATION.md), [Protocol Conformance](docs/CONFORMANCE.md), [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), [Snapshot Compatibility](docs/SNAPSHOT_COMPATIBILITY.md), [Pre-1.0 Deprecation Policy](docs/DEPRECATION_POLICY.md), and [Security Model](docs/SECURITY_MODEL.md) document the executable contract, design rationale, evolution rules, and trust boundaries.
 
 ## Capability negotiation
 
@@ -269,7 +273,7 @@ examples/consumers/javascript/ Independent dependency-free JavaScript consumer
 compatibility/v1/            Version compatibility rules and cases
 compatibility/snapshots/     Pinned real public-release compatibility baselines
 capabilities/v1/             Machine-readable capability profile and cases
-docs/                        Product context, architecture, conformance, compatibility, evolution, security, integration guides
+docs/                        Product context, adoption, architecture, conformance, compatibility, evolution, security, integration guides
 scripts/                     Repository integrity, boundary, interoperability, fixture, and conformance tools
 tests/                       Public contract regression tests
 .github/                     CI and contribution / feedback workflow templates

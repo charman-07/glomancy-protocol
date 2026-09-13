@@ -2,6 +2,8 @@
 
 Glomancy Protocol ships a public fixture corpus, language-neutral expected-outcome vectors, and small validation tools so external implementations can verify protocol behavior without depending on the private commercial Glomancy runtime.
 
+If you are integrating the protocol into another project, start with the [External Adoption Guide](ADOPTION_GUIDE.md). It explains how to pin a released baseline or exact commit, vendor and verify schemas, consume the Rust package by Git tag, and upgrade without silently tracking mutable pre-1.0 `main` state.
+
 ## Install the payload validator
 
 From the repository root:
@@ -186,7 +188,7 @@ These exit codes are stable for the `0.1.x` public line and are intended for CI 
 
 ## Example CI usage
 
-A non-Rust consumer can vendor or check out this repository and run:
+A non-Rust consumer can vendor or check out a **pinned release or exact commit** of this repository and run:
 
 ```bash
 python3 -m pip install -r requirements-conformance.txt
@@ -197,6 +199,8 @@ python3 scripts/validate_cli_output_contract.py
 ```
 
 A failing payload returns exit code `2`, while consumer-vector, compatibility-snapshot, or CLI-output-contract consistency failures return non-zero, so ordinary CI shells will fail the step automatically. Automation can parse the CLI JSON object for structured diagnostics and validate that object against the published output schema without changing the process-code contract.
+
+Do not point production CI at mutable `main` and assume pre-1.0 behavior is frozen. The [External Adoption Guide](ADOPTION_GUIDE.md) describes release/tag and exact-commit pinning.
 
 ## Fail-closed expectations
 
