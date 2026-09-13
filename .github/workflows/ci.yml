@@ -96,6 +96,28 @@ jobs:
             exit 1
           fi
 
+      - name: Smoke-test conformance CLI JSON output
+        shell: bash
+        run: |
+          schema_json="$(python3 scripts/glomancy_conformance.py list-schemas --json)"
+          printf '%s\n' "$schema_json" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["output_version"] == "1.0.0"; assert d["command"] == "list-schemas"; assert d["ok"] is True; assert d["exit_code"] == 0; assert d["schema_count"] == len(d["schemas"]); assert d["schema_count"] > 0'
+
+          valid_json="$(python3 scripts/glomancy_conformance.py validate examples/v1/valid/task.submit.json --json)"
+          printf '%s\n' "$valid_json" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["command"] == "validate"; assert d["ok"] is True; assert d["valid"] is True; assert d["exit_code"] == 0; assert d["kind"] == "task.submit"; assert d["errors"] == []'
+
+          fixture_json="$(python3 scripts/glomancy_conformance.py fixtures --json)"
+          printf '%s\n' "$fixture_json" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["command"] == "fixtures"; assert d["ok"] is True; assert d["passed"] is True; assert d["total_fixtures"] == d["valid_fixtures_accepted"] + d["invalid_fixtures_rejected"]'
+
+          set +e
+          invalid_json="$(python3 scripts/glomancy_conformance.py validate examples/v1/invalid/bad-message-id-format.json --json)"
+          invalid_code=$?
+          set -e
+          if [ "$invalid_code" -ne 2 ]; then
+            echo "expected invalid JSON-mode payload exit code 2, got $invalid_code" >&2
+            exit 1
+          fi
+          printf '%s\n' "$invalid_json" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["command"] == "validate"; assert d["ok"] is False; assert d["valid"] is False; assert d["exit_code"] == 2; assert d["error_count"] >= 1; assert len(d["errors"]) >= 1'
+
   portability:
     name: Test (${{ matrix.os }})
     strategy:

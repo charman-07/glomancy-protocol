@@ -22,6 +22,7 @@ REGISTRY_MANIFEST = ROOT / "registry" / "v1" / "manifest.json"
 EXIT_OK = 0
 EXIT_VALIDATION_FAILED = 2
 EXIT_CONFIGURATION_ERROR = 3
+JSON_OUTPUT_VERSION = "1.0.0"
 
 
 def load_registry() -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
@@ -104,16 +105,49 @@ def choose_entry(
     return schema_entry or kind_entry  # type: ignore[return-value]
 
 
+def error_record(error: Any) -> dict[str, Any]:
+    location_parts = [str(part) for part in error.absolute_path]
+    return {
+        "keyword": str(error.validator) if error.validator is not None else None,
+        "path": location_parts,
+        "path_text": "/".join(location_parts) or "<root>",
+        "message": str(error.message),
+    }
+
+
 def render_error(error: Any) -> str:
-    location = "/".join(str(part) for part in error.absolute_path) or "<root>"
-    return f"keyword={error.validator!r} path={location}: {error.message}"
+    record = error_record(error)
+    return f"keyword={record['keyword']!r} path={record['path_text']}: {record['message']}"
+
+
+def emit_json(command: str, ok: bool, exit_code: int, **fields: Any) -> None:
+    payload: dict[str, Any] = {
+        "output_version": JSON_OUTPUT_VERSION,
+        "command": command,
+        "ok": ok,
+        "exit_code": exit_code,
+    }
+    payload.update(fields)
+    print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+
+
+def emit_configuration_error(args: argparse.Namespace, message: str) -> int:
+    if args.json_output:
+        emit_json(
+            str(args.command),
+            False,
+            EXIT_CONFIGURATION_ERROR,
+            error={"type": "configuration", "message": message},
+        )
+    else:
+        print(f"configuration error: {message}", file=sys.stderr)
+    return EXIT_CONFIGURATION_ERROR
 
 
 def command_validate(args: argparse.Namespace) -> int:
     document_path = Path(args.path).expanduser().resolve()
     if not document_path.is_file():
-        print(f"configuration error: payload file does not exist: {document_path}", file=sys.stderr)
-        return EXIT_CONFIGURATION_ERROR
+        return emit_configuration_error(args, f"payload file does not exist: {document_path}")
 
     try:
         document = load_json(document_path)
@@ -121,51 +155,126 @@ def command_validate(args: argparse.Namespace) -> int:
         schema_path = resolve_schema_file(entry)
         validator = validator_for(schema_path, build_store())
         errors = sorted(validator.iter_errors(document), key=lambda error: list(error.path))
-    except (KeyError, TypeError, ConformanceError) as exc:
-        print(f"configuration error: {exc}", file=sys.stderr)
-        return EXIT_CONFIGURATION_ERROR
+    except (KeyError, TypeError, ConformanceError, json.JSONDecodeError, OSError) as exc:
+        return emit_configuration_error(args, str(exc))
+
+    schema_id = str(entry.get("schema_id"))
+    message_kind = entry.get("message_kind")
 
     if errors:
-        schema_id = entry.get("schema_id", "<unknown>")
-        print(f"invalid: {document_path}: schema={schema_id}", file=sys.stderr)
-        for error in errors[: args.max_errors]:
-            print(f"  - {render_error(error)}", file=sys.stderr)
-        if len(errors) > args.max_errors:
-            print(f"  - ... {len(errors) - args.max_errors} more error(s)", file=sys.stderr)
+        limited_errors = [error_record(error) for error in errors[: args.max_errors]]
+        if args.json_output:
+            emit_json(
+                "validate",
+                False,
+                EXIT_VALIDATION_FAILED,
+                path=str(document_path),
+                schema_id=schema_id,
+                kind=message_kind,
+                valid=False,
+                error_count=len(errors),
+                errors=limited_errors,
+                truncated_error_count=max(0, len(errors) - len(limited_errors)),
+            )
+        else:
+            print(f"invalid: {document_path}: schema={schema_id}", file=sys.stderr)
+            for error in errors[: args.max_errors]:
+                print(f"  - {render_error(error)}", file=sys.stderr)
+            if len(errors) > args.max_errors:
+                print(f"  - ... {len(errors) - args.max_errors} more error(s)", file=sys.stderr)
         return EXIT_VALIDATION_FAILED
 
-    print(
-        f"valid: {document_path}: schema={entry.get('schema_id')}"
-        + (f" kind={entry.get('message_kind')}" if entry.get("message_kind") else "")
-    )
+    if args.json_output:
+        emit_json(
+            "validate",
+            True,
+            EXIT_OK,
+            path=str(document_path),
+            schema_id=schema_id,
+            kind=message_kind,
+            valid=True,
+            error_count=0,
+            errors=[],
+            truncated_error_count=0,
+        )
+    else:
+        print(
+            f"valid: {document_path}: schema={schema_id}"
+            + (f" kind={message_kind}" if message_kind else "")
+        )
     return EXIT_OK
 
 
-def command_fixtures(_: argparse.Namespace) -> int:
+def command_fixtures(args: argparse.Namespace) -> int:
     try:
         valid_count, invalid_count = validate_manifest()
-    except (KeyError, TypeError, ConformanceError) as exc:
-        print(f"fixture conformance failed: {exc}", file=sys.stderr)
+    except (KeyError, TypeError, ConformanceError, json.JSONDecodeError, OSError) as exc:
+        if args.json_output:
+            emit_json(
+                "fixtures",
+                False,
+                EXIT_VALIDATION_FAILED,
+                passed=False,
+                error={"type": "fixture-conformance", "message": str(exc)},
+            )
+        else:
+            print(f"fixture conformance failed: {exc}", file=sys.stderr)
         return EXIT_VALIDATION_FAILED
 
-    print(
-        "fixture conformance passed: "
-        f"{valid_count} valid fixtures accepted, {invalid_count} invalid fixtures rejected"
-    )
+    if args.json_output:
+        emit_json(
+            "fixtures",
+            True,
+            EXIT_OK,
+            passed=True,
+            valid_fixtures_accepted=valid_count,
+            invalid_fixtures_rejected=invalid_count,
+            total_fixtures=valid_count + invalid_count,
+        )
+    else:
+        print(
+            "fixture conformance passed: "
+            f"{valid_count} valid fixtures accepted, {invalid_count} invalid fixtures rejected"
+        )
     return EXIT_OK
 
 
-def command_list(_: argparse.Namespace) -> int:
+def command_list(args: argparse.Namespace) -> int:
     try:
         _, by_kind = load_registry()
-    except (KeyError, TypeError, ConformanceError) as exc:
-        print(f"configuration error: {exc}", file=sys.stderr)
-        return EXIT_CONFIGURATION_ERROR
+    except (KeyError, TypeError, ConformanceError, json.JSONDecodeError, OSError) as exc:
+        return emit_configuration_error(args, str(exc))
 
-    for kind in sorted(by_kind):
-        entry = by_kind[kind]
-        print(f"{kind}\t{entry['schema_id']}\t{entry['version']}")
+    schemas = [
+        {
+            "kind": kind,
+            "schema_id": str(by_kind[kind]["schema_id"]),
+            "version": str(by_kind[kind]["version"]),
+        }
+        for kind in sorted(by_kind)
+    ]
+
+    if args.json_output:
+        emit_json(
+            "list-schemas",
+            True,
+            EXIT_OK,
+            schema_count=len(schemas),
+            schemas=schemas,
+        )
+    else:
+        for entry in schemas:
+            print(f"{entry['kind']}\t{entry['schema_id']}\t{entry['version']}")
     return EXIT_OK
+
+
+def add_json_option(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="json_output",
+        help="emit one machine-readable JSON object to stdout",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -185,16 +294,19 @@ def build_parser() -> argparse.ArgumentParser:
         default=10,
         choices=range(1, 51),
         metavar="1-50",
-        help="maximum validation errors to print (default: 10)",
+        help="maximum validation errors to print or return (default: 10)",
     )
+    add_json_option(validate_parser)
     validate_parser.set_defaults(handler=command_validate)
 
     fixtures_parser = subparsers.add_parser(
         "fixtures", help="execute all valid/invalid public conformance fixtures"
     )
+    add_json_option(fixtures_parser)
     fixtures_parser.set_defaults(handler=command_fixtures)
 
     list_parser = subparsers.add_parser("list-schemas", help="list registered message schemas")
+    add_json_option(list_parser)
     list_parser.set_defaults(handler=command_list)
 
     return parser
