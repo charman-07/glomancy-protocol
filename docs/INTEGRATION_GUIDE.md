@@ -127,7 +127,30 @@ B -> A  task.result
 
 Some tasks will not require the approval messages. Some implementations may emit multiple progress/evidence records.
 
-## 10. Rejection example
+## 10. Executable reference consumer
+
+The repository includes a small Rust consumer example at `examples/reference_consumer.rs`.
+
+Run it with:
+
+```bash
+cargo run --example reference_consumer
+```
+
+It demonstrates:
+
+- current wire-version compatibility checking;
+- exact required/optional capability negotiation;
+- rejection of an unsupported required capability;
+- task-time capability subset checking;
+- message-kind to registered-schema resolution;
+- an explicit reminder that protocol validity and negotiated support are not authorization.
+
+The example does not connect to an editor, invoke a model provider, or execute private Glomancy runtime behavior. It exists to show the public contract boundary only.
+
+See `docs/REFERENCE_CONSUMER.md` for the annotated flow and extension guidance.
+
+## 11. Rejection example
 
 A safe incompatible-version path is:
 
@@ -141,7 +164,7 @@ B       does not accept task traffic for that incompatible session
 
 The receiver should not silently choose a version outside the declared compatibility rules.
 
-## 11. Minimal production checklist
+## 12. Minimal production checklist
 
 Before accepting task execution in a real integration, verify that you have:
 
@@ -159,7 +182,7 @@ Before accepting task execution in a real integration, verify that you have:
 - [ ] audit/evidence retention appropriate to your environment;
 - [ ] safe handling of errors without leaking secrets.
 
-## 12. What the protocol does not provide
+## 13. What the protocol does not provide
 
 Glomancy Protocol intentionally does not provide transport encryption, user authentication, authorization, credential storage, model-provider security, filesystem/process sandboxing, editor-specific permissions, or proof that an action is safe simply because its message validates.
 
@@ -167,6 +190,7 @@ Those controls belong to the integrating system.
 
 ## Related documents
 
+- `docs/REFERENCE_CONSUMER.md` — executable transport-neutral consumer example
 - `docs/ARCHITECTURE.md` — protocol layers and design constraints
 - `docs/COMPATIBILITY.md` — wire/schema version rules
 - `docs/SECURITY_MODEL.md` — threats, properties, and integration responsibilities
