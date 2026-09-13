@@ -96,6 +96,36 @@
       "file": "invalid/missing-task-id.json",
       "schema": "../../schemas/v1/task.submit.schema.json",
       "expected_keyword": "required"
+    },
+    {
+      "file": "invalid/bad-message-id-format.json",
+      "schema": "../../schemas/v1/task.submit.schema.json",
+      "expected_keyword": "format"
+    },
+    {
+      "file": "invalid/bad-sent-at-format.json",
+      "schema": "../../schemas/v1/task.submit.schema.json",
+      "expected_keyword": "format"
+    },
+    {
+      "file": "invalid/bad-trace-id.json",
+      "schema": "../../schemas/v1/task.submit.schema.json",
+      "expected_keyword": "pattern"
+    },
+    {
+      "file": "invalid/duplicate-requested-capability.json",
+      "schema": "../../schemas/v1/task.submit.schema.json",
+      "expected_keyword": "uniqueItems"
+    },
+    {
+      "file": "invalid/empty-user-instruction.json",
+      "schema": "../../schemas/v1/task.submit.schema.json",
+      "expected_keyword": "minLength"
+    },
+    {
+      "file": "invalid/bad-context-uri.json",
+      "schema": "../../schemas/v1/task.submit.schema.json",
+      "expected_keyword": "format"
     }
   ]
 }
