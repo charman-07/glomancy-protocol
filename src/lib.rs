@@ -33,6 +33,20 @@ mod tests {
 
     use super::*;
 
+    fn valid_header() -> MessageHeader<'static> {
+        MessageHeader {
+            schema_id: "urn:glomancy:protocol:heartbeat:1.0.0",
+            protocol_version: PROTOCOL_VERSION,
+            message_id: "11111111-1111-4111-8111-111111111111",
+            sent_at: "2026-07-27T09:07:00Z",
+            sender_component: Component::Bridge,
+            sender_instance_id: "bridge-main",
+            trace_id: "0123456789abcdef0123456789abcdef",
+            span_id: "0123456789abcdef",
+            kind: MessageKind::Heartbeat,
+        }
+    }
+
     #[test]
     fn current_protocol_version_is_phase_four_version() {
         assert_eq!(PROTOCOL_VERSION, ProtocolVersion::new(0, 4, 0));
@@ -114,33 +128,50 @@ mod tests {
 
     #[test]
     fn valid_header_passes() {
-        let header = MessageHeader {
-            schema_id: "urn:glomancy:protocol:heartbeat:1.0.0",
-            protocol_version: PROTOCOL_VERSION,
-            message_id: "11111111-1111-4111-8111-111111111111",
-            sent_at: "2026-07-27T09:07:00Z",
-            sender_component: Component::Bridge,
-            sender_instance_id: "bridge-main",
-            trace_id: "0123456789abcdef0123456789abcdef",
-            span_id: "0123456789abcdef",
-            kind: MessageKind::Heartbeat,
-        };
+        assert_eq!(valid_header().validate(), Ok(()));
+    }
+
+    #[test]
+    fn compatible_patch_header_passes() {
+        let mut header = valid_header();
+        header.protocol_version = ProtocolVersion::new(0, 4, 9);
         assert_eq!(header.validate(), Ok(()));
     }
 
     #[test]
+    fn incompatible_protocol_version_fails_closed() {
+        let mut header = valid_header();
+        header.protocol_version = ProtocolVersion::new(0, 5, 0);
+        assert_eq!(
+            header.validate(),
+            Err(HeaderValidationError::IncompatibleProtocolVersion)
+        );
+    }
+
+    #[test]
+    fn unknown_registered_schema_fails_closed() {
+        let mut header = valid_header();
+        header.schema_id = "urn:glomancy:protocol:unknown:1.0.0";
+        assert_eq!(
+            header.validate(),
+            Err(HeaderValidationError::UnknownSchemaId)
+        );
+    }
+
+    #[test]
+    fn schema_kind_mismatch_fails_closed() {
+        let mut header = valid_header();
+        header.kind = MessageKind::TaskSubmit;
+        assert_eq!(
+            header.validate(),
+            Err(HeaderValidationError::SchemaKindMismatch)
+        );
+    }
+
+    #[test]
     fn invalid_header_message_id_fails() {
-        let header = MessageHeader {
-            schema_id: "urn:glomancy:protocol:heartbeat:1.0.0",
-            protocol_version: PROTOCOL_VERSION,
-            message_id: "bad-id",
-            sent_at: "2026-07-27T09:07:00Z",
-            sender_component: Component::Bridge,
-            sender_instance_id: "bridge-main",
-            trace_id: "0123456789abcdef0123456789abcdef",
-            span_id: "0123456789abcdef",
-            kind: MessageKind::Heartbeat,
-        };
+        let mut header = valid_header();
+        header.message_id = "bad-id";
         assert_eq!(
             header.validate(),
             Err(HeaderValidationError::InvalidMessageId)
