@@ -96,6 +96,25 @@ def release_heading_exists(version: str) -> bool:
     return re.search(rf"(?m)^## \[{re.escape(version)}\](?:\s|—|-|$)", changelog) is not None
 
 
+def support_release_lines(policy: dict[str, Any]) -> list[dict[str, str]]:
+    entries = policy.get("supported_releases")
+    if not isinstance(entries, list) or not entries:
+        raise ReadinessError("support policy supported_releases must be a non-empty array")
+
+    result: list[dict[str, str]] = []
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            raise ReadinessError(f"support policy entry {index} must be an object")
+        row: dict[str, str] = {}
+        for key in ("crate_line", "latest_release", "source_tag", "wire_line", "schema_line", "status"):
+            value = entry.get(key)
+            if not isinstance(value, str) or not value:
+                raise ReadinessError(f"support policy entry {index} has invalid {key}")
+            row[key] = value
+        result.append(row)
+    return result
+
+
 def collect(expected_version: str | None) -> dict[str, Any]:
     cargo = read_text(ROOT / "Cargo.toml")
     package_name = cargo_package_field(cargo, "name")
@@ -113,6 +132,7 @@ def collect(expected_version: str | None) -> dict[str, Any]:
     capability = load_json(ROOT / "capabilities" / "v1" / "profile.json")
     vectors = load_json(ROOT / "vectors" / "v1" / "manifest.json")
     errors = load_json(ROOT / "errors" / "v1" / "catalog.json")
+    support = load_json(ROOT / "support" / "v1" / "policy.json")
 
     registry_wire = require_semver(
         "registry wire_protocol_version", registry.get("wire_protocol_version"), core_only=True
@@ -141,6 +161,8 @@ def collect(expected_version: str | None) -> dict[str, Any]:
     profile_version = require_semver("capability profile_version", capability.get("profile_version"))
     vector_version = require_semver("consumer vector_version", vectors.get("vector_version"))
     catalog_version = require_semver("error catalog_version", errors.get("catalog_version"))
+    support_policy_version = require_semver("support policy_version", support.get("policy_version"))
+    supported_lines = support_release_lines(support)
     schemas = schema_versions(registry)
 
     message_schemas = registry.get("message_schemas")
@@ -174,11 +196,14 @@ def collect(expected_version: str | None) -> dict[str, Any]:
         "capability_profile_version": profile_version,
         "consumer_vector_version": vector_version,
         "error_catalog_version": catalog_version,
+        "support_policy_version": support_policy_version,
+        "supported_release_lines": supported_lines,
         "counts": {
             "message_schemas": len(message_schemas),
             "support_schemas": len(support_schemas),
             "vector_areas": len(vector_files),
             "protocol_error_codes": len(error_codes),
+            "supported_release_lines": len(supported_lines),
         },
         "changelog_has_current_package_release": changelog_has_release,
     }
@@ -188,6 +213,10 @@ def as_markdown(data: dict[str, Any], ref: str | None, sha: str | None) -> str:
     package = data["package"]
     counts = data["counts"]
     schema_versions_text = ", ".join(data["schema_versions"])
+    support_lines = ", ".join(
+        f"{entry['crate_line']} ({entry['status']}, latest {entry['latest_release']}, wire {entry['wire_line']})"
+        for entry in data["supported_release_lines"]
+    )
     lines = [
         "# Glomancy Protocol release-readiness metadata",
         "",
@@ -201,12 +230,14 @@ def as_markdown(data: dict[str, Any], ref: str | None, sha: str | None) -> str:
         f"- **Capability profile:** `{data['capability_profile_version']}`",
         f"- **Consumer vectors:** `{data['consumer_vector_version']}`",
         f"- **Error catalog:** `{data['error_catalog_version']}`",
+        f"- **Support policy:** `{data['support_policy_version']}`",
+        f"- **Supported public release lines:** `{support_lines}`",
         f"- **Message schemas:** `{counts['message_schemas']}`",
         f"- **Support schemas:** `{counts['support_schemas']}`",
         f"- **Vector areas:** `{counts['vector_areas']}`",
         f"- **Protocol error codes:** `{counts['protocol_error_codes']}`",
         "",
-        "> This report validates release-facing metadata consistency only. The workflow's quality, contract, and portability jobs provide the remaining release-gate evidence. It does not sign, publish, certify, or authorize a release.",
+        "> This report validates release-facing metadata consistency only. The workflow's quality, contract, support-policy, and portability jobs provide the remaining release-gate evidence. It does not sign, publish, certify, or authorize a release.",
     ]
     return "\n".join(lines)
 
@@ -246,7 +277,8 @@ def main() -> int:
             f"wire={data['wire_protocol_version']} "
             f"schemas={','.join(data['schema_versions'])} "
             f"vectors={data['consumer_vector_version']} "
-            f"errors={data['error_catalog_version']}"
+            f"errors={data['error_catalog_version']} "
+            f"support={data['support_policy_version']}"
         )
     return 0
 
