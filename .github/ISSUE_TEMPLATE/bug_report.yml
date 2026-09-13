@@ -1,0 +1,60 @@
+name: Bug report
+description: Report a reproducible problem in the public protocol, schemas, fixtures, or Rust helpers.
+title: "bug: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Glomancy Protocol. Do not report security vulnerabilities here; follow SECURITY.md instead.
+  - type: input
+    id: version
+    attributes:
+      label: Protocol / crate version
+      description: Include the wire protocol, crate version, commit, or schema version when known.
+      placeholder: "wire 0.4.0 / crate 0.1.x / commit SHA"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Rust API / validation
+        - JSON Schema
+        - Registry / hashes
+        - Compatibility negotiation
+        - Fixtures / examples
+        - Documentation
+        - CI / tooling
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and the smallest reproducible example.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Compatibility or safety impact
+      description: Note any fail-open behavior, version mismatch, validation bypass, or migration impact. Do not include sensitive exploit details.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues first.
+          required: true
+        - label: This report contains no credentials, customer data, proprietary code, or other sensitive information.
+          required: true
+        - label: This is not a privately reportable security vulnerability.
+          required: true
