@@ -1,6 +1,6 @@
 # Support
 
-Glomancy Protocol is an early-stage open-source project maintained on a best-effort basis.
+Glomancy Protocol is a newly public open-source repository built from protocol work that has already been under active development and validation. It is maintained on a best-effort basis.
 
 ## Questions and integration help
 
