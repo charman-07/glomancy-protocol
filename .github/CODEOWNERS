@@ -8,6 +8,7 @@
 /vectors/ @charman-07
 /errors/ @charman-07
 /support/ @charman-07
+/contracts/ @charman-07
 
 # Security, governance, release, and CI surfaces
 /.github/workflows/ @charman-07
@@ -20,3 +21,4 @@
 /docs/PROTOCOL_CHANGE_PROCESS.md @charman-07
 /docs/RELEASE_GATES.md @charman-07
 /docs/RELEASE_SUPPORT_POLICY.md @charman-07
+/docs/PUBLIC_CONTRACT_FINGERPRINT.md @charman-07
