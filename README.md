@@ -50,7 +50,8 @@ Glomancy Protocol makes that boundary explicit with:
 - a SHA-256-backed schema registry;
 - fail-closed handling for unknown message kinds, schemas, incompatible versions, and unsupported required capabilities;
 - valid and intentionally invalid fixtures for conformance testing;
-- a public conformance CLI for validating payloads without the private Glomancy runtime.
+- a public conformance CLI for validating payloads without the private Glomancy runtime;
+- an executable reference consumer showing how an independent integration can apply the public protocol checks without private Glomancy code.
 
 ## What benefit does it provide?
 
@@ -68,7 +69,7 @@ The public contract is transport-neutral and provider-neutral. An outside implem
 
 ### Testability
 
-Schemas, registry hashes, compatibility cases, capability cases, Rust tests, valid/invalid fixtures, repository validators, and the public conformance CLI can all run in CI.
+Schemas, registry hashes, compatibility cases, capability cases, Rust tests, valid/invalid fixtures, repository validators, the public conformance CLI, and the reference consumer can all run in CI.
 
 ### Safer evolution
 
@@ -107,10 +108,13 @@ git clone https://github.com/charman-07/glomancy-protocol.git
 cd glomancy-protocol
 cargo test --all-targets
 cargo run --example quick_start
+cargo run --example reference_consumer
 python3 scripts/validate_repository.py
 ```
 
-The Rust example parses protocol versions, evaluates compatibility, and resolves a known message kind. The repository validator checks JSON integrity, schema-registry hashes, fixture references, and protocol-version consistency.
+`quick_start` shows basic version and message-kind handling. `reference_consumer` demonstrates a fuller external-consumer boundary: version compatibility, exact capability negotiation, task capability gating, schema resolution, fail-closed required-capability rejection, and the explicit fact that authorization is still required. See [Reference Consumer](docs/REFERENCE_CONSUMER.md) for the annotated walkthrough.
+
+The repository validator checks JSON integrity, schema-registry hashes, fixture references, and protocol-version consistency.
 
 ### Validate protocol messages
 
@@ -154,7 +158,7 @@ The v1 schema set covers:
 | Verification | `evidence.record` |
 | Liveness | `heartbeat` |
 
-See the [Consumer Integration Guide](docs/INTEGRATION_GUIDE.md) for an end-to-end language-neutral flow. [Capability Negotiation](docs/CAPABILITY_NEGOTIATION.md), [Protocol Conformance](docs/CONFORMANCE.md), [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), [Pre-1.0 Deprecation Policy](docs/DEPRECATION_POLICY.md), and [Security Model](docs/SECURITY_MODEL.md) document the executable contract, design rationale, evolution rules, and trust boundaries.
+See the [Consumer Integration Guide](docs/INTEGRATION_GUIDE.md) for an end-to-end language-neutral flow and the [Reference Consumer](docs/REFERENCE_CONSUMER.md) for a runnable external-consumer example. [Capability Negotiation](docs/CAPABILITY_NEGOTIATION.md), [Protocol Conformance](docs/CONFORMANCE.md), [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), [Pre-1.0 Deprecation Policy](docs/DEPRECATION_POLICY.md), and [Security Model](docs/SECURITY_MODEL.md) document the executable contract, design rationale, evolution rules, and trust boundaries.
 
 ## Capability negotiation
 
@@ -212,6 +216,7 @@ The protocol is not presented as a broadly adopted industry standard today. It i
 src/                 Rust protocol types and validation helpers
 schemas/v1/          JSON Schema contracts
 registry/v1/         Canonical schema registry and SHA-256 metadata
+examples/             Runnable Rust examples plus public protocol fixtures
 examples/v1/         Valid and invalid protocol fixtures
 compatibility/v1/    Version negotiation rules and cases
 capabilities/v1/     Machine-readable capability profile and cases
@@ -231,7 +236,7 @@ Schema versions and wire-protocol versions are separate on purpose: a schema can
 
 This public repository is newly open-sourced, but the underlying protocol work had already been under active development, testing, debugging, and repeated validation before the public repository was opened. The current public focus is a small, auditable protocol core with executable conformance behavior rather than a large framework.
 
-The repository already includes cross-platform tests, JSON Schema validation, public/private boundary checks, capability-negotiation validation, registry hash checks, supply-chain maintenance rules, and a public conformance CLI. It is still pre-1.0; real integration feedback and independent usage are important before stronger stability claims are appropriate.
+The repository already includes cross-platform tests, JSON Schema validation, public/private boundary checks, capability-negotiation validation, registry hash checks, supply-chain maintenance rules, a public conformance CLI, and an executable reference consumer. It is still pre-1.0; real integration feedback and independent usage are important before stronger stability claims are appropriate.
 
 Planned work is tracked in [ROADMAP.md](ROADMAP.md) and GitHub Issues. Roadmap items are direction, not promises or fabricated adoption claims.
 
@@ -243,7 +248,7 @@ Project decisions and maintainer responsibilities are described in [GOVERNANCE.m
 
 ## Release discipline
 
-Every release should pass formatting, Clippy, tests, documentation checks, cross-platform test jobs, repository integrity validation, capability-profile validation, and executable conformance checks. Public deprecations/removals must also carry explicit migration notes under [docs/DEPRECATION_POLICY.md](docs/DEPRECATION_POLICY.md). The release checklist is documented in [RELEASING.md](RELEASING.md), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
+Every release should pass formatting, Clippy, tests, documentation checks, cross-platform test jobs, repository integrity validation, capability-profile validation, executable examples, and executable conformance checks. Public deprecations/removals must also carry explicit migration notes under [docs/DEPRECATION_POLICY.md](docs/DEPRECATION_POLICY.md). The release checklist is documented in [RELEASING.md](RELEASING.md), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
