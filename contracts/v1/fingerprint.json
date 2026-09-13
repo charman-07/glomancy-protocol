@@ -24,6 +24,10 @@
       "sha256": "08739b044f3bb2eba4675f50a51415718498070ad3334c67a316eaee0b2eb1ba"
     },
     {
+      "path": "limits/v1/policy.json",
+      "sha256": "952f6c5c996acc59cb4066a0a786b23b3afc53d00911756941c93972715c1134"
+    },
+    {
       "path": "registry/v1/manifest.json",
       "sha256": "b17fee2a6e78ca67a7f1942383102c7727f86e664a2151bbed69f9936ffa2166"
     },
@@ -40,5 +44,5 @@
       "sha256": "0af2f57c26e8f85d33ac96c4301c4fbb286a5b0b7fb3dc4970f7306201517c8e"
     }
   ],
-  "aggregate_sha256": "fedf58c9d16f37ca691bf241894dbfac0c7d7c74d4b8ad6c87a668bdc34c3015"
+  "aggregate_sha256": "9078d67f7c99ca8144d43f14c7397d70b3e79c84d7e50bcdee7dff62fe39b485"
 }
