@@ -11,6 +11,10 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Public OSS governance, roadmap, support, release, architecture, compatibility, and security-model documentation.
 - GitHub issue forms, pull-request template, CODEOWNERS, and Dependabot configuration.
 - Repository-integrity validation for JSON files, schema hashes, fixture references, and version consistency.
+- Executable JSON Schema conformance checks for the public valid/invalid fixture corpus, including format validation and expected-failure keywords.
+- Expanded malformed/boundary vectors for UUIDs, timestamps, trace IDs, URIs, duplicate capabilities, and empty instructions.
+- Public `glomancy_conformance.py` CLI for validating payloads, executing fixtures, and listing registered message schemas without the private Glomancy runtime.
+- External implementer conformance guide with stable CLI exit codes and CI examples.
 - Public contract regression tests.
 - Cross-platform CI on Linux, Windows, and macOS in addition to formatting, Clippy, Rustdoc, and repository-contract checks.
 
