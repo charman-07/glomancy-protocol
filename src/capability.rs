@@ -63,7 +63,9 @@ pub fn is_capability_name(value: &str) -> bool {
         return false;
     }
 
-    bytes.all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'.' | b'-'))
+    bytes.all(|byte| {
+        byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'.' | b'-')
+    })
 }
 
 /// Negotiates profile-v1 capabilities using exact name + exact version matching.
@@ -85,7 +87,9 @@ pub fn negotiate_capabilities<'a>(
 
     for capability in local {
         if !is_capability_name(capability.name) {
-            return Err(CapabilityNegotiationError::InvalidLocalName(capability.name));
+            return Err(CapabilityNegotiationError::InvalidLocalName(
+                capability.name,
+            ));
         }
     }
 
@@ -101,9 +105,9 @@ pub fn negotiate_capabilities<'a>(
 
     for requirement in remote {
         let requested = requirement.capability;
-        let exact = local
-            .iter()
-            .any(|available| available.name == requested.name && available.version == requested.version);
+        let exact = local.iter().any(|available| {
+            available.name == requested.name && available.version == requested.version
+        });
 
         if exact {
             selected.push(requested);
@@ -128,9 +132,7 @@ pub fn task_capabilities_are_selected(requested: &[&str], selected: &[Capability
     })
 }
 
-fn first_duplicate_remote_name<'a>(
-    capabilities: &[CapabilityRequirement<'a>],
-) -> Option<&'a str> {
+fn first_duplicate_remote_name<'a>(capabilities: &[CapabilityRequirement<'a>]) -> Option<&'a str> {
     for (index, capability) in capabilities.iter().enumerate() {
         if capabilities[..index]
             .iter()
@@ -240,7 +242,9 @@ mod tests {
 
         assert_eq!(
             negotiate_capabilities(&remote, &local),
-            Err(CapabilityNegotiationError::DuplicateRemoteName("asset.read"))
+            Err(CapabilityNegotiationError::DuplicateRemoteName(
+                "asset.read"
+            ))
         );
     }
 
