@@ -1,0 +1,47 @@
+{
+  "catalog_version": "1.0.0",
+  "wire_protocol_version": "0.4.0",
+  "description": "Machine-readable catalog of protocol error codes currently defined by the public Glomancy Protocol package.",
+  "codes": [
+    {
+      "name": "invalid_envelope",
+      "code": "GLM-PROTO-1001",
+      "description": "The protocol envelope is malformed or violates required envelope-level structure."
+    },
+    {
+      "name": "unsupported_version",
+      "code": "GLM-PROTO-1002",
+      "description": "The supplied or negotiated wire protocol version is not supported by the receiving implementation."
+    },
+    {
+      "name": "unknown_schema",
+      "code": "GLM-PROTO-1003",
+      "description": "The message references a schema identifier that is not registered for the supported public protocol contract."
+    },
+    {
+      "name": "unknown_message_kind",
+      "code": "GLM-PROTO-1004",
+      "description": "The message kind is unknown to the receiving implementation and must fail closed."
+    },
+    {
+      "name": "policy_denied",
+      "code": "GLM-PROTO-1005",
+      "description": "Local policy rejected the requested protocol operation."
+    },
+    {
+      "name": "message_too_large",
+      "code": "GLM-PROTO-1006",
+      "description": "The message exceeds the public or locally enforced message-size limit."
+    },
+    {
+      "name": "invalid_identifier",
+      "code": "GLM-PROTO-1007",
+      "description": "A required protocol identifier does not satisfy the public identifier contract."
+    },
+    {
+      "name": "internal",
+      "code": "GLM-PROTO-1999",
+      "description": "An internal protocol-processing failure occurred that is not represented by a more specific public protocol error code."
+    }
+  ]
+}

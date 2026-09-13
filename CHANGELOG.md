@@ -25,6 +25,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Stdlib-only Rust/JSON registry parity validation that fails CI if public message kinds, schema IDs, schema versions, hashes, or schema paths drift between the canonical JSON registry and the Rust crate snapshot.
 - Fail-closed Rust `from_wire` helpers for public component, risk-level, execution-mode, task-status, and error-category enums, plus CI parity checks against the canonical enum values in `common.schema.json`.
 - Registry-aware Rust `MessageHeader::validate()` checks for incompatible wire versions, unknown registered schema IDs, and schema-ID/message-kind mismatches while preserving existing structural header validation.
+- Versioned machine-readable protocol error-code catalog with fail-closed Rust parsing, round-trip tests, and CI parity checks between `errors/v1/catalog.json` and `ProtocolErrorCode`.
 
 ### Clarified
 
@@ -33,6 +34,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Published schema IDs are immutable identities: a compatible current contract may not silently change the SHA-256 content or message-kind mapping behind a pinned release schema ID.
 - Maintainer-derived implementation notes are tracked separately from genuine external integration feedback; the project does not claim third-party production adoption or feedback that has not occurred.
 - The `v0.1.0` wording describes the first public pre-1.0 release rather than implying that the underlying Glomancy/protocol work began when the public repository was opened.
+- The generic JSON Schema `error.code` pattern permits future well-formed codes, while the versioned error catalog records the codes currently defined by this protocol package; unknown codes remain unknown and must not be treated as implicitly supported.
 
 ## [0.1.0] — 2026-09-13
 
