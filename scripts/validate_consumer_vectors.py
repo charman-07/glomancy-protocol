@@ -148,6 +148,122 @@ def task_gate(requested_names: list[str], selected: list[dict[str, object]]) -> 
     return all(valid_capability_name(name) and name in selected_names for name in requested_names)
 
 
+def lifecycle_outcome(
+    accepted: bool,
+    terminal_status: str | None,
+    evidence_count: int,
+    reason: str | None,
+) -> dict[str, object]:
+    return {
+        "accepted": accepted,
+        "terminal_status": terminal_status,
+        "evidence_count": evidence_count,
+        "reason": reason,
+    }
+
+
+def evaluate_task_lifecycle(inputs: dict[str, object]) -> dict[str, object]:
+    selected = inputs["selected_capabilities"]
+    task = inputs["task"]
+    events = inputs["events"]
+    if not isinstance(selected, list) or not isinstance(task, dict) or not isinstance(events, list):
+        raise TypeError("task lifecycle input has invalid shape")
+
+    task_id = str(task["task_id"])
+    requested_capabilities = [str(value) for value in task["requested_capabilities"]]
+    approval_required = bool(task["approval_required"])
+
+    if not task_gate(requested_capabilities, selected):
+        return lifecycle_outcome(False, None, 0, "unselected-capability")
+
+    approval_request: dict[str, object] | None = None
+    approval_granted = not approval_required
+    approval_denied = False
+    evidence_ids: set[str] = set()
+    terminal_status: str | None = None
+
+    for raw_event in events:
+        if not isinstance(raw_event, dict):
+            raise TypeError("task lifecycle event must be an object")
+        event = raw_event
+
+        if terminal_status is not None:
+            return lifecycle_outcome(
+                False, terminal_status, len(evidence_ids), "event-after-terminal"
+            )
+
+        kind = str(event.get("kind", ""))
+        if kind not in {
+            "approval.request",
+            "approval.decision",
+            "task.progress",
+            "evidence.record",
+            "task.result",
+        }:
+            return lifecycle_outcome(False, None, len(evidence_ids), "unknown-event-kind")
+
+        if str(event.get("task_id", "")) != task_id:
+            return lifecycle_outcome(False, None, len(evidence_ids), "task-id-mismatch")
+
+        if kind == "approval.request":
+            if approval_request is not None:
+                return lifecycle_outcome(
+                    False, None, len(evidence_ids), "duplicate-approval-request"
+                )
+            approval_request = {
+                "approval_id": event["approval_id"],
+                "task_id": event["task_id"],
+                "expires_at": event["expires_at"],
+            }
+            continue
+
+        if kind == "approval.decision":
+            if approval_request is None:
+                return lifecycle_outcome(
+                    False, None, len(evidence_ids), "approval-not-requested"
+                )
+            decision_accepted, gate_satisfied, reason = evaluate_approval(
+                approval_request, event
+            )
+            if not decision_accepted:
+                return lifecycle_outcome(False, None, len(evidence_ids), reason)
+            approval_granted = gate_satisfied
+            approval_denied = reason == "denied"
+            continue
+
+        if kind == "evidence.record":
+            evidence_id = str(event["evidence_id"])
+            if evidence_id in evidence_ids:
+                return lifecycle_outcome(
+                    False, None, len(evidence_ids), "duplicate-evidence-id"
+                )
+            evidence_ids.add(evidence_id)
+            continue
+
+        referenced_evidence = [str(value) for value in event.get("evidence_ids", [])]
+        if any(value not in evidence_ids for value in referenced_evidence):
+            return lifecycle_outcome(False, None, len(evidence_ids), "missing-evidence")
+
+        if kind == "task.progress":
+            status = str(event.get("status", ""))
+            if status in {"running", "validating"} and approval_required and not approval_granted:
+                reason = "approval-denied" if approval_denied else "approval-required"
+                return lifecycle_outcome(False, None, len(evidence_ids), reason)
+            continue
+
+        if kind == "task.result":
+            if str(event.get("status", "")) != "succeeded":
+                return lifecycle_outcome(
+                    False, None, len(evidence_ids), "invalid-result-status"
+                )
+            if approval_required and not approval_granted:
+                reason = "approval-denied" if approval_denied else "approval-required"
+                return lifecycle_outcome(False, None, len(evidence_ids), reason)
+            terminal_status = "succeeded"
+
+    return lifecycle_outcome(True, terminal_status, len(evidence_ids), None)
+
+
 def require_equal(case_id: str, actual: object, expected: object) -> None:
     if actual != expected:
         raise AssertionError(f"{case_id}: expected {expected!r}, got {actual!r}")
@@ -245,6 +361,15 @@ def validate_approval_flow(path: Path) -> int:
     return len(cases)
 
 
+def validate_task_lifecycle(path: Path) -> int:
+    data = load_json(path)
+    cases = data["cases"]  # type: ignore[index]
+    for case in cases:
+        actual = evaluate_task_lifecycle(case["input"])
+        require_equal(str(case["id"]), actual, case["expected"])
+    return len(cases)
+
+
 def main() -> int:
     try:
         manifest = load_json(VECTORS / "manifest.json")
@@ -262,6 +387,7 @@ def main() -> int:
             "capability-negotiation": validate_capabilities,
             "task-capability-gate": validate_task_gate,
             "approval-flow": validate_approval_flow,
+            "task-lifecycle": validate_task_lifecycle,
         }
         seen: set[str] = set()
         total = 0
