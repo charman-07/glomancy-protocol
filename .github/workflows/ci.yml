@@ -62,6 +62,9 @@ jobs:
       - name: Validate capability negotiation profile
         run: python3 scripts/validate_capability_profile.py
 
+      - name: Validate language-neutral consumer vectors
+        run: python3 scripts/validate_consumer_vectors.py
+
       - name: Execute JSON Schema conformance fixtures
         run: python3 scripts/validate_fixtures.py
 

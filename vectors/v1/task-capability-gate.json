@@ -1,0 +1,8 @@
+{
+  "cases": [
+    {"id":"selected-capability-accepted","input":{"requested_names":["editor.read"],"selected":[{"name":"editor.read","version":"1.0.0"},{"name":"result.evidence","version":"1.0.0"}]},"expected":{"accepted":true}},
+    {"id":"unselected-capability-rejected","input":{"requested_names":["editor.write"],"selected":[{"name":"editor.read","version":"1.0.0"}]},"expected":{"accepted":false}},
+    {"id":"invalid-capability-name-rejected","input":{"requested_names":["Editor.Read"],"selected":[{"name":"editor.read","version":"1.0.0"}]},"expected":{"accepted":false}},
+    {"id":"multiple-selected-capabilities-accepted","input":{"requested_names":["editor.read","result.evidence"],"selected":[{"name":"editor.read","version":"1.0.0"},{"name":"result.evidence","version":"1.0.0"}]},"expected":{"accepted":true}}
+  ]
+}

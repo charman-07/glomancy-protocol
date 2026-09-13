@@ -6,7 +6,11 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 
 ## [Unreleased]
 
-No unreleased public changes yet.
+### Added
+
+- Versioned, language-neutral consumer conformance vectors in plain JSON for message-kind lookup, wire compatibility, capability negotiation, and task-time capability gating.
+- Dependency-free repository validator for the consumer vectors so CI detects drift between expected outcomes and the public registry/compatibility/capability rules.
+- External implementer documentation explaining how non-Rust consumers can run the same expected-outcome suite without depending on the Rust crate or private Glomancy runtime.
 
 ## [0.1.0] — 2026-09-13
 

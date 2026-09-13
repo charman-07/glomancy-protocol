@@ -1,0 +1,10 @@
+{
+  "cases": [
+    {"id":"required-and-optional-selected","input":{"requested":[{"name":"editor.read","version":"1.0.0","required":true},{"name":"result.evidence","version":"1.0.0","required":false}],"available":[{"name":"editor.read","version":"1.0.0"},{"name":"result.evidence","version":"1.0.0"}]},"expected":{"accepted":true,"selected":[{"name":"editor.read","version":"1.0.0"},{"name":"result.evidence","version":"1.0.0"}],"error":null}},
+    {"id":"unsupported-optional-omitted","input":{"requested":[{"name":"editor.read","version":"1.0.0","required":true},{"name":"result.evidence","version":"1.0.0","required":false}],"available":[{"name":"editor.read","version":"1.0.0"}]},"expected":{"accepted":true,"selected":[{"name":"editor.read","version":"1.0.0"}],"error":null}},
+    {"id":"unsupported-required-rejected","input":{"requested":[{"name":"editor.write","version":"1.0.0","required":true}],"available":[{"name":"editor.read","version":"1.0.0"}]},"expected":{"accepted":false,"selected":[],"error":"unsupported-required"}},
+    {"id":"exact-version-required","input":{"requested":[{"name":"editor.read","version":"1.1.0","required":true}],"available":[{"name":"editor.read","version":"1.0.0"}]},"expected":{"accepted":false,"selected":[],"error":"unsupported-required"}},
+    {"id":"duplicate-requested-name-rejected","input":{"requested":[{"name":"editor.read","version":"1.0.0","required":false},{"name":"editor.read","version":"1.1.0","required":false}],"available":[{"name":"editor.read","version":"1.0.0"}]},"expected":{"accepted":false,"selected":[],"error":"duplicate-remote-name"}},
+    {"id":"invalid-requested-name-rejected","input":{"requested":[{"name":"Editor.Read","version":"1.0.0","required":true}],"available":[{"name":"editor.read","version":"1.0.0"}]},"expected":{"accepted":false,"selected":[],"error":"invalid-remote-name"}}
+  ]
+}
