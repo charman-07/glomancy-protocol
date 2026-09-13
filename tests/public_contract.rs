@@ -1,7 +1,8 @@
 use core::str::FromStr;
 
 use glomancy_protocol::{
-    MessageKind, PROTOCOL_VERSION, ProtocolVersion, VersionCompatibility, is_sha256, schema_for_kind,
+    MessageKind, PROTOCOL_VERSION, ProtocolVersion, VersionCompatibility, is_sha256,
+    schema_for_kind,
 };
 
 const ALL_MESSAGE_KINDS: [MessageKind; 11] = [
