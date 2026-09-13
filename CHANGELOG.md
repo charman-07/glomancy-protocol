@@ -30,6 +30,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Public `MAINTAINERS.md` register and release-quality gate documentation covering source quality, cross-platform portability, contract integrity, security review, release metadata, and post-release verification.
 - Manually runnable release-readiness audit workflow with exact-ref checkout, Rust/repository-contract/cross-platform gates, deterministic release-facing metadata validation, and an audited ref/SHA summary without publishing or certifying a release.
 - Versioned machine-readable release/security support policy for published pre-1.0 release lines, with best-effort security/bug-fix semantics, explicit non-SLA/non-LTS posture, published-snapshot validation, and release-readiness reporting.
+- Deterministic public-contract fingerprint manifest and dependency-free verifier covering the canonical registry, compatibility, capability, vector, error, support, snapshot, and conformance-output contracts, with aggregate SHA-256 reporting in release-readiness audits.
 
 ### Clarified
 
@@ -41,6 +42,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - The generic JSON Schema `error.code` pattern permits future well-formed codes, while the versioned error catalog records the codes currently defined by this protocol package; unknown codes remain unknown and must not be treated as implicitly supported.
 - Project process requirements are distinct from GitHub-enforced repository controls; branch/ruleset protection is not claimed until it is actually configured and verified.
 - Release-support metadata describes published public release lines rather than unreleased `main`; active development may advance before a new release becomes the current supported line.
+- The public contract fingerprint provides deterministic integrity comparison only; it is not a signature, authenticity proof, provenance claim, authorization decision, or certification.
 
 ## [0.1.0] — 2026-09-13
 
