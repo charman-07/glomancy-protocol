@@ -104,19 +104,18 @@ python3 scripts/validate_consumer_vectors.py
 
 It checks the vector expectations against the public registry and documented compatibility/capability/approval rules. CI runs it on every change to catch drift between vectors and the rest of the public contract.
 
-## Independent Python consumer
+## Independent consumer examples
 
-A separate dependency-free example lives at `examples/consumers/python/reference_consumer.py`.
-
-Run it from the repository root:
+The repository includes dependency-free examples that implement selected decisions independently from the Rust crate and repository validator:
 
 ```bash
 python3 examples/consumers/python/reference_consumer.py
+node examples/consumers/javascript/reference_consumer.mjs
 ```
 
-Unlike the repository validator, this example independently implements advertised-version selection, capability negotiation, task capability gating, and approval correlation/expiry behavior, then executes the published JSON vectors. It does not import `scripts/validate_consumer_vectors.py` or the Rust crate.
+Both examples load the same public registry and JSON vectors, independently implement advertised-version selection, capability negotiation, task capability gating, and approval correlation/expiry behavior, and fail non-zero if their result differs from the published expectation.
 
-That makes it a small interoperability example for developers implementing the protocol outside Rust. It is still non-normative: the versioned public contract and vectors remain authoritative.
+They are intentionally small interoperability examples rather than alternate specifications. Neither example imports `scripts/validate_consumer_vectors.py`, delegates to the other language, or depends on the private Glomancy runtime.
 
 ## Versioning
 

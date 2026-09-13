@@ -68,6 +68,9 @@ jobs:
       - name: Run independent Python consumer example
         run: python3 examples/consumers/python/reference_consumer.py
 
+      - name: Run independent JavaScript consumer example
+        run: node examples/consumers/javascript/reference_consumer.mjs
+
       - name: Validate published compatibility snapshots
         run: python3 scripts/validate_compatibility_snapshots.py
 
