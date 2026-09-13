@@ -31,11 +31,15 @@ The current negotiation policy also requires:
 
 Before 1.0, a minor version can represent a meaningful contract change. Treating a new minor as automatically compatible would allow an implementation to accept semantics it does not understand. The project therefore uses a conservative same-minor rule before 1.0.
 
+The detailed lifecycle for announcing, migrating, and removing pre-1.0 public behavior is documented in [Pre-1.0 Deprecation and Schema Evolution Policy](DEPRECATION_POLICY.md).
+
 ## Schema evolution
 
 A schema's URN includes its schema version. A change that alters the accepted wire contract should not silently reuse a schema identifier whose published hash has changed.
 
 The schema registry records SHA-256 digests so CI can detect accidental mutation of the registered source files.
+
+For material contract changes, prefer a new schema version/ID, updated registry metadata, explicit fixtures/tests, and migration notes rather than silent mutation. The full process is defined in [DEPRECATION_POLICY.md](DEPRECATION_POLICY.md).
 
 ## Compatibility tests
 
@@ -57,3 +61,5 @@ The protocol is pre-1.0, so breaking changes can occur before 1.0. They must be 
 - migration options;
 - security consequences;
 - the intended wire/schema version transition.
+
+Where practical, a public contract should be deprecated and accompanied by a replacement/migration path before removal. Immediate removal is reserved for cases where retaining the old behavior would create unreasonable security or correctness risk. See [DEPRECATION_POLICY.md](DEPRECATION_POLICY.md) for the complete lifecycle and non-guarantees.

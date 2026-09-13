@@ -18,7 +18,7 @@ This roadmap describes the intended direction of Glomancy Protocol. It is delibe
 - [x] Add more boundary and malformed-input test vectors.
 - [ ] Add reference integration examples that remain transport-neutral.
 - [x] Define a machine-readable capability negotiation profile.
-- [ ] Add a documented deprecation process for pre-1.0 schema changes.
+- [x] Add a documented deprecation process for pre-1.0 schema changes.
 
 ## v0.3 — Interoperability
 

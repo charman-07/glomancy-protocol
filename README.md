@@ -72,7 +72,7 @@ Schemas, registry hashes, compatibility cases, capability cases, Rust tests, val
 
 ### Safer evolution
 
-Wire versions, schema IDs, compatibility rules, changelog discipline, and conformance checks make contract changes visible instead of silently changing behavior underneath consumers.
+Wire versions, schema IDs, compatibility rules, changelog discipline, and conformance checks make contract changes visible instead of silently changing behavior underneath consumers. The [Pre-1.0 Deprecation and Schema Evolution Policy](docs/DEPRECATION_POLICY.md) defines how public contracts are proposed, deprecated, migrated, and removed while the project is still evolving.
 
 ## Example high-level flow
 
@@ -154,7 +154,7 @@ The v1 schema set covers:
 | Verification | `evidence.record` |
 | Liveness | `heartbeat` |
 
-See the [Consumer Integration Guide](docs/INTEGRATION_GUIDE.md) for an end-to-end language-neutral flow. [Capability Negotiation](docs/CAPABILITY_NEGOTIATION.md), [Protocol Conformance](docs/CONFORMANCE.md), [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), and [Security Model](docs/SECURITY_MODEL.md) document the executable contract, design rationale, and trust boundaries.
+See the [Consumer Integration Guide](docs/INTEGRATION_GUIDE.md) for an end-to-end language-neutral flow. [Capability Negotiation](docs/CAPABILITY_NEGOTIATION.md), [Protocol Conformance](docs/CONFORMANCE.md), [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), [Pre-1.0 Deprecation Policy](docs/DEPRECATION_POLICY.md), and [Security Model](docs/SECURITY_MODEL.md) document the executable contract, design rationale, evolution rules, and trust boundaries.
 
 ## Capability negotiation
 
@@ -215,7 +215,7 @@ registry/v1/         Canonical schema registry and SHA-256 metadata
 examples/v1/         Valid and invalid protocol fixtures
 compatibility/v1/    Version negotiation rules and cases
 capabilities/v1/     Machine-readable capability profile and cases
-docs/                Product overview, architecture, conformance, compatibility, security, integration guides
+docs/                Product overview, architecture, conformance, compatibility, evolution, security, integration guides
 scripts/              Repository integrity, boundary, capability, fixture, and conformance tools
 tests/                Public contract regression tests
 .github/              CI and contribution workflow templates
@@ -225,7 +225,7 @@ tests/                Public contract regression tests
 
 Before 1.0, a patch change within the same protocol minor line is compatible; a different minor line is treated as incompatible. At 1.0 and later, versions with the same major version are considered protocol-compatible. Exact rules and negotiation behavior live in `compatibility/v1/compatibility-matrix.json` and are documented in [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
-Schema versions and wire-protocol versions are separate on purpose: a schema can evolve independently while negotiation remains explicit.
+Schema versions and wire-protocol versions are separate on purpose: a schema can evolve independently while negotiation remains explicit. Changes that deprecate or remove public behavior must follow [docs/DEPRECATION_POLICY.md](docs/DEPRECATION_POLICY.md) rather than silently mutating the contract.
 
 ## Project status
 
@@ -243,7 +243,7 @@ Project decisions and maintainer responsibilities are described in [GOVERNANCE.m
 
 ## Release discipline
 
-Every release should pass formatting, Clippy, tests, documentation checks, cross-platform test jobs, repository integrity validation, capability-profile validation, and executable conformance checks. The release checklist is documented in [RELEASING.md](RELEASING.md), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
+Every release should pass formatting, Clippy, tests, documentation checks, cross-platform test jobs, repository integrity validation, capability-profile validation, and executable conformance checks. Public deprecations/removals must also carry explicit migration notes under [docs/DEPRECATION_POLICY.md](docs/DEPRECATION_POLICY.md). The release checklist is documented in [RELEASING.md](RELEASING.md), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
