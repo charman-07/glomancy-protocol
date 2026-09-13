@@ -68,6 +68,9 @@ jobs:
       - name: Validate protocol error code catalog
         run: python3 scripts/validate_error_catalog.py
 
+      - name: Validate release-facing metadata
+        run: python3 scripts/release_readiness_report.py --json
+
       - name: Validate capability negotiation profile
         run: python3 scripts/validate_capability_profile.py
 
