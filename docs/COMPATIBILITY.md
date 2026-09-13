@@ -1,0 +1,59 @@
+# Compatibility
+
+Glomancy Protocol separates three version concepts:
+
+1. the **Rust crate version** (for example `0.1.0`);
+2. the **wire protocol version** (currently `0.4.0`);
+3. individual **schema versions** (currently `1.0.0` for the v1 public schema set).
+
+They are related but not interchangeable.
+
+## Wire negotiation rules
+
+The canonical machine-readable rules live in `compatibility/v1/compatibility-matrix.json`.
+
+| Local / remote relationship | Result |
+| --- | --- |
+| Versions exactly equal | `exact` |
+| Major is `0`, minor equal, patch differs | `patch-compatible` |
+| Major is `0`, minor differs | `incompatible` |
+| Major is `1+` and major equal | `major-compatible` |
+| Major differs | `incompatible` |
+
+The current negotiation policy also requires:
+
+- highest common supported version selection when more than one version is shared;
+- handshake rejection when there is no compatible intersection;
+- fail-closed behavior for unknown schema IDs;
+- fail-closed behavior for unknown message kinds.
+
+## Why pre-1.0 minor versions are incompatible
+
+Before 1.0, a minor version can represent a meaningful contract change. Treating a new minor as automatically compatible would allow an implementation to accept semantics it does not understand. The project therefore uses a conservative same-minor rule before 1.0.
+
+## Schema evolution
+
+A schema's URN includes its schema version. A change that alters the accepted wire contract should not silently reuse a schema identifier whose published hash has changed.
+
+The schema registry records SHA-256 digests so CI can detect accidental mutation of the registered source files.
+
+## Compatibility tests
+
+Compatibility behavior should be represented in all applicable places:
+
+- `compatibility/v1/compatibility-matrix.json` for the rule;
+- `compatibility/v1/cases.json` for concrete cases;
+- Rust tests for the public helper behavior;
+- migration notes in `CHANGELOG.md` when users need to act.
+
+A change is incomplete if code, matrix, fixtures, and documentation disagree.
+
+## Breaking changes
+
+The project is early-stage, so breaking changes can occur before 1.0. They must be explicit. A breaking proposal should describe:
+
+- what stops being accepted or changes meaning;
+- why an additive change is insufficient;
+- migration options;
+- security consequences;
+- the intended wire/schema version transition.

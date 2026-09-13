@@ -2,15 +2,18 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
   pull_request:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  quality:
+    name: Rust quality
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,6 +29,47 @@ jobs:
 
       - name: Clippy
         run: cargo clippy --all-targets -- -D warnings
+
+      - name: Tests
+        run: cargo test --all-targets
+
+      - name: Example
+        run: cargo run --example quick_start
+
+      - name: Rustdoc
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --no-deps
+
+  repository-contract:
+    name: Repository contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate JSON, registry hashes, fixtures, and versions
+        run: python3 scripts/validate_repository.py
+
+  portability:
+    name: Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust 1.85
+        run: rustup toolchain install 1.85.0 --profile minimal
+
+      - name: Set Rust override
+        run: rustup override set 1.85.0
 
       - name: Tests
         run: cargo test --all-targets

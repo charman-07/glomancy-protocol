@@ -1,0 +1,46 @@
+name: Protocol proposal
+description: Propose a transport-neutral improvement to the public protocol.
+title: "proposal: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What interoperability, validation, compatibility, or safety problem needs to be solved?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed contract change
+      description: Describe the smallest protocol-level change that solves the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and migration impact
+      description: Explain whether wire behavior, schema IDs, fixtures, or consumers need to change.
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Security impact
+      description: Consider validation, authorization boundaries, approvals, evidence, resource limits, and fail-closed behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Why is an existing message or an implementation-specific extension insufficient?
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This proposal is transport-neutral and does not require private Glomancy product code.
+          required: true
+        - label: I understand that product-specific runtime, provider, billing, credential, and editor mutation logic are out of scope.
+          required: true

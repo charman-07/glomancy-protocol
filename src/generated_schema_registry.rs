@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Glomancy
 // SPDX-License-Identifier: MIT
 
-// Generated registry snapshot for the standalone open-source staging package.
+// Generated registry snapshot for the standalone open-source package.
 // Keep schema hashes in sync with schemas/v1.
 
 pub const GENERATED_SCHEMA_REGISTRY: &[SchemaDescriptor] = &[
