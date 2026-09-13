@@ -16,7 +16,7 @@ This roadmap describes the intended direction of Glomancy Protocol. It is delibe
 
 - [x] Add a small conformance command-line tool for validating public protocol payloads and fixtures.
 - [x] Add more boundary and malformed-input test vectors.
-- [ ] Add reference integration examples that remain transport-neutral.
+- [x] Add reference integration examples that remain transport-neutral.
 - [x] Define a machine-readable capability negotiation profile.
 - [x] Add a documented deprecation process for pre-1.0 schema changes.
 

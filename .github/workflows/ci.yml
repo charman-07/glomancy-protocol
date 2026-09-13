@@ -33,8 +33,10 @@ jobs:
       - name: Tests
         run: cargo test --all-targets
 
-      - name: Example
-        run: cargo run --example quick_start
+      - name: Examples
+        run: |
+          cargo run --example quick_start
+          cargo run --example reference_consumer
 
       - name: Rustdoc
         env:
