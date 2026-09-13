@@ -1,0 +1,97 @@
+{
+  "catalog_version": "1.0.0",
+  "wire_protocol_version": "0.4.0",
+  "description": "Vector-backed fail-closed security invariants for the public Glomancy Protocol contract. These records provide regression evidence, not formal verification or authorization.",
+  "invariants": [
+    {
+      "id": "GLM-SEC-001",
+      "category": "versioning",
+      "status": "enforced",
+      "statement": "Peers must reject wire protocol lines that are incompatible under the published compatibility rules.",
+      "failure_mode": "reject",
+      "evidence": [
+        {"area": "wire-compatibility", "case_id": "minor-mismatch-pre1"},
+        {"area": "wire-compatibility", "case_id": "stable-major-mismatch"}
+      ]
+    },
+    {
+      "id": "GLM-SEC-002",
+      "category": "versioning",
+      "status": "enforced",
+      "statement": "Handshake negotiation must select only an exact version explicitly advertised by both peers; compatibility alone must not invent an unadvertised shared version.",
+      "failure_mode": "reject",
+      "evidence": [
+        {"area": "version-negotiation", "case_id": "patch-compatible-is-not-implicitly-advertised"},
+        {"area": "version-negotiation", "case_id": "no-shared-version"}
+      ]
+    },
+    {
+      "id": "GLM-SEC-003",
+      "category": "capability",
+      "status": "enforced",
+      "statement": "A task may request only capability names selected for the current session.",
+      "failure_mode": "reject",
+      "evidence": [
+        {"area": "task-capability-gate", "case_id": "unselected-capability-rejected"},
+        {"area": "task-lifecycle", "case_id": "reject-unselected-task-capability"}
+      ]
+    },
+    {
+      "id": "GLM-SEC-004",
+      "category": "approval",
+      "status": "enforced",
+      "statement": "A task marked as requiring approval must not enter execution before a valid approving decision exists.",
+      "failure_mode": "withhold-authorization",
+      "evidence": [
+        {"area": "task-lifecycle", "case_id": "reject-execution-before-required-approval"}
+      ]
+    },
+    {
+      "id": "GLM-SEC-005",
+      "category": "approval",
+      "status": "enforced",
+      "statement": "A denied or expired approval decision must never authorize execution.",
+      "failure_mode": "withhold-authorization",
+      "evidence": [
+        {"area": "approval-flow", "case_id": "deny-matching-request"},
+        {"area": "approval-flow", "case_id": "decision-after-expiry"},
+        {"area": "task-lifecycle", "case_id": "reject-execution-after-denial"},
+        {"area": "task-lifecycle", "case_id": "reject-expired-approval-decision"}
+      ]
+    },
+    {
+      "id": "GLM-SEC-006",
+      "category": "approval",
+      "status": "enforced",
+      "statement": "An approval decision must correlate to the request by both approval_id and task_id, and a decision must not be accepted before its request exists.",
+      "failure_mode": "reject",
+      "evidence": [
+        {"area": "approval-flow", "case_id": "mismatched-approval-id"},
+        {"area": "approval-flow", "case_id": "mismatched-task-id"},
+        {"area": "task-lifecycle", "case_id": "reject-decision-before-request"}
+      ]
+    },
+    {
+      "id": "GLM-SEC-007",
+      "category": "evidence",
+      "status": "enforced",
+      "statement": "Task progress and results may reference only recorded evidence identifiers, and an evidence identifier must not be recorded more than once within a task lifecycle.",
+      "failure_mode": "reject",
+      "evidence": [
+        {"area": "task-lifecycle", "case_id": "reject-duplicate-evidence-id"},
+        {"area": "task-lifecycle", "case_id": "reject-result-with-unknown-evidence"},
+        {"area": "task-lifecycle", "case_id": "reject-progress-with-unknown-evidence"}
+      ]
+    },
+    {
+      "id": "GLM-SEC-008",
+      "category": "lifecycle",
+      "status": "enforced",
+      "statement": "A terminal task result closes the task lifecycle; later lifecycle events for that task must be rejected.",
+      "failure_mode": "reject",
+      "evidence": [
+        {"area": "task-lifecycle", "case_id": "reject-event-after-terminal-result"}
+      ]
+    }
+  ]
+}
