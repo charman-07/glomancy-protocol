@@ -48,13 +48,25 @@ cargo run --example quick_start
 python3 scripts/validate_repository.py
 ```
 
-CI repeats these checks and also runs tests on Linux, Windows, and macOS.
+For schema/fixture or integration changes, also install and run the public conformance tooling:
+
+```bash
+python3 -m pip install -r requirements-conformance.txt
+python3 scripts/glomancy_conformance.py fixtures
+python3 scripts/glomancy_conformance.py validate examples/v1/valid/task.submit.json
+```
+
+See `docs/CONFORMANCE.md` for schema selection, exit codes, CI integration, and fail-closed expectations.
+
+CI repeats these checks and also runs Rust tests on Linux, Windows, and macOS.
 
 ## Tests and fixtures
 
 Observable protocol behavior should be backed by a test or fixture. If a schema changes, update the registry hash intentionally and explain compatibility impact. If compatibility behavior changes, keep the matrix, cases, Rust behavior, and documentation consistent.
 
 Prefer targeted negative tests for malformed or ambiguous input. Unknown protocol input should remain fail-closed.
+
+Every entry in `examples/v1/manifest.json` is executable conformance evidence. Valid fixtures must pass their declared schemas. Invalid fixtures must fail for their declared `expected_keyword`; do not add an invalid fixture that only happens to fail for an unrelated reason.
 
 ## Pull requests
 
