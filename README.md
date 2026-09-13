@@ -38,7 +38,8 @@ See [Unreal Engine Product Focus](docs/UNREAL_ENGINE_FOCUS.md) for the concrete 
 | Higher-risk work may need review | Explicit approval request/decision messages |
 | Long-running work needs status | Progress and cancellation semantics |
 | "It worked" is not enough | Result and evidence contracts |
-| Integrations drift over time | Registry hashes, compatibility rules, fixtures, and CI |
+| Integrations drift over time | Registry hashes, compatibility rules, fixtures, snapshots, and CI |
+| External tools need structured diagnostics | Versioned conformance CLI JSON output with a published JSON Schema contract |
 | Unknown input can be dangerous | Conservative fail-closed validation |
 
 ## Why this exists
@@ -56,8 +57,11 @@ Glomancy Protocol makes that boundary explicit with:
 - a SHA-256-backed schema registry;
 - fail-closed handling for unknown message kinds, schemas, incompatible versions, and unsupported required capabilities;
 - valid and intentionally invalid fixtures for conformance testing;
-- a public conformance CLI for validating payloads without the private Glomancy runtime;
-- an executable reference consumer showing how an independent integration can apply the public protocol checks without private Glomancy code.
+- language-neutral consumer vectors for deterministic protocol decisions;
+- published compatibility snapshots for released public contracts;
+- a public conformance CLI with human-readable and versioned machine-readable JSON output;
+- a Draft 2020-12 JSON Schema for the CLI JSON-output contract;
+- executable Rust, independent Python, and independent JavaScript consumer examples.
 
 ## What benefit does it provide?
 
@@ -71,15 +75,15 @@ Structured messages make it easier to answer what was requested, which component
 
 ### Interoperability
 
-The public contract is transport-neutral and provider-neutral. An outside implementation can speak the protocol without adopting the private commercial Glomancy runtime.
+The public contract is transport-neutral and provider-neutral. An outside implementation can speak the protocol without adopting the private commercial Glomancy runtime. Language-neutral vectors and independently implemented Python and JavaScript examples demonstrate how the same published decisions can be consumed outside the Rust crate.
 
 ### Testability
 
-Schemas, registry hashes, compatibility cases, capability cases, Rust tests, valid/invalid fixtures, repository validators, the public conformance CLI, and the reference consumer can all run in CI.
+Schemas, registry hashes, compatibility cases, capability cases, language-neutral vectors, published snapshots, Rust tests, valid/invalid fixtures, repository validators, the public conformance CLI, its JSON-output schema, and independent consumer examples can all run in CI.
 
 ### Safer evolution
 
-Wire versions, schema IDs, compatibility rules, changelog discipline, and conformance checks make contract changes visible instead of silently changing behavior underneath consumers. The [Pre-1.0 Deprecation and Schema Evolution Policy](docs/DEPRECATION_POLICY.md) defines how public contracts are proposed, deprecated, migrated, and removed while the project is still evolving.
+Wire versions, schema IDs, compatibility rules, snapshot regression checks, changelog discipline, and conformance checks make contract changes visible instead of silently changing behavior underneath consumers. The [Pre-1.0 Deprecation and Schema Evolution Policy](docs/DEPRECATION_POLICY.md) defines how public contracts are proposed, deprecated, migrated, and removed while the project is still evolving.
 
 ## Example high-level flow
 
@@ -107,7 +111,7 @@ For consequential work, an implementation can insert an explicit approval step b
 
 ## Quick start
 
-Requirements: Rust 1.85 or newer. Python is used for the public repository/conformance tooling.
+Requirements: Rust 1.85 or newer. Python is used for the public repository/conformance tooling. Node.js is optional and is only needed for the independent JavaScript consumer example.
 
 ```bash
 git clone https://github.com/charman-07/glomancy-protocol.git
@@ -118,9 +122,29 @@ cargo run --example reference_consumer
 python3 scripts/validate_repository.py
 ```
 
-`quick_start` shows basic version and message-kind handling. `reference_consumer` demonstrates a fuller external-consumer boundary: version compatibility, exact capability negotiation, task capability gating, schema resolution, fail-closed required-capability rejection, and the explicit fact that authorization is still required. See [Reference Consumer](docs/REFERENCE_CONSUMER.md) for the annotated walkthrough.
+`quick_start` shows basic version and message-kind handling. The Rust `reference_consumer` demonstrates a fuller consumer boundary: version compatibility, exact capability negotiation, task capability gating, schema resolution, fail-closed required-capability rejection, and the explicit fact that authorization is still required. See [Reference Consumer](docs/REFERENCE_CONSUMER.md) for the annotated walkthrough.
 
 The repository validator checks JSON integrity, schema-registry hashes, fixture references, and protocol-version consistency.
+
+### Interoperability quick start
+
+The repository also contains independent, dependency-free consumer examples that implement selected public decisions without importing the Rust crate or the repository vector validator:
+
+```bash
+python3 examples/consumers/python/reference_consumer.py
+node examples/consumers/javascript/reference_consumer.mjs
+```
+
+Both consumers load the same public registry and `vectors/v1/` cases and independently exercise advertised-version selection, exact capability negotiation, task-time capability gating, and approval correlation/expiry behavior. CI runs both examples and fails if either disagrees with the published expected outcomes.
+
+Run the language-neutral repository consistency suite directly with:
+
+```bash
+python3 scripts/validate_consumer_vectors.py
+python3 scripts/validate_compatibility_snapshots.py
+```
+
+These maintained examples demonstrate implementability across languages; they are **not** claims of third-party adoption or production deployment.
 
 ### Validate protocol messages
 
@@ -148,7 +172,20 @@ List the registered message schemas:
 python3 scripts/glomancy_conformance.py list-schemas
 ```
 
-See [Protocol Conformance](docs/CONFORMANCE.md) for exit codes, explicit schema selection, CI usage, and fail-closed expectations.
+For automation, add `--json`:
+
+```bash
+python3 scripts/glomancy_conformance.py validate examples/v1/valid/task.submit.json --json
+python3 scripts/glomancy_conformance.py list-schemas --json
+```
+
+The JSON interface carries `output_version: "1.0.0"`. Its Draft 2020-12 machine-readable contract is published at [`conformance/v1/cli-output.schema.json`](conformance/v1/cli-output.schema.json), and repository CI checks representative real CLI outputs against it with:
+
+```bash
+python3 scripts/validate_cli_output_contract.py
+```
+
+See [Protocol Conformance](docs/CONFORMANCE.md) for exit codes, explicit schema selection, JSON-output fields, CI usage, and fail-closed expectations.
 
 ## Protocol surface
 
@@ -164,7 +201,7 @@ The v1 schema set covers:
 | Verification | `evidence.record` |
 | Liveness | `heartbeat` |
 
-See the [Consumer Integration Guide](docs/INTEGRATION_GUIDE.md) for an end-to-end language-neutral flow and the [Reference Consumer](docs/REFERENCE_CONSUMER.md) for a runnable external-consumer example. [Capability Negotiation](docs/CAPABILITY_NEGOTIATION.md), [Protocol Conformance](docs/CONFORMANCE.md), [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), [Pre-1.0 Deprecation Policy](docs/DEPRECATION_POLICY.md), and [Security Model](docs/SECURITY_MODEL.md) document the executable contract, design rationale, evolution rules, and trust boundaries.
+See the [Consumer Integration Guide](docs/INTEGRATION_GUIDE.md) for an end-to-end language-neutral flow and [Consumer Conformance Vectors](docs/CONSUMER_VECTORS.md) for independent implementation guidance. [Capability Negotiation](docs/CAPABILITY_NEGOTIATION.md), [Protocol Conformance](docs/CONFORMANCE.md), [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), [Snapshot Compatibility](docs/SNAPSHOT_COMPATIBILITY.md), [Pre-1.0 Deprecation Policy](docs/DEPRECATION_POLICY.md), and [Security Model](docs/SECURITY_MODEL.md) document the executable contract, design rationale, evolution rules, and trust boundaries.
 
 ## Capability negotiation
 
@@ -177,7 +214,7 @@ The initial public capability profile intentionally starts conservative:
 - a task may request only capability names selected for that session;
 - capability negotiation never grants authorization by itself.
 
-This behavior is backed by a machine-readable profile, conformance cases, Rust helpers/tests, and CI validation.
+This behavior is backed by a machine-readable profile, conformance cases, Rust helpers/tests, language-neutral vectors, independent consumer examples, and CI validation.
 
 ## Security principles
 
@@ -220,24 +257,29 @@ The protocol is not presented as a broadly adopted industry standard today. It i
 ## Repository layout
 
 ```text
-src/                 Rust protocol types and validation helpers
-schemas/v1/          JSON Schema contracts
-registry/v1/         Canonical schema registry and SHA-256 metadata
-examples/             Runnable Rust examples plus public protocol fixtures
-examples/v1/         Valid and invalid protocol fixtures
-compatibility/v1/    Version negotiation rules and cases
-capabilities/v1/     Machine-readable capability profile and cases
-docs/                Product overview, Unreal product context, architecture, conformance, compatibility, evolution, security, integration guides
-scripts/              Repository integrity, boundary, capability, fixture, and conformance tools
-tests/                Public contract regression tests
-.github/              CI and contribution workflow templates
+src/                         Rust protocol types and validation helpers
+schemas/v1/                  Wire-message JSON Schema contracts
+registry/v1/                 Canonical schema registry and SHA-256 metadata
+conformance/v1/              Versioned contracts for public conformance tooling output
+vectors/v1/                  Language-neutral expected-outcome vectors
+examples/                    Runnable Rust examples plus public protocol fixtures
+examples/v1/                 Valid and invalid protocol fixtures
+examples/consumers/python/   Independent dependency-free Python consumer
+examples/consumers/javascript/ Independent dependency-free JavaScript consumer
+compatibility/v1/            Version compatibility rules and cases
+compatibility/snapshots/     Pinned real public-release compatibility baselines
+capabilities/v1/             Machine-readable capability profile and cases
+docs/                        Product context, architecture, conformance, compatibility, evolution, security, integration guides
+scripts/                     Repository integrity, boundary, interoperability, fixture, and conformance tools
+tests/                       Public contract regression tests
+.github/                     CI and contribution / feedback workflow templates
 ```
 
 ## Compatibility and versioning
 
 Before 1.0, a patch change within the same protocol minor line is compatible; a different minor line is treated as incompatible. At 1.0 and later, versions with the same major version are considered protocol-compatible. Exact rules and negotiation behavior live in `compatibility/v1/compatibility-matrix.json` and are documented in [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
-Schema versions and wire-protocol versions are separate on purpose: a schema can evolve independently while negotiation remains explicit. Changes that deprecate or remove public behavior must follow [docs/DEPRECATION_POLICY.md](docs/DEPRECATION_POLICY.md) rather than silently mutating the contract.
+Schema versions and wire-protocol versions are separate on purpose: a schema can evolve independently while negotiation remains explicit. CLI JSON-output versions and consumer-vector versions are separate again. Changes that deprecate or remove public behavior must follow [docs/DEPRECATION_POLICY.md](docs/DEPRECATION_POLICY.md) rather than silently mutating the contract.
 
 ## Project status
 
@@ -245,7 +287,9 @@ This public repository is newly open-sourced, but the underlying protocol work h
 
 The broader private Glomancy product is being developed with Unreal Engine as its first primary editor target. That concrete product work gives the protocol a real high-trust editor environment to design against, while the public protocol intentionally avoids depending on Unreal-specific implementation details.
 
-The repository already includes cross-platform tests, JSON Schema validation, public/private boundary checks, capability-negotiation validation, registry hash checks, supply-chain maintenance rules, a public conformance CLI, and an executable reference consumer. It is still pre-1.0; real integration feedback and independent usage are important before stronger stability claims are appropriate.
+The repository includes cross-platform Rust tests, JSON Schema validation, public/private boundary checks, capability-negotiation validation, language-neutral expected-outcome vectors, independent Python and JavaScript consumer examples, published compatibility snapshots, registry hash checks, supply-chain maintenance rules, a public conformance CLI, versioned machine-readable CLI output, and a published schema for that output. It is still pre-1.0; **genuine external integration feedback and independent usage remain important before stronger stability or adoption claims are appropriate.**
+
+If you have actually implemented or evaluated the public protocol independently, use the dedicated [Integration feedback issue form](https://github.com/charman-07/glomancy-protocol/issues/new?template=integration_feedback.yml). Maintainer-derived implementation notes live separately in [Integration Pitfalls and Implementation Notes](docs/INTEGRATION_PITFALLS.md); the project does not treat those notes as external adoption evidence.
 
 Planned work is tracked in [ROADMAP.md](ROADMAP.md) and GitHub Issues. Roadmap items are direction, not promises or fabricated adoption claims.
 
@@ -253,11 +297,13 @@ Planned work is tracked in [ROADMAP.md](ROADMAP.md) and GitHub Issues. Roadmap i
 
 Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before opening a pull request. Good first contributions include additional fixtures, validation tests, documentation, interoperability examples, and edge cases that remain inside the public protocol boundary.
 
+If you built an independent consumer, proof of concept, editor/tool integration, or conformance implementation, genuine test results are also useful through the [Integration feedback issue form](https://github.com/charman-07/glomancy-protocol/issues/new?template=integration_feedback.yml). Do not include credentials, customer data, private source code, or sensitive infrastructure details.
+
 Project decisions and maintainer responsibilities are described in [GOVERNANCE.md](GOVERNANCE.md). Support guidance is in [SUPPORT.md](SUPPORT.md).
 
 ## Release discipline
 
-Every release should pass formatting, Clippy, tests, documentation checks, cross-platform test jobs, repository integrity validation, capability-profile validation, executable examples, and executable conformance checks. Public deprecations/removals must also carry explicit migration notes under [docs/DEPRECATION_POLICY.md](docs/DEPRECATION_POLICY.md). The release checklist is documented in [RELEASING.md](RELEASING.md), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
+Every release should pass formatting, Clippy, tests, documentation checks, cross-platform test jobs, repository integrity validation, capability-profile validation, independent consumer examples, compatibility-snapshot checks, executable examples, and executable conformance checks. Public deprecations/removals must also carry explicit migration notes under [docs/DEPRECATION_POLICY.md](docs/DEPRECATION_POLICY.md). The release checklist is documented in [RELEASING.md](RELEASING.md), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 

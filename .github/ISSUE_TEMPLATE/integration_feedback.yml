@@ -1,0 +1,112 @@
+name: Integration feedback
+description: Share results from a real independent Glomancy Protocol integration or conformance experiment.
+title: "integration: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing Glomancy Protocol independently. This form is for genuine implementation or integration experience. Please do not include credentials, customer data, private source code, proprietary infrastructure details, or other sensitive information.
+
+  - type: dropdown
+    id: integration_type
+    attributes:
+      label: Integration type
+      description: What did you build or test?
+      options:
+        - Independent protocol consumer
+        - Editor or tooling integration
+        - Conformance or validation tooling
+        - Protocol evaluation / proof of concept
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: language_runtime
+    attributes:
+      label: Language and runtime
+      description: Language, runtime, and relevant version used for the integration.
+      placeholder: "Example: TypeScript / Node.js 24"
+    validations:
+      required: true
+
+  - type: input
+    id: public_link
+    attributes:
+      label: Public implementation link
+      description: Optional public repository, pull request, package, article, or demo that can be reviewed.
+      placeholder: "https://..."
+
+  - type: input
+    id: wire_version
+    attributes:
+      label: Wire protocol version tested
+      description: The Glomancy wire-protocol version your implementation targeted.
+      placeholder: "Example: 0.4.0"
+    validations:
+      required: true
+
+  - type: input
+    id: vector_version
+    attributes:
+      label: Consumer-vector version tested
+      description: Copy the vector_version from vectors/v1/manifest.json, or write "not used" if you did not run the vectors.
+      placeholder: "Example: value from vectors/v1/manifest.json"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: areas
+    attributes:
+      label: Areas exercised
+      description: Select every public contract area you actually tested.
+      options:
+        - label: JSON Schema payload validation
+        - label: Message-kind / schema registry lookup
+        - label: Wire compatibility or advertised-version selection
+        - label: Capability negotiation
+        - label: Task-time capability gating
+        - label: Approval request / decision flow
+        - label: Language-neutral consumer vectors
+        - label: Conformance CLI or its JSON output contract
+        - label: Published compatibility snapshots
+
+  - type: textarea
+    id: results
+    attributes:
+      label: What worked
+      description: Describe the behavior you implemented or tested and the results you observed.
+      placeholder: Include concrete commands, vector areas, or public protocol behavior where useful.
+    validations:
+      required: true
+
+  - type: textarea
+    id: friction
+    attributes:
+      label: Friction, ambiguity, or pitfalls
+      description: What was difficult, unclear, inconsistent, or unnecessarily hard to integrate?
+      placeholder: Point to public files, schema IDs, vectors, or documentation when possible.
+    validations:
+      required: true
+
+  - type: textarea
+    id: deviations
+    attributes:
+      label: Deviations or interoperability failures
+      description: If your implementation disagreed with a vector or documented rule, describe the input, expected result, and actual result.
+
+  - type: textarea
+    id: suggestions
+    attributes:
+      label: Suggested improvements
+      description: Optional changes that would make the public protocol or conformance material easier to implement independently.
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: This report describes integration or conformance work that I actually ran; it is not a fabricated adoption claim.
+          required: true
+        - label: I have removed credentials, customer data, private source code, and sensitive infrastructure details from this report.
+          required: true
