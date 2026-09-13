@@ -87,6 +87,9 @@ jobs:
       - name: Protocol security invariants
         run: python3 scripts/validate_security_invariants.py
 
+      - name: Public resource limits
+        run: python3 scripts/validate_resource_limits.py
+
       - name: Release support policy
         run: python3 scripts/validate_support_policy.py
 
