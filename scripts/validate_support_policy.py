@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the public release/security support policy against release metadata."""
+"""Validate the public release/security support policy against published release metadata."""
 
 from __future__ import annotations
 
@@ -12,11 +12,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT / "support" / "v1" / "policy.json"
 SNAPSHOTS = ROOT / "compatibility" / "snapshots" / "manifest.json"
-REGISTRY = ROOT / "registry" / "v1" / "manifest.json"
-CARGO = ROOT / "Cargo.toml"
 SEMVER_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
 LINE_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.x$")
-SCHEMA_LINE_RE = SEMVER_RE
 
 
 class ValidationError(RuntimeError):
@@ -33,28 +30,16 @@ def load_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def cargo_package_version() -> str:
-    try:
-        text = CARGO.read_text(encoding="utf-8")
-    except OSError as exc:
-        raise ValidationError(f"cannot read Cargo.toml: {exc}") from exc
-    package = re.search(r"(?ms)^\[package\]\s*(.*?)(?=^\[|\Z)", text)
-    if package is None:
-        raise ValidationError("Cargo.toml is missing [package]")
-    match = re.search(r'(?m)^\s*version\s*=\s*"([^"]+)"\s*$', package.group(1))
-    if match is None:
-        raise ValidationError("Cargo.toml [package] is missing version")
-    version = match.group(1)
-    if SEMVER_RE.fullmatch(version) is None:
-        raise ValidationError(f"Cargo.toml package version is not core semver: {version!r}")
-    return version
-
-
-def release_line(version: str) -> str:
+def semver_tuple(version: str) -> tuple[int, int, int]:
     match = SEMVER_RE.fullmatch(version)
     if match is None:
         raise ValidationError(f"not a core semantic version: {version!r}")
-    return f"{match.group(1)}.{match.group(2)}.x"
+    return tuple(int(part) for part in match.groups())
+
+
+def release_line(version: str) -> str:
+    major, minor, _patch = semver_tuple(version)
+    return f"{major}.{minor}.x"
 
 
 def require_string(data: dict[str, Any], key: str) -> str:
@@ -67,11 +52,9 @@ def require_string(data: dict[str, Any], key: str) -> str:
 def validate() -> int:
     policy = load_json(POLICY)
     snapshots = load_json(SNAPSHOTS)
-    registry = load_json(REGISTRY)
 
     policy_version = require_string(policy, "policy_version")
-    if SEMVER_RE.fullmatch(policy_version) is None:
-        raise ValidationError(f"invalid policy_version: {policy_version!r}")
+    semver_tuple(policy_version)
 
     if policy.get("project_maturity") != "pre-1.0":
         raise ValidationError("project_maturity must remain 'pre-1.0' until an explicit 1.0 transition")
@@ -95,27 +78,33 @@ def validate() -> int:
     snapshot_entries = snapshots.get("snapshots")
     if not isinstance(snapshot_entries, list) or not snapshot_entries:
         raise ValidationError("compatibility snapshot manifest must contain snapshots")
+
     snapshots_by_tag: dict[str, dict[str, Any]] = {}
+    release_versions: list[str] = []
     for raw in snapshot_entries:
         if not isinstance(raw, dict):
             raise ValidationError("snapshot manifest contains a non-object entry")
         tag = raw.get("source_tag")
+        crate_version = raw.get("crate_version")
         if not isinstance(tag, str) or not tag:
             raise ValidationError("snapshot entry is missing source_tag")
+        if not isinstance(crate_version, str):
+            raise ValidationError(f"{tag}: snapshot is missing crate_version")
+        semver_tuple(crate_version)
+        if tag != f"v{crate_version}":
+            raise ValidationError(f"{tag}: source_tag/crate_version mismatch")
         if tag in snapshots_by_tag:
             raise ValidationError(f"duplicate snapshot source_tag: {tag}")
         snapshots_by_tag[tag] = raw
+        release_versions.append(crate_version)
 
-    cargo_version = cargo_package_version()
-    cargo_line = release_line(cargo_version)
-    registry_wire = registry.get("wire_protocol_version")
-    if not isinstance(registry_wire, str) or SEMVER_RE.fullmatch(registry_wire) is None:
-        raise ValidationError("registry wire_protocol_version is invalid")
-    registry_wire_line = release_line(registry_wire)
+    latest_public_version = max(release_versions, key=semver_tuple)
+    latest_public_tag = f"v{latest_public_version}"
+    latest_public_snapshot = snapshots_by_tag[latest_public_tag]
 
     seen_crate_lines: set[str] = set()
     seen_tags: set[str] = set()
-    current_entries = 0
+    current_entries: list[dict[str, Any]] = []
 
     for entry in entries:
         if not isinstance(entry, dict):
@@ -132,10 +121,8 @@ def validate() -> int:
             raise ValidationError(f"invalid crate_line: {crate_line!r}")
         if LINE_RE.fullmatch(wire_line) is None:
             raise ValidationError(f"invalid wire_line: {wire_line!r}")
-        if SEMVER_RE.fullmatch(latest_release) is None:
-            raise ValidationError(f"invalid latest_release: {latest_release!r}")
-        if SCHEMA_LINE_RE.fullmatch(schema_line) is None:
-            raise ValidationError(f"invalid schema_line: {schema_line!r}")
+        semver_tuple(latest_release)
+        semver_tuple(schema_line)
         if source_tag != f"v{latest_release}":
             raise ValidationError(
                 f"source_tag/latest_release mismatch: tag={source_tag!r}, release={latest_release!r}"
@@ -172,18 +159,27 @@ def validate() -> int:
             raise ValidationError(f"{source_tag}: snapshot schema_line drift")
 
         if status == "current":
-            current_entries += 1
-            if crate_line != cargo_line:
-                raise ValidationError(
-                    f"current support crate_line {crate_line} does not match Cargo.toml line {cargo_line}"
-                )
-            if wire_line != registry_wire_line:
-                raise ValidationError(
-                    f"current support wire_line {wire_line} does not match registry line {registry_wire_line}"
-                )
+            current_entries.append(entry)
 
-    if current_entries != 1:
-        raise ValidationError(f"exactly one supported release entry must be current, got {current_entries}")
+    if len(current_entries) != 1:
+        raise ValidationError(
+            f"exactly one supported release entry must be current, got {len(current_entries)}"
+        )
+
+    current = current_entries[0]
+    expected = {
+        "crate_line": release_line(latest_public_version),
+        "latest_release": latest_public_version,
+        "source_tag": latest_public_tag,
+        "wire_line": release_line(str(latest_public_snapshot["wire_protocol_version"])),
+        "schema_line": str(latest_public_snapshot["schema_line"]),
+    }
+    actual = {key: current.get(key) for key in expected}
+    if actual != expected:
+        raise ValidationError(
+            "current support entry does not match latest published compatibility snapshot: "
+            f"expected={expected}, actual={actual}"
+        )
 
     return len(entries)
 
