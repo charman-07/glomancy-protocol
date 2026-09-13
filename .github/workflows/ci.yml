@@ -60,6 +60,31 @@ jobs:
       - name: Execute JSON Schema conformance fixtures
         run: python3 scripts/validate_fixtures.py
 
+      - name: Smoke-test public conformance CLI
+        shell: bash
+        run: |
+          python3 scripts/glomancy_conformance.py list-schemas
+          python3 scripts/glomancy_conformance.py validate examples/v1/valid/task.submit.json
+          python3 scripts/glomancy_conformance.py fixtures
+
+          set +e
+          python3 scripts/glomancy_conformance.py validate examples/v1/invalid/bad-message-id-format.json
+          exit_code=$?
+          set -e
+          if [ "$exit_code" -ne 2 ]; then
+            echo "expected invalid payload exit code 2, got $exit_code" >&2
+            exit 1
+          fi
+
+          set +e
+          python3 scripts/glomancy_conformance.py validate examples/v1/valid/task.submit.json --kind heartbeat
+          mismatch_code=$?
+          set -e
+          if [ "$mismatch_code" -ne 3 ]; then
+            echo "expected schema/kind mismatch exit code 3, got $mismatch_code" >&2
+            exit 1
+          fi
+
   portability:
     name: Test (${{ matrix.os }})
     strategy:

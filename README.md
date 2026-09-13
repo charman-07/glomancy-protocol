@@ -31,7 +31,8 @@ Glomancy Protocol makes that boundary explicit with:
 - strict identifiers, trace/span metadata, and bounded protocol limits;
 - a SHA-256-backed schema registry;
 - fail-closed handling for unknown message kinds, schemas, and incompatible versions;
-- valid and intentionally invalid fixtures for conformance testing.
+- valid and intentionally invalid fixtures for conformance testing;
+- a public conformance CLI for validating payloads without the private Glomancy runtime.
 
 ## Quick start
 
@@ -47,6 +48,34 @@ python3 scripts/validate_repository.py
 
 The Rust example parses protocol versions, evaluates compatibility, and resolves a known message kind. The repository validator checks JSON integrity, schema-registry hashes, fixture references, and protocol-version consistency.
 
+### Validate protocol messages
+
+Install the public conformance validator:
+
+```bash
+python3 -m pip install -r requirements-conformance.txt
+```
+
+Validate a message using its embedded `schema_id` / `kind`:
+
+```bash
+python3 scripts/glomancy_conformance.py validate examples/v1/valid/task.submit.json
+```
+
+Execute the entire public fixture corpus:
+
+```bash
+python3 scripts/glomancy_conformance.py fixtures
+```
+
+List the registered message schemas:
+
+```bash
+python3 scripts/glomancy_conformance.py list-schemas
+```
+
+See [Protocol Conformance](docs/CONFORMANCE.md) for exit codes, explicit schema selection, CI usage, and fail-closed expectations.
+
 ## Protocol surface
 
 Current wire protocol: **0.4.0**. Initial public crate line: **0.1.x**.
@@ -61,7 +90,7 @@ The v1 schema set covers:
 | Verification | `evidence.record` |
 | Liveness | `heartbeat` |
 
-See the [Consumer Integration Guide](docs/INTEGRATION_GUIDE.md) for an end-to-end language-neutral flow. [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), and [Security Model](docs/SECURITY_MODEL.md) document the design rationale and trust boundaries.
+See the [Consumer Integration Guide](docs/INTEGRATION_GUIDE.md) for an end-to-end language-neutral flow. [Protocol Conformance](docs/CONFORMANCE.md), [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), and [Security Model](docs/SECURITY_MODEL.md) document the executable contract, design rationale, and trust boundaries.
 
 ## Security principles
 
@@ -84,8 +113,8 @@ schemas/v1/          JSON Schema contracts
 registry/v1/         Canonical schema registry and SHA-256 metadata
 examples/v1/         Valid and invalid protocol fixtures
 compatibility/v1/    Version negotiation rules and cases
-docs/                Architecture, compatibility, security, and integration guides
-scripts/              Repository integrity checks
+docs/                Architecture, conformance, compatibility, security, and integration guides
+scripts/              Repository integrity, boundary, fixture, and conformance tools
 tests/                Public contract regression tests
 .github/              CI and contribution workflow templates
 ```
@@ -110,7 +139,7 @@ Project decisions and maintainer responsibilities are described in [GOVERNANCE.m
 
 ## Release discipline
 
-Every release should pass formatting, Clippy, tests, documentation checks, cross-platform test jobs, and repository integrity validation. The release checklist is documented in [RELEASING.md](RELEASING.md), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
+Every release should pass formatting, Clippy, tests, documentation checks, cross-platform test jobs, repository integrity validation, and executable conformance checks. The release checklist is documented in [RELEASING.md](RELEASING.md), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
