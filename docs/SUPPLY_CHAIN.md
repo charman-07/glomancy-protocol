@@ -37,6 +37,13 @@ Direct versions are pinned. Transitive Python packages are not currently hash-lo
 
 Workflow actions are pinned to immutable commit SHAs rather than movable tags where practical. The release line is kept in an inline comment for readability.
 
+The current first-party Action surface includes:
+
+- `actions/checkout` pinned to the verified commit for `v7.0.1`;
+- `actions/upload-artifact` pinned to commit `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` (`v7.0.1`) for the bounded-retention Release Readiness evidence artifact.
+
+The Release Readiness workflow keeps repository contents permission read-only. Uploading its evidence bundle stores a workflow artifact in GitHub Actions; it does not grant repository-content write permission and does not sign or publish a GitHub Release.
+
 When updating an Action:
 
 1. confirm the commit belongs to the expected upstream repository/release;
@@ -60,17 +67,21 @@ A dependency or workflow update should not merge unless all applicable checks ar
 
 - public/private boundary guard;
 - repository integrity checks;
+- support-policy and public-contract-fingerprint checks;
+- release-evidence generator/schema/checksum validation;
 - executable JSON Schema conformance fixtures;
 - public conformance CLI smoke tests;
-- Rust formatting, Clippy, tests, example, and Rustdoc;
+- Rust formatting, Clippy, tests, examples, and Rustdoc;
 - Rust tests on Linux, Windows, and macOS.
 
 ## Credentials and provenance
 
-The repository must not contain package-registry credentials, GitHub tokens, signing keys, API keys, private certificates, or private infrastructure configuration. CI uses GitHub-provided ephemeral credentials only where GitHub itself supplies them, with workflow permissions restricted to read-only contents for the current CI workflow.
+The repository must not contain package-registry credentials, GitHub tokens, signing keys, API keys, private certificates, or private infrastructure configuration. CI uses GitHub-provided ephemeral credentials only where GitHub itself supplies them, with workflow permissions kept least-privilege.
+
+The Release Readiness evidence bundle is audit/integrity metadata. It is not a digital signature, cryptographic attestation, SLSA provenance, certification, or proof of publisher authenticity.
 
 Release signing or stronger provenance mechanisms may be added later, but this document does not claim that tagged releases are currently signed, SLSA-certified, or reproducible bit-for-bit.
 
 ## Reporting supply-chain concerns
 
-Potential dependency confusion, compromised upstream releases, malicious package updates, workflow-action compromise, or credential exposure should be treated as security issues. Follow `SECURITY.md` rather than opening a public issue when disclosure could put users at risk.
+Potential dependency confusion, compromised upstream releases, malicious package updates, workflow-action compromise, artifact-tampering concerns, or credential exposure should be treated as security issues. Follow `SECURITY.md` rather than opening a public issue when disclosure could put users at risk.
