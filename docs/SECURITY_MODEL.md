@@ -34,6 +34,18 @@ The project is designed to reduce risk from:
 
 Unknown message kinds and unsupported protocol combinations are rejected. Integrations should preserve this behavior and must not map unknown values to a permissive default.
 
+### Registry-aware Rust header validation
+
+The public Rust `MessageHeader::validate()` helper performs more than identifier-shape checks. For the current compiled public protocol registry it also requires:
+
+- a wire protocol version compatible with the crate's current `PROTOCOL_VERSION` rules;
+- a registered schema ID rather than merely a syntactically valid schema URN;
+- an exact match between the registered schema's message kind and the header's `kind`.
+
+A syntactically valid but unknown schema URN therefore fails closed, as does pairing a known schema ID with the wrong message kind. Compatible pre-1.0 patch versions remain valid under the documented compatibility rules, while incompatible protocol lines are rejected.
+
+This helper is still **not** complete message validation. It does not replace JSON Schema validation of the payload, capability checks, authentication, authorization, policy, approval, sandboxing, or editor/tool permissions.
+
 ### Schema integrity
 
 The registry records SHA-256 digests for public schemas. CI recalculates the registered hashes to catch accidental or unauthorized drift in repository content.
