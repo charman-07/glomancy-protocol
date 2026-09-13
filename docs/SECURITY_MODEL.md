@@ -60,6 +60,10 @@ Approval request and decision messages make approval state visible at the protoc
 
 Public constants define upper bounds for message size, payload depth, extensions, and artifacts. Integrations should enforce equivalent or stricter limits before expensive processing.
 
+The same limits are published in [`limits/v1/policy.json`](../limits/v1/policy.json) so non-Rust consumers do not have to infer security-sensitive maximums from source code. Repository CI checks exact parity between the machine-readable policy and the Rust constants. See [Public Resource Limits](RESOURCE_LIMITS.md) for the current values, units, counting semantics, and assurance boundary.
+
+These maximums reduce one class of resource-pressure risk but do not provide denial-of-service immunity. Integrations remain responsible for transport framing, rate limiting, concurrency limits, timeouts, memory/process isolation, and stricter local limits where appropriate.
+
 ### Traceability
 
 Headers carry message IDs, timestamps, sender identity fields, trace IDs, and span IDs. These fields improve correlation and auditing but do not authenticate a sender by themselves.
@@ -74,7 +78,7 @@ The current catalog covers incompatible/unadvertised version handling, task capa
 
 This catalog is **regression assurance**, not formal verification. It does not prove every implementation secure and does not replace authentication, authorization, policy, sandboxing, editor/tool permissions, security review, or external testing. See [Security Invariants](SECURITY_INVARIANTS.md) for the exact assurance boundary and validation workflow.
 
-The invariant catalog is included in the deterministic public contract fingerprint, so changing a cataloged security expectation changes the aggregate public-contract SHA-256 used by release-readiness reporting.
+The invariant catalog and resource-limits policy are both included in the deterministic public contract fingerprint, so changing a cataloged security expectation or public protocol maximum changes the aggregate public-contract SHA-256 used by release-readiness reporting.
 
 ## Out of scope / integration responsibilities
 
@@ -114,6 +118,6 @@ Skipping later authorization or policy layers because a message is schema-valid 
 
 ## Vulnerability classes of interest
 
-Security reports are especially useful for issues involving validation bypasses, fail-open behavior, schema/registry mismatch, ambiguous version negotiation, malformed-input crashes, unsafe defaults, or contracts that allow approval/evidence invariants to be bypassed.
+Security reports are especially useful for issues involving validation bypasses, fail-open behavior, schema/registry mismatch, ambiguous version negotiation, malformed-input crashes, unsafe defaults, bounded-input bypasses, or contracts that allow approval/evidence invariants to be bypassed.
 
 Follow `SECURITY.md` for private reporting. Do not place exploit details or sensitive data in a public issue.
