@@ -90,7 +90,7 @@ Schema versions and wire-protocol versions are separate on purpose: a schema can
 
 ## Project status
 
-The project is early-stage and is being developed in public. The current focus is a small, auditable protocol core with conformance fixtures and clear compatibility behavior rather than a large framework.
+This public repository is newly open-sourced, but the underlying Glomancy protocol work has already been under active development, testing, debugging, and repeated validation for roughly two months before this repository was opened. The current public focus is a small, auditable protocol core with conformance fixtures and clear compatibility behavior rather than a large framework.
 
 Planned work is tracked in [ROADMAP.md](ROADMAP.md) and GitHub Issues. Roadmap items are direction, not promises or fabricated adoption claims.
 
