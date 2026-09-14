@@ -1,0 +1,309 @@
+{
+  "transcript_message_set_version": "1.0.0",
+  "wire_protocol_version": "0.4.0",
+  "messages": {
+    "handshake.request": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000001",
+      "sent_at": "2026-09-15T00:01:00Z",
+      "sender": {"component": "desktop", "instance_id": "desktop-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "0000000000000001", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:handshake.request:1.0.0",
+      "kind": "handshake.request",
+      "payload": {
+        "component": "desktop",
+        "supported_versions": ["0.4.0"],
+        "capabilities": [
+          {"name": "blueprint.read", "version": "1.0.0", "required": true},
+          {"name": "blueprint.plan", "version": "1.0.0", "required": true}
+        ],
+        "max_message_bytes": 1048576,
+        "locale": "en-US"
+      }
+    },
+    "handshake.response": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000002",
+      "sent_at": "2026-09-15T00:02:00Z",
+      "sender": {"component": "bridge", "instance_id": "bridge-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "0000000000000002", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:handshake.response:1.0.0",
+      "kind": "handshake.response",
+      "payload": {
+        "accepted": true,
+        "selected_version": "0.4.0",
+        "selected_capabilities": [
+          {"name": "blueprint.read", "version": "1.0.0", "required": true},
+          {"name": "blueprint.plan", "version": "1.0.0", "required": true}
+        ],
+        "max_message_bytes": 1048576
+      },
+      "correlation_id": "10000000-0000-4000-8000-000000000001"
+    },
+    "handshake.response.bad-correlation": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000014",
+      "sent_at": "2026-09-15T00:14:00Z",
+      "sender": {"component": "bridge", "instance_id": "bridge-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "000000000000000e", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:handshake.response:1.0.0",
+      "kind": "handshake.response",
+      "payload": {
+        "accepted": true,
+        "selected_version": "0.4.0",
+        "selected_capabilities": [
+          {"name": "blueprint.read", "version": "1.0.0", "required": true},
+          {"name": "blueprint.plan", "version": "1.0.0", "required": true}
+        ],
+        "max_message_bytes": 1048576
+      },
+      "correlation_id": "99999999-9999-4999-8999-999999999999"
+    },
+    "handshake.response.unadvertised-version": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000015",
+      "sent_at": "2026-09-15T00:15:00Z",
+      "sender": {"component": "bridge", "instance_id": "bridge-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "000000000000000f", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:handshake.response:1.0.0",
+      "kind": "handshake.response",
+      "payload": {
+        "accepted": true,
+        "selected_version": "0.4.1",
+        "selected_capabilities": [
+          {"name": "blueprint.read", "version": "1.0.0", "required": true},
+          {"name": "blueprint.plan", "version": "1.0.0", "required": true}
+        ],
+        "max_message_bytes": 1048576
+      },
+      "correlation_id": "10000000-0000-4000-8000-000000000001"
+    },
+    "handshake.response.unrequested-capability": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000016",
+      "sent_at": "2026-09-15T00:16:00Z",
+      "sender": {"component": "bridge", "instance_id": "bridge-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "0000000000000010", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:handshake.response:1.0.0",
+      "kind": "handshake.response",
+      "payload": {
+        "accepted": true,
+        "selected_version": "0.4.0",
+        "selected_capabilities": [
+          {"name": "material.write", "version": "1.0.0", "required": false}
+        ],
+        "max_message_bytes": 1048576
+      },
+      "correlation_id": "10000000-0000-4000-8000-000000000001"
+    },
+    "task.submit": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000003",
+      "sent_at": "2026-09-15T00:03:00Z",
+      "sender": {"component": "desktop", "instance_id": "desktop-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "0000000000000003", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:task.submit:1.0.0",
+      "kind": "task.submit",
+      "payload": {
+        "task_id": "20000000-0000-4000-8000-000000000099",
+        "user_instruction": "Analyze the selected Blueprint, plan a safe change, and verify the resulting state.",
+        "language": "en-US",
+        "execution_mode": "execute",
+        "risk_ceiling": "R3",
+        "requested_capabilities": ["blueprint.read", "blueprint.plan"],
+        "context_refs": [{"source_type": "project", "uri": "glomancy://project/current", "revision": "workspace-1"}],
+        "idempotency_key": "task:20000000:attempt:1"
+      }
+    },
+    "task.submit.unselected-capability": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000017",
+      "sent_at": "2026-09-15T00:17:00Z",
+      "sender": {"component": "desktop", "instance_id": "desktop-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "0000000000000011", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:task.submit:1.0.0",
+      "kind": "task.submit",
+      "payload": {
+        "task_id": "20000000-0000-4000-8000-000000000099",
+        "user_instruction": "Analyze the selected Blueprint, plan a safe change, and verify the resulting state.",
+        "language": "en-US",
+        "execution_mode": "execute",
+        "risk_ceiling": "R3",
+        "requested_capabilities": ["material.write"],
+        "context_refs": [{"source_type": "project", "uri": "glomancy://project/current", "revision": "workspace-1"}],
+        "idempotency_key": "task:20000000:attempt:1"
+      }
+    },
+    "approval.request": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000004",
+      "sent_at": "2026-09-15T00:04:00Z",
+      "sender": {"component": "policy-engine", "instance_id": "policy-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "0000000000000004", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:approval.request:1.0.0",
+      "kind": "approval.request",
+      "payload": {
+        "approval_id": "30000000-0000-4000-8000-000000000099",
+        "task_id": "20000000-0000-4000-8000-000000000099",
+        "risk_level": "R3",
+        "action_summary": "Apply the approved Blueprint plan and verify the resulting state.",
+        "consequences": ["The supported editor integration may change project state.", "A read-back verification step will follow."],
+        "reversible": true,
+        "expires_at": "2026-09-15T00:20:00Z"
+      }
+    },
+    "approval.approve": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000005",
+      "sent_at": "2026-09-15T00:05:00Z",
+      "sender": {"component": "desktop", "instance_id": "desktop-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "0000000000000005", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:approval.decision:1.0.0",
+      "kind": "approval.decision",
+      "payload": {
+        "approval_id": "30000000-0000-4000-8000-000000000099",
+        "task_id": "20000000-0000-4000-8000-000000000099",
+        "decision": "approve",
+        "decided_by": "user",
+        "decided_at": "2026-09-15T00:10:00Z",
+        "constraints": {"single_executor": true, "require_read_back": true}
+      }
+    },
+    "approval.deny": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000006",
+      "sent_at": "2026-09-15T00:06:00Z",
+      "sender": {"component": "desktop", "instance_id": "desktop-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "0000000000000006", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:approval.decision:1.0.0",
+      "kind": "approval.decision",
+      "payload": {
+        "approval_id": "30000000-0000-4000-8000-000000000099",
+        "task_id": "20000000-0000-4000-8000-000000000099",
+        "decision": "deny",
+        "decided_by": "user",
+        "decided_at": "2026-09-15T00:10:00Z",
+        "constraints": {"single_executor": true, "require_read_back": true}
+      }
+    },
+    "task.progress.running": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000007",
+      "sent_at": "2026-09-15T00:07:00Z",
+      "sender": {"component": "bridge", "instance_id": "bridge-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "0000000000000007", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:task.progress:1.0.0",
+      "kind": "task.progress",
+      "payload": {
+        "task_id": "20000000-0000-4000-8000-000000000099",
+        "status": "running",
+        "progress_percent": 25,
+        "stage": "execution",
+        "detail": "Executing the approved protocol task.",
+        "evidence_ids": []
+      }
+    },
+    "evidence.record": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000008",
+      "sent_at": "2026-09-15T00:08:00Z",
+      "sender": {"component": "validation-engine", "instance_id": "validator-01", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "0000000000000008", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:evidence.record:1.0.0",
+      "kind": "evidence.record",
+      "payload": {
+        "evidence_id": "40000000-0000-4000-8000-000000000099",
+        "task_id": "20000000-0000-4000-8000-000000000099",
+        "evidence_type": "read-back",
+        "captured_at": "2026-09-15T00:08:30Z",
+        "producer": {"component": "validation-engine", "instance_id": "validator-01", "build_version": "0.4.0"},
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "artifacts": [],
+        "claims": ["The observed state matched the expected post-task contract."]
+      }
+    },
+    "task.progress.validating": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000009",
+      "sent_at": "2026-09-15T00:09:00Z",
+      "sender": {"component": "bridge", "instance_id": "bridge-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "0000000000000009", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:task.progress:1.0.0",
+      "kind": "task.progress",
+      "payload": {
+        "task_id": "20000000-0000-4000-8000-000000000099",
+        "status": "validating",
+        "progress_percent": 80,
+        "stage": "read-back",
+        "detail": "Verifying the resulting state.",
+        "evidence_ids": ["40000000-0000-4000-8000-000000000099"]
+      }
+    },
+    "task.result.success": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000010",
+      "sent_at": "2026-09-15T00:10:00Z",
+      "sender": {"component": "bridge", "instance_id": "bridge-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "000000000000000a", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:task.result:1.0.0",
+      "kind": "task.result",
+      "payload": {
+        "task_id": "20000000-0000-4000-8000-000000000099",
+        "status": "succeeded",
+        "summary": "The task completed and the resulting state was verified.",
+        "artifacts": [],
+        "evidence_ids": ["40000000-0000-4000-8000-000000000099"],
+        "read_back_verified": true
+      }
+    },
+    "task.result.missing-evidence": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000013",
+      "sent_at": "2026-09-15T00:13:00Z",
+      "sender": {"component": "bridge", "instance_id": "bridge-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "000000000000000d", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:task.result:1.0.0",
+      "kind": "task.result",
+      "payload": {
+        "task_id": "20000000-0000-4000-8000-000000000099",
+        "status": "succeeded",
+        "summary": "The task completed and the resulting state was verified.",
+        "artifacts": [],
+        "evidence_ids": ["40000000-0000-4000-8000-000000000199"],
+        "read_back_verified": true
+      }
+    },
+    "task.progress.after-terminal": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000011",
+      "sent_at": "2026-09-15T00:11:00Z",
+      "sender": {"component": "bridge", "instance_id": "bridge-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "000000000000000b", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:task.progress:1.0.0",
+      "kind": "task.progress",
+      "payload": {
+        "task_id": "20000000-0000-4000-8000-000000000099",
+        "status": "validating",
+        "progress_percent": 100,
+        "stage": "read-back",
+        "detail": "Verifying the resulting state.",
+        "evidence_ids": ["40000000-0000-4000-8000-000000000099"]
+      }
+    },
+    "task.cancel": {
+      "protocol_version": "0.4.0",
+      "message_id": "10000000-0000-4000-8000-000000000012",
+      "sent_at": "2026-09-15T00:12:00Z",
+      "sender": {"component": "desktop", "instance_id": "desktop-main", "build_version": "0.4.0"},
+      "trace": {"trace_id": "0123456789abcdef0123456789abcdef", "span_id": "000000000000000c", "sampled": true},
+      "schema_id": "urn:glomancy:protocol:task.cancel:1.0.0",
+      "kind": "task.cancel",
+      "payload": {
+        "task_id": "20000000-0000-4000-8000-000000000099",
+        "reason": "The user requested cancellation.",
+        "requested_by": "user",
+        "force": false
+      }
+    }
+  }
+}
