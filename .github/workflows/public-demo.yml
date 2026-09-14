@@ -1,0 +1,52 @@
+name: Public protocol demo
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-demo-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  demo:
+    name: Runnable public flow
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run human-readable demo
+        run: python3 examples/consumers/python/demo_flow.py
+
+      - name: Validate machine-readable demo contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$(python3 examples/consumers/python/demo_flow.py --json)"
+          printf '%s\n' "$output" | python3 -c '
+          import json, sys
+          value = json.load(sys.stdin)
+          assert value["demo_output_version"] == "1.0.0"
+          assert value["ok"] is True
+          steps = value["steps"]
+          assert [step["step"] for step in steps] == [
+              "advertised-version-selection",
+              "capability-negotiation",
+              "task-capability-gate",
+              "approval-correlation",
+              "evidence-contract-resolution",
+          ]
+          assert steps[0]["result"]["selected_version"] == "0.4.0"
+          assert steps[1]["result"]["accepted"] is True
+          assert steps[2]["result"]["accepted"] is True
+          assert steps[3]["result"]["accepted"] is True
+          assert steps[3]["result"]["authorized"] is True
+          assert steps[4]["result"]["message_kind"] == "evidence.record"
+          boundary = value["boundary"]
+          assert "editor authorization" in boundary
+          assert "integration responsibilities" in boundary
+          '
