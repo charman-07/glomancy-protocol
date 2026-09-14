@@ -49,7 +49,7 @@ fn main() {
         .expect("representative downstream message header should validate");
 
     println!(
-        "downstream Rust consumer passed: protocol={} schema={} selected_capabilities={}",
+        "downstream Rust consumer passed: protocol={:?} schema={} selected_capabilities={}",
         PROTOCOL_VERSION,
         heartbeat.schema_id,
         selected.len()
