@@ -20,6 +20,24 @@ Glomancy Protocol is a small Rust library plus versioned JSON Schemas for the bo
 >
 > Integrating it into another project? Read **[External Adoption Guide](docs/ADOPTION_GUIDE.md)** for release/commit pinning, Rust Git dependencies, schema/hash verification, non-Rust vendoring, conformance, and upgrade discipline.
 
+## Product preview — Glomancy Desktop
+
+<p align="center">
+  <a href="docs/GLOMANCY_PRODUCT_VISION.md">
+    <img src="./assets/glomancy-desktop-preview.webp" alt="Glomancy Desktop connected to an Unreal Engine project" width="100%">
+  </a>
+</p>
+
+> **Real development build:** an active Unreal Engine project is detected, the Desktop ↔ Unreal Bridge is authenticated, and the AI provider session is ready. Glomancy remains under active development; the current UI and capability surface represent one stage of a broader product roadmap.
+
+The broader **Glomancy** product is being developed as an AI-native Unreal Engine development environment — not merely a chat interface or code generator. Its direction is to understand the project as a connected technical system, trace relationships across supported Blueprint, C++, asset, animation, AI, and editor contexts, plan multi-step work, execute through explicit editor integrations, and verify what actually happened.
+
+The product thesis is deliberately ambitious: **the developer should be able to state the outcome, while Glomancy increasingly gathers the relevant project context, investigates the system, connects dependencies, plans the work, performs supported changes, validates the result, and returns evidence.**
+
+The long-term goal is for Glomancy to become a force multiplier for game developers — a persistent technical co-pilot that reduces operational and cognitive overhead while keeping creative and engineering authority with the developer.
+
+**[Read the full Glomancy product vision →](docs/GLOMANCY_PRODUCT_VISION.md)**
+
 ## Glomancy in one minute
 
 The broader **Glomancy product is currently being developed primarily for Unreal Engine** as an AI-assisted editor copilot and automation layer. Its high-level goal is to help turn a natural-language change request into a structured workflow: understand the active project/editor context, plan work, check capabilities and policy, request approval when appropriate, execute through supported Unreal/editor integrations, validate the result, and return status/evidence.
