@@ -179,7 +179,6 @@ def evaluate_task_lifecycle(inputs: dict[str, object]) -> dict[str, object]:
     approval_request: dict[str, object] | None = None
     approval_granted = not approval_required
     approval_denied = False
-    cancellation_requested = False
     evidence_ids: set[str] = set()
     terminal_status: str | None = None
 
@@ -234,8 +233,8 @@ def evaluate_task_lifecycle(inputs: dict[str, object]) -> dict[str, object]:
             approval_denied = reason == "denied"
             continue
 
+        # task.cancel is a request, not a terminal outcome by itself.
         if kind == "task.cancel":
-            cancellation_requested = True
             continue
 
         if kind == "evidence.record":
@@ -275,10 +274,6 @@ def evaluate_task_lifecycle(inputs: dict[str, object]) -> dict[str, object]:
                 return lifecycle_outcome(
                     False, None, len(evidence_ids), "invalid-error-status"
                 )
-            # A task.cancel message is a request, not a terminal outcome by itself.
-            # A consumer may receive a terminal `cancelled` error after such a request,
-            # but cancellation can also originate from another policy/runtime source.
-            _ = cancellation_requested
             terminal_status = status
 
     return lifecycle_outcome(True, terminal_status, len(evidence_ids), None)
