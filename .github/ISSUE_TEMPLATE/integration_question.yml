@@ -1,0 +1,83 @@
+name: Integration question
+description: Ask a focused technical question about implementing or evaluating Glomancy Protocol.
+title: "integration: "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for evaluating Glomancy Protocol. This form is for public technical questions about the OSS protocol, schemas, vectors, conformance tooling, compatibility, or integration boundaries.
+
+        Do not include credentials, private source code, customer data, vulnerability exploit details, or proprietary Glomancy implementation details. Security vulnerabilities should follow SECURITY.md instead.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Version / compatibility negotiation
+        - JSON Schema / registry
+        - Capabilities
+        - Task lifecycle
+        - Approval flow
+        - Evidence / result contracts
+        - Security invariants / limits
+        - Conformance CLI / vectors
+        - Rust API
+        - Non-Rust implementation
+        - Unreal/editor integration boundary
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Language / runtime / environment
+      description: Example: Rust 1.85, Python 3.12, Node 22, C#/.NET 8, Unreal Engine plugin, custom editor tool.
+      placeholder: "C# / .NET 8"
+    validations:
+      required: false
+
+  - type: input
+    id: baseline
+    attributes:
+      label: Protocol baseline
+      description: Prefer a tag, commit SHA, wire version, or schema/vector version when known.
+      placeholder: "v0.1.0 / wire 0.4.0"
+    validations:
+      required: false
+
+  - type: textarea
+    id: trying
+    attributes:
+      label: What are you trying to implement or evaluate?
+      description: Keep the scope concrete enough that another developer can reproduce or reason about it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What specific behavior, contract, or integration decision is unclear?
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Relevant public evidence
+      description: Optional public error output, payload fragment, vector case, schema ID, or repository link. Remove secrets/private data first.
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Public-data confirmation
+      options:
+        - label: I have removed credentials, private code/data, signing material, and sensitive vulnerability details from this issue.
+          required: true
