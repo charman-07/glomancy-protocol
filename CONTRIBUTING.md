@@ -2,6 +2,19 @@
 
 Thanks for your interest in improving Glomancy Protocol. The project welcomes focused contributions that make the public protocol safer, clearer, more interoperable, or easier to test.
 
+## New contributor? Start here
+
+If this is your first contribution, you do **not** need to understand the entire protocol first.
+
+1. Read [Contributor Start Here](docs/CONTRIBUTOR_START_HERE.md).
+2. Pick an issue labeled [`good first issue`](https://github.com/charman-07/glomancy-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) or [`help wanted`](https://github.com/charman-07/glomancy-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22).
+3. For a quick technical evaluation before contributing, use [Evaluate in 5 minutes](docs/EVALUATE_IN_5_MINUTES.md).
+4. Keep the first PR focused and include executable evidence when behavior changes.
+
+Current intentionally newcomer-friendly work includes the independent Go consumer (#60), independent C# consumer (#81), and copy-paste GitHub Actions conformance recipe (#82).
+
+If you are implementing the protocol in another project instead of contributing to this repository, start with [External Adoption Guide](docs/ADOPTION_GUIDE.md) and [Ecosystem and Implementations](docs/ECOSYSTEM.md).
+
 Please read `CODE_OF_CONDUCT.md`, `GOVERNANCE.md`, and `MAINTAINERS.md` before making a large proposal.
 
 ## Scope
@@ -64,7 +77,7 @@ python3 scripts/glomancy_conformance.py fixtures
 python3 scripts/glomancy_conformance.py validate examples/v1/valid/task.submit.json
 ```
 
-Depending on the area changed, run the relevant repository-contract validators as well, including registry parity, wire-enum parity, protocol error-catalog parity, capability/vector checks, compatibility snapshots, and CLI output-contract validation.
+Depending on the area changed, run the relevant repository-contract validators as well, including registry parity, wire-enum parity, protocol error-catalog parity, security-invariant validation, resource-limit parity, capability/vector checks, compatibility snapshots, and CLI output-contract validation.
 
 See `docs/CONFORMANCE.md` for schema selection, exit codes, CI integration, and fail-closed expectations.
 
@@ -109,4 +122,4 @@ Changes intended for a release should consider the gates in `docs/RELEASE_GATES.
 
 Good starter work includes additional boundary fixtures, documentation clarifications, test coverage for public helpers, compatibility cases, and small transport-neutral examples.
 
-Issue #60 (independent Go consumer) is an example of the kind of focused external contribution the project wants to make approachable.
+Current newcomer issues are intentionally kept scoped so an outside contributor can make progress without private Glomancy context. The maintained list is available through the `good first issue` and `help wanted` labels rather than being treated as evidence of external adoption.
