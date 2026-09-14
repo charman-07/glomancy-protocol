@@ -1,0 +1,184 @@
+name: Contract distribution
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Exact branch, tag, or commit SHA to package as a candidate
+        required: true
+        default: main
+        type: string
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contract-distribution-${{ github.event_name }}-${{ github.event.release.tag_name || inputs.ref }}
+  cancel-in-progress: false
+
+jobs:
+  candidate:
+    name: Build candidate contract distribution
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout candidate ref
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 1
+
+      - name: Validate public contract fingerprint
+        run: python3 scripts/public_contract_fingerprint.py --check
+
+      - name: Validate deterministic bundle generation
+        run: python3 scripts/validate_contract_bundle.py
+
+      - name: Build and verify candidate distribution
+        id: bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          audited_sha="$(git rev-parse HEAD)"
+          short_sha="$(git rev-parse --short=12 HEAD)"
+          asset="glomancy-protocol-contracts-candidate-${short_sha}.zip"
+          out="dist/contract-distribution"
+          mkdir -p "$out"
+
+          python3 scripts/build_contract_bundle.py \
+            --out-dir "$out/extracted" \
+            --archive "$out/$asset" \
+            --json > "$out/build-metadata.json"
+
+          python3 scripts/verify_contract_bundle.py "$out/$asset" --json \
+            > "$out/verification.json"
+
+          (
+            cd "$out"
+            sha256sum "$asset" > "$asset.sha256"
+            rm -rf extracted
+          )
+
+          echo "asset=$asset" >> "$GITHUB_OUTPUT"
+          echo "audited_sha=$audited_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Upload candidate distribution artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: contract-distribution-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/contract-distribution/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Write candidate summary
+        shell: bash
+        run: |
+          {
+            echo "# Contract distribution candidate"
+            echo
+            echo "- Requested ref: \`${{ inputs.ref }}\`"
+            echo "- Audited SHA: \`${{ steps.bundle.outputs.audited_sha }}\`"
+            echo "- ZIP: \`${{ steps.bundle.outputs.asset }}\`"
+            echo "- Artifact: \`contract-distribution-${{ github.run_id }}-${{ github.run_attempt }}\` (30-day retention)"
+            echo
+            echo "This is a candidate distribution artifact, not a published GitHub release asset."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    name: Publish contract bundle release assets
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      EVENT_SHA: ${{ github.sha }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout published release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 1
+
+      - name: Verify release tag identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9A-Za-z][0-9A-Za-z._+-]*$ ]]; then
+            echo "release tag is not safe for a distribution filename: $RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          head_sha="$(git rev-parse HEAD)"
+          if [ "$head_sha" != "$EVENT_SHA" ]; then
+            echo "checked-out release SHA $head_sha does not match event SHA $EVENT_SHA" >&2
+            exit 1
+          fi
+
+          exact_tag="$(git describe --tags --exact-match HEAD 2>/dev/null || true)"
+          if [ "$exact_tag" != "$RELEASE_TAG" ]; then
+            echo "checked-out commit is not exactly tagged as $RELEASE_TAG" >&2
+            exit 1
+          fi
+
+      - name: Validate public contract fingerprint
+        run: python3 scripts/public_contract_fingerprint.py --check
+
+      - name: Validate deterministic bundle generation
+        run: python3 scripts/validate_contract_bundle.py
+
+      - name: Build and verify release distribution
+        id: bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          asset="glomancy-protocol-contracts-${RELEASE_TAG}.zip"
+          out="dist/contract-distribution"
+          mkdir -p "$out"
+
+          python3 scripts/build_contract_bundle.py \
+            --out-dir "$out/extracted" \
+            --archive "$out/$asset" \
+            --json > "$out/build-metadata.json"
+
+          python3 scripts/verify_contract_bundle.py "$out/$asset" --json \
+            > "$out/verification.json"
+
+          (
+            cd "$out"
+            sha256sum "$asset" > "$asset.sha256"
+            rm -rf extracted
+          )
+
+          echo "asset=$asset" >> "$GITHUB_OUTPUT"
+
+      - name: Attach verified assets to GitHub release
+        shell: bash
+        run: |
+          set -euo pipefail
+          asset="${{ steps.bundle.outputs.asset }}"
+          gh release upload "$RELEASE_TAG" \
+            "dist/contract-distribution/$asset" \
+            "dist/contract-distribution/$asset.sha256" \
+            --clobber
+
+      - name: Write publication summary
+        shell: bash
+        run: |
+          asset="${{ steps.bundle.outputs.asset }}"
+          {
+            echo "# Published contract distribution"
+            echo
+            echo "- Release tag: \`$RELEASE_TAG\`"
+            echo "- Source SHA: \`$(git rev-parse HEAD)\`"
+            echo "- ZIP asset: \`$asset\`"
+            echo "- SHA-256 sidecar: \`$asset.sha256\`"
+            echo
+            echo "The checksum is an integrity mechanism; it is not a signature, provenance attestation, certification, or adoption claim."
+          } >> "$GITHUB_STEP_SUMMARY"

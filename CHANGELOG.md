@@ -34,6 +34,8 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Versioned release-readiness evidence JSON contract and downloadable GitHub Actions evidence bundle containing exact audited ref/SHA metadata, quality/contract/portability gate outcomes, byte-identical public-contract/support-policy copies, and SHA-256 payload checksums with bounded artifact retention.
 - Versioned machine-readable `GLM-SEC-*` security-invariant catalog linking core fail-closed versioning, capability, approval, evidence, and lifecycle rules to executable language-neutral conformance vectors, with CI validation and release-readiness reporting.
 - Versioned machine-readable public resource-limits policy for message bytes, payload depth, extensions, and artifacts, with exact Rust-constant parity validation, public-contract fingerprint coverage, and release-readiness reporting.
+- Dependency-free verifier for already-built standalone contract ZIPs, checking archive structure, embedded manifest/checksums, payload hashes, deterministic metadata rules, and the public-contract fingerprint against the pinned source checkout.
+- Contract-distribution GitHub Actions workflow that can build bounded-retention candidate bundles for an exact ref and, for future published releases, attach a verified deterministic contract ZIP plus whole-archive SHA-256 sidecar to the exact release tag.
 
 ### Clarified
 
@@ -49,6 +51,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Release-readiness evidence artifacts preserve auditable workflow facts and integrity metadata but are not signatures, provenance attestations, certifications, or proof that a release was authorized or published.
 - Security-invariant vector references provide regression evidence for documented fail-closed behavior; they are not formal verification, security certification, authentication, authorization, or proof that an integration enforces higher-layer policy correctly.
 - Published resource limits are protocol maximums rather than denial-of-service guarantees; consumers may enforce stricter local limits but must not silently accept values beyond the advertised public maxima while claiming policy conformance.
+- Contract bundle release assets and their SHA-256 sidecars provide integrity/distribution convenience only; they are not code signatures, provenance attestations, certifications, or evidence of third-party adoption, and historical releases are not retrofitted from newer source.
 
 ## [0.1.0] — 2026-09-13
 

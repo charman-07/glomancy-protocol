@@ -2,7 +2,7 @@
 
 This checklist keeps public releases deliberate, auditable, and aligned with the project’s compatibility/security promises.
 
-Read [`docs/RELEASE_GATES.md`](docs/RELEASE_GATES.md) before preparing a release. The gates define the expected quality evidence; this file defines the maintainer workflow. Public maintenance expectations are defined separately in [`docs/RELEASE_SUPPORT_POLICY.md`](docs/RELEASE_SUPPORT_POLICY.md).
+Read [`docs/RELEASE_GATES.md`](docs/RELEASE_GATES.md) before preparing a release. The gates define the expected quality evidence; this file defines the maintainer workflow. Public maintenance expectations are defined separately in [`docs/RELEASE_SUPPORT_POLICY.md`](docs/RELEASE_SUPPORT_POLICY.md). Contract-bundle packaging and release-asset behavior are documented in [`docs/RELEASE_DISTRIBUTION.md`](docs/RELEASE_DISTRIBUTION.md).
 
 ## 1. Establish the release candidate
 
@@ -45,6 +45,22 @@ The workflow is read-only with respect to repository contents. It does **not** c
 
 The audit includes dependency-free metadata validation covering the Rust package, Rust `PROTOCOL_VERSION`, canonical registry, capability profile, consumer vectors, error catalog, security-invariant catalog, resource-limits policy, public schema-version set, machine-readable support policy, and public-contract fingerprint. The summary job also emits the bounded-retention evidence bundle described in [`docs/RELEASE_AUDIT.md`](docs/RELEASE_AUDIT.md).
 
+### Build the exact candidate contract distribution
+
+After the release-readiness audit is green, maintainers may run the separate **Contract distribution** workflow in manual mode for the same exact ref/SHA.
+
+The candidate workflow is not a substitute for release-readiness. It exists to build and inspect the exact deterministic standalone contract ZIP that external consumers would receive.
+
+Verify that:
+
+1. the candidate workflow audited the same commit SHA as Release readiness;
+2. the generated ZIP passes `scripts/verify_contract_bundle.py` inside the workflow;
+3. the whole-ZIP `.sha256` sidecar matches the downloaded ZIP;
+4. the embedded `BUNDLE_MANIFEST.json` reports the expected package/wire versions and public-contract fingerprint;
+5. the candidate artifact contains public contract assets only.
+
+Candidate distribution artifacts have bounded retention and are not published GitHub release assets.
+
 ### Local/manual equivalent
 
 When reproducing the release audit locally, run at minimum:
@@ -64,6 +80,7 @@ python3 scripts/validate_security_invariants.py
 python3 scripts/validate_resource_limits.py
 python3 scripts/validate_support_policy.py
 python3 scripts/public_contract_fingerprint.py --check
+python3 scripts/validate_contract_bundle.py
 python3 scripts/validate_release_evidence.py
 python3 scripts/release_readiness_report.py --json
 python3 scripts/validate_capability_profile.py
@@ -74,6 +91,16 @@ python3 scripts/validate_fixtures.py
 python3 scripts/glomancy_conformance.py fixtures
 python3 scripts/glomancy_conformance.py validate examples/v1/valid/task.submit.json
 python3 scripts/validate_cli_output_contract.py
+```
+
+To inspect the exact standalone archive you intend to distribute, build it from the pinned source and then verify that same ZIP:
+
+```bash
+python3 scripts/build_contract_bundle.py \
+  --out-dir dist/glomancy-contracts \
+  --archive dist/glomancy-protocol-contracts.zip \
+  --json
+python3 scripts/verify_contract_bundle.py dist/glomancy-protocol-contracts.zip
 ```
 
 Also verify the independent language examples that are part of repository CI.
@@ -106,7 +133,7 @@ For proposal-driven changes, confirm the implementation still matches the accept
 
 Review `docs/SUPPLY_CHAIN.md` and confirm dependency/Action changes were intentional, pinned immutably where required, and passed the applicable CI suite.
 
-Confirm no credentials, private certificates, customer data, signing material, proprietary runtime/provider/billing/editor-mutation code, or sensitive private infrastructure details entered the public history or the release-evidence artifact.
+Confirm no credentials, private certificates, customer data, signing material, proprietary runtime/provider/billing/editor-mutation code, or sensitive private infrastructure details entered the public history, release-evidence artifact, candidate contract distribution, or public release bundle.
 
 ## 6. Changelog and release notes
 
@@ -120,6 +147,7 @@ Update `CHANGELOG.md` and prepare release notes that clearly describe:
 - security-invariant changes when fail-closed public behavior changed;
 - public resource-limit changes when bounded-input policy changed;
 - security-relevant behavior changes when safe to disclose;
+- whether a standalone contract bundle will be attached for the release;
 - maturity/status wording supported by evidence.
 
 Do not describe a release as stable, production-proven, certified, broadly adopted, signed, reproducible, LTS, provenance-attested, formally verified, denial-of-service-proof, or supply-chain verified unless those properties are actually implemented and demonstrable for that release.
@@ -130,7 +158,18 @@ Prefer an annotated semantic-version tag such as `v0.2.0` when creating tags thr
 
 The tag must resolve to the reviewed release-candidate commit and match the SHA recorded by the release-readiness evidence bundle.
 
-Publish the GitHub release only after the tag target, release notes, and release-readiness evidence have been reviewed.
+Publish the GitHub release only after the tag target, release notes, release-readiness evidence, and candidate contract distribution (when used) have been reviewed.
+
+For release lines that contain `.github/workflows/contract-distribution.yml` and the current bundle tooling, publishing the GitHub release triggers automatic contract-bundle distribution. The release workflow checks out the exact published tag, verifies event SHA/tag identity, validates the public-contract fingerprint and deterministic bundle, verifies the exact generated ZIP, and then uploads:
+
+```text
+glomancy-protocol-contracts-<tag>.zip
+glomancy-protocol-contracts-<tag>.zip.sha256
+```
+
+The automatic distribution workflow does not create the release or move the tag. It only attaches assets after the maintainer publishes the release.
+
+Do not retrofit an older release with a contract bundle built from newer source. If a historical release predates this distribution workflow or its bundle tooling, record that truthfully instead of presenting a newer bundle as historical release content.
 
 ## 8. Post-release verification
 
@@ -142,17 +181,20 @@ After publication:
 - verify README/documentation links from the tagged source;
 - verify key examples and the public conformance CLI against the tagged source;
 - verify source/archive links;
+- when the release line supports automatic contract distribution, verify the expected ZIP and `.sha256` assets are present on the GitHub release;
+- download the published contract ZIP, verify the whole-archive SHA-256 sidecar, and run `scripts/verify_contract_bundle.py` from the exact matching tag when practical;
+- confirm the published bundle fingerprint/package/wire metadata matches the reviewed release candidate;
 - add a compatibility snapshot for the real release when required by the compatibility-snapshot policy;
 - update `support/v1/policy.json` and `docs/RELEASE_SUPPORT_POLICY.md` when the newly published release changes the current supported line;
 - regenerate/check `contracts/v1/fingerprint.json` if any canonical fingerprint input changed during release preparation;
-- re-run `python3 scripts/validate_security_invariants.py`, `python3 scripts/validate_resource_limits.py`, `python3 scripts/validate_support_policy.py`, `python3 scripts/public_contract_fingerprint.py --check`, and `python3 scripts/validate_release_evidence.py` after the real release snapshot/support update;
+- re-run `python3 scripts/validate_security_invariants.py`, `python3 scripts/validate_resource_limits.py`, `python3 scripts/validate_support_policy.py`, `python3 scripts/public_contract_fingerprint.py --check`, `python3 scripts/validate_contract_bundle.py`, and `python3 scripts/validate_release_evidence.py` after the real release snapshot/support update;
 - open follow-up issues for deferred work rather than silently changing a published historical contract.
 
 ## Security releases
 
 For a sensitive vulnerability, coordinate disclosure through `SECURITY.md`. Do not expose exploit details before affected users have a reasonable opportunity to update.
 
-Security urgency may require a shorter public review window, but it does not remove the need for regression tests, compatibility/migration analysis, accurate support-policy status, release evidence, and release notes once disclosure is safe.
+Security urgency may require a shorter public review window, but it does not remove the need for regression tests, compatibility/migration analysis, accurate support-policy status, release evidence, contract-distribution verification when applicable, and release notes once disclosure is safe.
 
 ## Repository enforcement
 
