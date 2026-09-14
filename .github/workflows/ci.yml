@@ -83,6 +83,31 @@ jobs:
       - name: Validate standalone contract bundle
         run: python3 scripts/validate_contract_bundle.py
 
+      - name: Smoke-test standalone bundle verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          temp_dir="$(mktemp -d)"
+          trap 'rm -rf "$temp_dir"' EXIT
+          python3 scripts/build_contract_bundle.py \
+            --out-dir "$temp_dir/extracted" \
+            --archive "$temp_dir/contracts.zip" \
+            --json > "$temp_dir/build.json"
+          python3 scripts/verify_contract_bundle.py "$temp_dir/contracts.zip" --json \
+            > "$temp_dir/verify.json"
+          python3 - "$temp_dir/build.json" "$temp_dir/verify.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          built = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          verified = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
+          assert built["archive_sha256"] == verified["archive_sha256"]
+          assert built["file_count"] == verified["file_count"]
+          assert built["public_contract_fingerprint"] == verified["public_contract_fingerprint"]
+          assert built["wire_protocol_version"] == verified["wire_protocol_version"]
+          PY
+
       - name: Validate release evidence bundle contract
         run: python3 scripts/validate_release_evidence.py
 
