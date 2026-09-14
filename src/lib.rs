@@ -1,6 +1,73 @@
 // Copyright (c) 2026 Glomancy
 // SPDX-License-Identifier: MIT
 
+//! Public Rust types and validation helpers for Glomancy Protocol.
+//!
+//! Glomancy Protocol is intentionally a small, transport-neutral contract layer. This crate
+//! exposes protocol-visible identifiers, message metadata, capability negotiation, schema
+//! registry lookup, version compatibility, resource limits, and fail-closed validation helpers.
+//! It does **not** contain the private Glomancy runtime, model-provider clients, editor mutation
+//! implementations, credentials, billing, or authorization policy.
+//!
+//! # Quick start
+//!
+//! The example below exercises the canonical consumer path using only public exports:
+//!
+//! ```rust
+//! use glomancy_protocol::{
+//!     Capability, CapabilityRequirement, Component, MessageHeader, MessageKind, PROTOCOL_VERSION,
+//!     ProtocolVersion, negotiate_capabilities, schema_for_kind, task_capabilities_are_selected,
+//! };
+//!
+//! // Protocol versions use a canonical major.minor.patch representation.
+//! let parsed: ProtocolVersion = "0.4.0".parse().expect("valid protocol version");
+//! assert_eq!(parsed, PROTOCOL_VERSION);
+//! assert_eq!(PROTOCOL_VERSION.to_string(), "0.4.0");
+//!
+//! // Resolve the public schema identity for a wire-visible message kind.
+//! let heartbeat = schema_for_kind(MessageKind::Heartbeat)
+//!     .expect("heartbeat must have a registered public schema");
+//! assert_eq!(heartbeat.schema_id, "urn:glomancy:protocol:heartbeat:1.0.0");
+//!
+//! // Negotiate capabilities by exact public name + exact version.
+//! let v1 = ProtocolVersion::new(1, 0, 0);
+//! let requested = [CapabilityRequirement::new(
+//!     Capability::new("result.evidence", v1),
+//!     true,
+//! )];
+//! let available = [
+//!     Capability::new("result.evidence", v1),
+//!     Capability::new("asset.read", v1),
+//! ];
+//! let selected = negotiate_capabilities(&requested, &available)
+//!     .expect("required capability should negotiate exactly");
+//!
+//! // Task gating confirms only that the capability was selected for the session.
+//! // It is deliberately separate from authorization.
+//! assert!(task_capabilities_are_selected(&["result.evidence"], &selected));
+//! assert!(!task_capabilities_are_selected(&["asset.write"], &selected));
+//!
+//! // Validate representative protocol-visible message metadata fail-closed.
+//! let header = MessageHeader {
+//!     schema_id: heartbeat.schema_id,
+//!     protocol_version: PROTOCOL_VERSION,
+//!     message_id: "11111111-1111-4111-8111-111111111111",
+//!     sent_at: "2026-07-27T09:07:00Z",
+//!     sender_component: Component::Bridge,
+//!     sender_instance_id: "example-consumer",
+//!     trace_id: "0123456789abcdef0123456789abcdef",
+//!     span_id: "0123456789abcdef",
+//!     kind: MessageKind::Heartbeat,
+//! };
+//! header.validate().expect("representative header should validate");
+//! ```
+//!
+//! # Important boundary
+//!
+//! Successful schema lookup, version compatibility, capability selection, or structural message
+//! validation does not authorize an editor/tool operation. Consumers remain responsible for
+//! higher-layer authentication, policy, approval, execution, and verification decisions.
+
 #![forbid(unsafe_code)]
 
 mod capability;
