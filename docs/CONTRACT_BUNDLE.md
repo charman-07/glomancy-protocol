@@ -43,6 +43,7 @@ The bundle includes:
 - `compatibility/v1/` and published snapshot JSON;
 - `capabilities/v1/` — capability profile;
 - `vectors/v1/` — language-neutral conformance vectors;
+- `examples/v1/` — valid and intentionally invalid conformance fixtures plus their manifest;
 - `errors/v1/` — public protocol error catalog;
 - `security/v1/` — vector-backed security invariant catalog;
 - `limits/v1/` — public resource-limit policy;
@@ -51,7 +52,7 @@ The bundle includes:
 - `conformance/v1/` — machine-readable conformance-tool output contract;
 - `LICENSE`.
 
-The builder uses an explicit allowlist and rejects missing required contract surfaces or unsafe archive paths.
+The builder uses an explicit allowlist and rejects missing required contract surfaces, missing valid/invalid fixture sets, or unsafe archive paths.
 
 ## Verify the extracted bundle
 
@@ -87,8 +88,9 @@ A non-Rust consumer can:
 3. vendor the extracted public files into its repository or build system;
 4. verify `SHA256SUMS` in CI;
 5. implement behavior against the JSON Schemas and language-neutral vectors;
-6. run the public conformance CLI or its own independent vector runner;
-7. review compatibility/release notes before updating the pinned baseline.
+6. validate its parser/validator against the bundled valid and invalid fixtures;
+7. run the public conformance CLI or its own independent vector runner;
+8. review compatibility/release notes before updating the pinned baseline.
 
 ## Release assets
 
