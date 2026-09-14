@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Evaluate Glomancy Protocol in 5 minutes
+    url: https://github.com/charman-07/glomancy-protocol/blob/main/docs/EVALUATE_IN_5_MINUTES.md
+    about: Run the shortest public evaluation path before opening an integration issue.
+  - name: Contributor Start Here
+    url: https://github.com/charman-07/glomancy-protocol/blob/main/docs/CONTRIBUTOR_START_HERE.md
+    about: Pick a newcomer-friendly contribution and run the right local checks.
   - name: Security vulnerability
     url: https://github.com/charman-07/glomancy-protocol/security/policy
     about: Please report security-sensitive issues privately instead of opening a public issue.
