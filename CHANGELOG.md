@@ -33,6 +33,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - Deterministic public-contract fingerprint manifest and dependency-free verifier covering the canonical registry, compatibility, capability, vector, error, support, snapshot, and conformance-output contracts, with aggregate SHA-256 reporting in release-readiness audits.
 - Versioned release-readiness evidence JSON contract and downloadable GitHub Actions evidence bundle containing exact audited ref/SHA metadata, quality/contract/portability gate outcomes, byte-identical public-contract/support-policy copies, and SHA-256 payload checksums with bounded artifact retention.
 - Versioned machine-readable `GLM-SEC-*` security-invariant catalog linking core fail-closed versioning, capability, approval, evidence, and lifecycle rules to executable language-neutral conformance vectors, with CI validation and release-readiness reporting.
+- Versioned machine-readable public resource-limits policy for message bytes, payload depth, extensions, and artifacts, with exact Rust-constant parity validation, public-contract fingerprint coverage, and release-readiness reporting.
 
 ### Clarified
 
@@ -47,6 +48,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 - The public contract fingerprint provides deterministic integrity comparison only; it is not a signature, authenticity proof, provenance claim, authorization decision, or certification.
 - Release-readiness evidence artifacts preserve auditable workflow facts and integrity metadata but are not signatures, provenance attestations, certifications, or proof that a release was authorized or published.
 - Security-invariant vector references provide regression evidence for documented fail-closed behavior; they are not formal verification, security certification, authentication, authorization, or proof that an integration enforces higher-layer policy correctly.
+- Published resource limits are protocol maximums rather than denial-of-service guarantees; consumers may enforce stricter local limits but must not silently accept values beyond the advertised public maxima while claiming policy conformance.
 
 ## [0.1.0] — 2026-09-13
 

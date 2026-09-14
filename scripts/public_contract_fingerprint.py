@@ -26,6 +26,7 @@ CANONICAL_PATHS = (
     "compatibility/v1/compatibility-matrix.json",
     "conformance/v1/cli-output.schema.json",
     "errors/v1/catalog.json",
+    "limits/v1/policy.json",
     "registry/v1/manifest.json",
     "security/v1/invariants.json",
     "support/v1/policy.json",

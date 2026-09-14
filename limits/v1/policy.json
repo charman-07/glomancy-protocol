@@ -1,0 +1,39 @@
+{
+  "policy_version": "1.0.0",
+  "wire_protocol_version": "0.4.0",
+  "description": "Machine-readable public bounded-input limits for Glomancy Protocol consumers. Integrations may enforce stricter local limits but must not silently accept values beyond these advertised protocol maximums.",
+  "limits": [
+    {
+      "id": "message.max_bytes",
+      "rust_constant": "MAX_MESSAGE_BYTES",
+      "value": 1048576,
+      "unit": "bytes",
+      "scope": "encoded_message",
+      "enforcement": "maximum"
+    },
+    {
+      "id": "payload.max_depth",
+      "rust_constant": "MAX_PAYLOAD_DEPTH",
+      "value": 32,
+      "unit": "levels",
+      "scope": "payload_structure",
+      "enforcement": "maximum"
+    },
+    {
+      "id": "extensions.max_per_message",
+      "rust_constant": "MAX_EXTENSIONS",
+      "value": 32,
+      "unit": "entries",
+      "scope": "message_extensions",
+      "enforcement": "maximum"
+    },
+    {
+      "id": "artifacts.max_per_message",
+      "rust_constant": "MAX_ARTIFACTS_PER_MESSAGE",
+      "value": 64,
+      "unit": "entries",
+      "scope": "message_artifacts",
+      "enforcement": "maximum"
+    }
+  ]
+}
