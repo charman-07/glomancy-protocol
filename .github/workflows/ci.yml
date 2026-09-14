@@ -80,6 +80,9 @@ jobs:
       - name: Validate public contract fingerprint
         run: python3 scripts/public_contract_fingerprint.py --check
 
+      - name: Validate standalone contract bundle
+        run: python3 scripts/validate_contract_bundle.py
+
       - name: Validate release evidence bundle contract
         run: python3 scripts/validate_release_evidence.py
 
