@@ -4,13 +4,23 @@ Glomancy Protocol treats Rust API compatibility as a separate contract from wire
 
 A crate can keep passing unit tests while still breaking a downstream Rust consumer by removing or changing a public type, method, field, trait implementation, or function signature. The repository therefore runs a dedicated SemVer compatibility check against the latest published public Rust baseline currently recorded for this project.
 
-## Current baseline
+## Current baseline and development line
 
-The current baseline is the published Git tag:
+The current published baseline is the Git tag:
 
 ```text
 v0.1.0
 ```
+
+The current unreleased Rust package line is:
+
+```text
+0.2.0
+```
+
+This distinction is deliberate. After `v0.1.0`, the public exhaustive `HeaderValidationError` enum gained additional validation variants for incompatible protocol versions, unknown schema IDs, and schema-kind mismatches. Adding variants to an exhaustive public Rust enum can break downstream exhaustive matches, so the change is represented as a new pre-1.0 package minor line rather than being hidden inside `0.1.x`.
+
+The wire protocol remains independently versioned; advancing the Rust crate to `0.2.0` does not by itself change the wire protocol version.
 
 The check uses `cargo-semver-checks` with:
 
