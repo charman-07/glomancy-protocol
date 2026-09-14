@@ -19,7 +19,7 @@ These versions intentionally do not move in lockstep.
 
 For a released baseline, start from an immutable Git tag such as `v0.1.0`. The `v0.1.0` release contains the initial Rust package, wire protocol `0.4.0`, public v1 message schemas, registry hashes, compatibility rules, capability profile, fixtures, and the first public conformance tooling.
 
-Some interoperability tooling on the current repository `main` was added after `v0.1.0`, including language-neutral vectors, independent Python/JavaScript consumers, published compatibility snapshots, and the versioned CLI JSON-output schema. Until those assets are included in a later release, consumers evaluating them should pin an **exact reviewed commit SHA**, not a mutable branch name.
+Some interoperability tooling on the current repository `main` was added after `v0.1.0`, including language-neutral vectors, independent Python/JavaScript consumers, published compatibility snapshots, versioned CLI JSON-output schema, security/limits catalogs, and the standalone contract-bundle builder. Until those assets are included in a later release, consumers evaluating them should pin an **exact reviewed commit SHA**, not a mutable branch name.
 
 Do not silently combine assets from different baselines. If you use schemas from a release tag and vectors from a later commit, document that choice in your own integration and test it explicitly.
 
@@ -67,6 +67,25 @@ git checkout <exact-reviewed-commit-sha>
 ```
 
 Avoid treating `main` as a stable API version before 1.0.
+
+## Non-Rust: build one deterministic contract package
+
+For current pinned revisions that include the bundle builder, non-Rust consumers can package the language-neutral public contract surface into one deterministic ZIP:
+
+```bash
+python3 scripts/build_contract_bundle.py \
+  --out-dir dist/glomancy-contracts \
+  --archive dist/glomancy-protocol-contracts.zip \
+  --json
+```
+
+The package includes public schemas, registry, compatibility data, capability profile, consumer vectors, error/security/limits/support policies, the public contract fingerprint, conformance output contract, `BUNDLE_MANIFEST.json`, `SHA256SUMS`, and the MIT license.
+
+Repository CI builds the archive twice and requires byte-identical ZIP output for the same source content. This makes the package useful for vendoring and integrity comparison without requiring the Rust crate.
+
+This does **not** mean every historical GitHub release already contains a downloadable ZIP asset. Generate it from a pinned source revision unless a future release explicitly publishes and verifies the artifact.
+
+See [Standalone Contract Bundle](CONTRACT_BUNDLE.md) for contents, verification, determinism, and assurance boundaries.
 
 ## Verify registry hashes before trusting a schema
 
@@ -200,6 +219,9 @@ Maintainer-authored examples and notes are intentionally kept separate from exte
 
 ## Related documentation
 
+- [Evaluate in 5 minutes](EVALUATE_IN_5_MINUTES.md)
+- [Standalone Contract Bundle](CONTRACT_BUNDLE.md)
+- [Ecosystem and Implementations](ECOSYSTEM.md)
 - [Protocol Conformance](CONFORMANCE.md)
 - [Consumer Integration Guide](INTEGRATION_GUIDE.md)
 - [Consumer Conformance Vectors](CONSUMER_VECTORS.md)
