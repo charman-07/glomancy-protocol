@@ -96,6 +96,9 @@ jobs:
       - name: Public contract fingerprint
         run: python3 scripts/public_contract_fingerprint.py --check
 
+      - name: Standalone contract bundle
+        run: python3 scripts/validate_contract_bundle.py
+
       - name: Release evidence bundle contract
         run: python3 scripts/validate_release_evidence.py
 
