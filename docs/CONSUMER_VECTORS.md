@@ -6,7 +6,7 @@ The files under `vectors/v1/` provide machine-readable expected outcomes for cor
 
 The JSON Schemas validate message payload shape. These vectors test a different layer: deterministic consumer decisions around message-kind lookup, wire compatibility, advertised-version selection, capability negotiation, task-time capability gating, approval correlation/expiry handling, and cross-message task lifecycle behavior.
 
-They are intended to reduce situations where two implementations both claim protocol support but interpret the same negotiation, approval, evidence, or lifecycle input differently.
+They are intended to reduce situations where two implementations both claim protocol support but interpret the same negotiation, approval, evidence, cancellation, terminal-error, or lifecycle input differently.
 
 ## Layout
 
@@ -106,13 +106,18 @@ The lifecycle vectors cover:
 - a valid denial keeps the approval gate closed;
 - every task-scoped event must correlate to the submitted `task_id`;
 - evidence IDs are unique within the scenario;
-- progress or result messages cannot reference evidence that has not been observed for that task in the scenario;
+- progress, result, and terminal error messages cannot reference evidence that has not been observed for that task in the scenario;
 - a successful `task.result` is terminal for the modeled flow;
-- later task events after that terminal result fail closed.
+- `task.error` may close the modeled flow with the public terminal statuses `failed`, `cancelled`, or `rolled_back`;
+- later task events after either a successful result or a terminal error fail closed;
+- `task.cancel` is modeled as a cancellation **request**, not as proof that the task has already stopped;
+- a cancellation request does not bypass an outstanding approval gate for subsequent execution progress.
 
-The successful reference case exercises an approval request, approval decision, running progress, evidence production, validating progress, and a final successful result. Rejection cases cover unselected capabilities, missing approval, denial, task-ID mismatch, duplicate evidence, missing evidence, expired approval, a decision without an outstanding request, and events after a terminal result.
+The successful reference case exercises an approval request, approval decision, running progress, evidence production, validating progress, and a final successful result. Failure-path cases exercise terminal failure with evidence, a cancellation request followed by a terminal cancelled outcome, an approved write flow that reports `rolled_back`, missing evidence on an error, invalid terminal error status, and events after a terminal error.
 
-These lifecycle vectors intentionally do **not** claim to provide authentication, local authorization, rollback, transactionality, editor permissions, or execution safety. They only define deterministic conformance behavior for the public protocol boundary. A consuming product remains responsible for all local security and execution policy.
+The public distinction matters: `task.cancel` communicates a request to cancel, while the existing `task.error` contract reports terminal `failed`, `cancelled`, or `rolled_back` outcomes. A consumer must not infer that a cancellation request succeeded merely because the request was emitted. Conversely, these vectors do not require every terminal cancellation to originate from a protocol `task.cancel`; local runtime or policy mechanisms may also produce a terminal cancellation outcome.
+
+These lifecycle vectors intentionally do **not** claim to provide authentication, local authorization, transactionality, editor permissions, rollback implementation, rollback safety, or execution safety. A `rolled_back` status is a reported public terminal outcome; the protocol does not define how a consumer must implement or prove rollback. A consuming product remains responsible for all local security, execution, recovery, and verification policy.
 
 ## Repository validator
 
@@ -145,7 +150,7 @@ Vector versions are separate from:
 - the wire protocol version;
 - individual JSON Schema versions.
 
-The addition of the task-lifecycle area advances the vector suite to `1.2.0`: existing vector meanings remain intact while the suite gains a new conformance surface.
+The addition of the task-lifecycle area advanced the suite to `1.2.0`. Expanding that existing area with explicit `failed`, `cancelled`, and `rolled_back` terminal outcomes, cancellation-request semantics, and failure-path evidence closure advances the vector suite to `1.3.0`. Existing vector meanings remain intact; the new minor vector version signals an expanded conformance surface.
 
 A vector change that changes an expected protocol decision must be reviewed together with the corresponding compatibility, capability, approval, lifecycle, schema, documentation, and migration implications. Do not silently rewrite historical expected outcomes for a published protocol snapshot.
 
@@ -155,6 +160,6 @@ For practical mistakes to avoid when implementing these decisions, read [Integra
 
 ## What these vectors do not prove
 
-Passing the vector suite does not prove that an implementation is secure or production-ready. It does not test authentication, authorization, sandboxing, transport security, editor permissions, provider credentials, rollback safety, or private Glomancy runtime behavior.
+Passing the vector suite does not prove that an implementation is secure or production-ready. It does not test authentication, authorization, sandboxing, transport security, editor permissions, provider credentials, rollback correctness, or private Glomancy runtime behavior.
 
 The vectors demonstrate agreement with specific public protocol decisions only.

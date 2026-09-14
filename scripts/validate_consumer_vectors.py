@@ -197,8 +197,10 @@ def evaluate_task_lifecycle(inputs: dict[str, object]) -> dict[str, object]:
             "approval.request",
             "approval.decision",
             "task.progress",
+            "task.cancel",
             "evidence.record",
             "task.result",
+            "task.error",
         }:
             return lifecycle_outcome(False, None, len(evidence_ids), "unknown-event-kind")
 
@@ -231,6 +233,10 @@ def evaluate_task_lifecycle(inputs: dict[str, object]) -> dict[str, object]:
             approval_denied = reason == "denied"
             continue
 
+        # task.cancel is a request, not a terminal outcome by itself.
+        if kind == "task.cancel":
+            continue
+
         if kind == "evidence.record":
             evidence_id = str(event["evidence_id"])
             if evidence_id in evidence_ids:
@@ -260,6 +266,15 @@ def evaluate_task_lifecycle(inputs: dict[str, object]) -> dict[str, object]:
                 reason = "approval-denied" if approval_denied else "approval-required"
                 return lifecycle_outcome(False, None, len(evidence_ids), reason)
             terminal_status = "succeeded"
+            continue
+
+        if kind == "task.error":
+            status = str(event.get("status", ""))
+            if status not in {"failed", "cancelled", "rolled_back"}:
+                return lifecycle_outcome(
+                    False, None, len(evidence_ids), "invalid-error-status"
+                )
+            terminal_status = status
 
     return lifecycle_outcome(True, terminal_status, len(evidence_ids), None)
 
