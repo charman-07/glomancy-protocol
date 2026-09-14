@@ -9,6 +9,8 @@
 # Glomancy Protocol
 
 [![CI](https://github.com/charman-07/glomancy-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/charman-07/glomancy-protocol/actions/workflows/ci.yml)
+[![Public protocol demo](https://github.com/charman-07/glomancy-protocol/actions/workflows/public-demo.yml/badge.svg)](https://github.com/charman-07/glomancy-protocol/actions/workflows/public-demo.yml)
+[![Rust API compatibility](https://github.com/charman-07/glomancy-protocol/actions/workflows/public-rust-api.yml/badge.svg)](https://github.com/charman-07/glomancy-protocol/actions/workflows/public-rust-api.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Rust 1.85+](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](rust-toolchain.toml)
 
@@ -19,6 +21,33 @@ Glomancy Protocol is a small Rust library plus versioned JSON Schemas for the bo
 > New here? Read **[What Glomancy Is and Why the Protocol Exists](docs/GLOMANCY_OVERVIEW.md)** for the product vision, concrete benefits, example workflows, intended audiences, current maturity, and the public/private boundary.
 >
 > Integrating it into another project? Read **[External Adoption Guide](docs/ADOPTION_GUIDE.md)** for release/commit pinning, Rust Git dependencies, schema/hash verification, non-Rust vendoring, conformance, and upgrade discipline.
+
+## See it work — 30 seconds
+
+The repository includes a dependency-free public demo that computes real protocol decisions from the versioned conformance vectors. It is not a prerecorded success path and it does not call the private Glomancy runtime.
+
+```bash
+python3 examples/consumers/python/demo_flow.py
+```
+
+Representative output:
+
+```text
+Glomancy Protocol — runnable public flow
+1. handshake       PASS  selected wire version: 0.4.0
+2. capabilities    PASS  selected: editor.read@1.0.0, result.evidence@1.0.0
+3. task gate       PASS  accepted: true
+4. approval        PASS  accepted=true authorized=true
+5. evidence        PASS  evidence.record -> urn:glomancy:protocol:evidence.record:1.0.0
+```
+
+The boundary demonstrated is:
+
+**advertised version → exact capabilities → task gate → approval correlation/expiry → evidence contract**
+
+The dedicated **Public protocol demo** workflow runs this path on every push and pull request, including a machine-readable `--json` contract check. Protocol validation and capability selection are prerequisites for a safe integration; they are **not** authentication, local authorization, editor execution, or proof that a real Unreal mutation occurred.
+
+**[See the full runnable walkthrough and sequence diagram →](docs/SEE_IT_WORK.md)**
 
 ## Product preview — Glomancy Desktop
 
@@ -211,7 +240,7 @@ See [Protocol Conformance](docs/CONFORMANCE.md) for exit codes, explicit schema 
 
 ## Protocol surface
 
-Current wire protocol: **0.4.0**. Initial public crate line: **0.1.x**.
+Current wire protocol: **0.4.0**. Published Rust baseline: **v0.1.0**. Current unreleased Rust package line: **0.2.0**.
 
 The v1 schema set covers:
 
@@ -223,7 +252,7 @@ The v1 schema set covers:
 | Verification | `evidence.record` |
 | Liveness | `heartbeat` |
 
-See the [External Adoption Guide](docs/ADOPTION_GUIDE.md) for pinned consumption and upgrade guidance, the [Consumer Integration Guide](docs/INTEGRATION_GUIDE.md) for an end-to-end language-neutral flow, and [Consumer Conformance Vectors](docs/CONSUMER_VECTORS.md) for independent implementation guidance. [Capability Negotiation](docs/CAPABILITY_NEGOTIATION.md), [Protocol Conformance](docs/CONFORMANCE.md), [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), [Snapshot Compatibility](docs/SNAPSHOT_COMPATIBILITY.md), [Pre-1.0 Deprecation Policy](docs/DEPRECATION_POLICY.md), and [Security Model](docs/SECURITY_MODEL.md) document the executable contract, design rationale, evolution rules, and trust boundaries.
+See the [External Adoption Guide](docs/ADOPTION_GUIDE.md) for pinned consumption and upgrade guidance, the [Consumer Integration Guide](docs/INTEGRATION_GUIDE.md) for an end-to-end language-neutral flow, and [Consumer Conformance Vectors](docs/CONSUMER_VECTORS.md) for independent implementation guidance. [Capability Negotiation](docs/CAPABILITY_NEGOTIATION.md), [Protocol Conformance](docs/CONFORMANCE.md), [Architecture](docs/ARCHITECTURE.md), [Compatibility](docs/COMPATIBILITY.md), [Snapshot Compatibility](docs/SNAPSHOT_COMPATIBILITY.md), [Pre-1.0 Deprecation Policy](docs/DEPRECATION_POLICY.md), [Public Rust API Compatibility](docs/RUST_API_COMPATIBILITY.md), and [Security Model](docs/SECURITY_MODEL.md) document the executable contract, design rationale, evolution rules, and trust boundaries.
 
 ## Capability negotiation
 
@@ -291,6 +320,7 @@ examples/consumers/javascript/ Independent dependency-free JavaScript consumer
 compatibility/v1/            Version compatibility rules and cases
 compatibility/snapshots/     Pinned real public-release compatibility baselines
 capabilities/v1/             Machine-readable capability profile and cases
+downstream/rust-consumer/    Standalone crate that consumes only the public Rust API
 docs/                        Product context, adoption, architecture, conformance, compatibility, evolution, security, integration guides
 scripts/                     Repository integrity, boundary, interoperability, fixture, and conformance tools
 tests/                       Public contract regression tests
@@ -303,13 +333,15 @@ Before 1.0, a patch change within the same protocol minor line is compatible; a 
 
 Schema versions and wire-protocol versions are separate on purpose: a schema can evolve independently while negotiation remains explicit. CLI JSON-output versions and consumer-vector versions are separate again. Changes that deprecate or remove public behavior must follow [docs/DEPRECATION_POLICY.md](docs/DEPRECATION_POLICY.md) rather than silently mutating the contract.
 
+Rust package SemVer is also tracked separately. The published `v0.1.0` baseline remains the comparison point for the current unreleased `0.2.0` package line, and CI runs a pinned, checksum-verified `cargo-semver-checks` job so public Rust API breaks are explicit rather than accidental. See [Public Rust API Compatibility](docs/RUST_API_COMPATIBILITY.md).
+
 ## Project status
 
 This public repository is newly open-sourced, but the underlying protocol work had already been under active development, testing, debugging, and repeated validation before the public repository was opened. The current public focus is a small, auditable protocol core with executable conformance behavior rather than a large framework.
 
 The broader private Glomancy product is being developed with Unreal Engine as its first primary editor target. That concrete product work gives the protocol a real high-trust editor environment to design against, while the public protocol intentionally avoids depending on Unreal-specific implementation details.
 
-The repository includes cross-platform Rust tests, JSON Schema validation, public/private boundary checks, capability-negotiation validation, language-neutral expected-outcome vectors, independent Python and JavaScript consumer examples, published compatibility snapshots, registry hash checks, supply-chain maintenance rules, a public conformance CLI, versioned machine-readable CLI output, and a published schema for that output. It is still pre-1.0; **genuine external integration feedback and independent usage remain important before stronger stability or adoption claims are appropriate.**
+The repository includes cross-platform Rust tests, JSON Schema validation, public/private boundary checks, capability-negotiation validation, language-neutral expected-outcome vectors, independent Python and JavaScript consumer examples, published compatibility snapshots, registry hash checks, supply-chain maintenance rules, a public conformance CLI, versioned machine-readable CLI output, a published schema for that output, a standalone downstream Rust consumer, an executable public demo, package-boundary validation, and public Rust API SemVer regression checks. It is still pre-1.0; **genuine external integration feedback and independent usage remain important before stronger stability or adoption claims are appropriate.**
 
 If you have actually implemented or evaluated the public protocol independently, use the dedicated [Integration feedback issue form](https://github.com/charman-07/glomancy-protocol/issues/new?template=integration_feedback.yml). Maintainer-derived implementation notes live separately in [Integration Pitfalls and Implementation Notes](docs/INTEGRATION_PITFALLS.md); the project does not treat those notes as external adoption evidence.
 
@@ -325,7 +357,7 @@ Project decisions and maintainer responsibilities are described in [GOVERNANCE.m
 
 ## Release discipline
 
-Every release should pass formatting, Clippy, tests, documentation checks, cross-platform test jobs, repository integrity validation, capability-profile validation, independent consumer examples, compatibility-snapshot checks, executable examples, and executable conformance checks. Public deprecations/removals must also carry explicit migration notes under [docs/DEPRECATION_POLICY.md](docs/DEPRECATION_POLICY.md). The release checklist is documented in [RELEASING.md](RELEASING.md), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
+Every release should pass formatting, Clippy, tests, documentation checks, cross-platform test jobs, repository integrity validation, capability-profile validation, independent consumer examples, compatibility-snapshot checks, executable examples, executable conformance checks, package-boundary/MSRV checks, the runnable public demo, and public Rust API SemVer review. Public deprecations/removals must also carry explicit migration notes under [docs/DEPRECATION_POLICY.md](docs/DEPRECATION_POLICY.md). The release checklist is documented in [RELEASING.md](RELEASING.md), and notable changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
