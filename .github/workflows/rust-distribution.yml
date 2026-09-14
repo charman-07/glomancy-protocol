@@ -1,0 +1,64 @@
+name: Rust distribution compatibility
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-distribution-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compatibility:
+    name: Rust compatibility (${{ matrix.toolchain }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain:
+          - 1.85.0
+          - stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Rust toolchain
+        run: rustup toolchain install "${{ matrix.toolchain }}" --profile minimal
+
+      - name: Set Rust override
+        run: rustup override set "${{ matrix.toolchain }}"
+
+      - name: Test public crate
+        run: cargo test --all-targets
+
+      - name: Check downstream consumer
+        run: cargo check --manifest-path downstream/rust-consumer/Cargo.toml
+
+      - name: Run downstream consumer
+        run: cargo run --manifest-path downstream/rust-consumer/Cargo.toml
+
+  package-boundary:
+    name: Cargo package boundary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Rust 1.85
+        run: rustup toolchain install 1.85.0 --profile minimal
+
+      - name: Set Rust override
+        run: rustup override set 1.85.0
+
+      - name: Inspect package file surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo package --allow-dirty --list > cargo-package-files.txt
+          python3 scripts/validate_cargo_package.py cargo-package-files.txt
+
+      - name: Build and verify distributable crate package
+        run: cargo package --allow-dirty

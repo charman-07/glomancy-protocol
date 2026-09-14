@@ -11,6 +11,25 @@ readme = "README.md"
 keywords = ["ai", "protocol", "json-schema", "developer-tools", "unreal-engine"]
 categories = ["development-tools"]
 publish = false
+include = [
+    "src/**",
+    "examples/*.rs",
+    "README.md",
+    "LICENSE",
+    "schemas/v1/**",
+    "registry/v1/**",
+    "compatibility/v1/**",
+    "compatibility/snapshots/**",
+    "capabilities/v1/**",
+    "vectors/v1/**",
+    "errors/v1/**",
+    "security/v1/**",
+    "limits/v1/**",
+    "support/v1/**",
+    "contracts/v1/**",
+    "conformance/v1/**",
+    "examples/v1/**",
+]
 
 [workspace]
 
