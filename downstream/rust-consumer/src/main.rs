@@ -5,6 +5,7 @@ use glomancy_protocol::{
 
 fn main() {
     assert_eq!(PROTOCOL_VERSION, ProtocolVersion::new(0, 4, 0));
+    assert_eq!(PROTOCOL_VERSION.to_string(), "0.4.0");
 
     let heartbeat = schema_for_kind(MessageKind::Heartbeat)
         .expect("heartbeat schema must remain publicly registered");
@@ -49,7 +50,7 @@ fn main() {
         .expect("representative downstream message header should validate");
 
     println!(
-        "downstream Rust consumer passed: protocol={:?} schema={} selected_capabilities={}",
+        "downstream Rust consumer passed: protocol={} schema={} selected_capabilities={}",
         PROTOCOL_VERSION,
         heartbeat.schema_id,
         selected.len()

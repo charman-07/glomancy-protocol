@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Glomancy
 // SPDX-License-Identifier: MIT
 
-use core::str::FromStr;
+use core::{fmt, str::FromStr};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ProtocolVersion {
@@ -37,6 +37,12 @@ impl ProtocolVersion {
         } else {
             VersionCompatibility::MajorCompatible
         }
+    }
+}
+
+impl fmt::Display for ProtocolVersion {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "{}.{}.{}", self.major, self.minor, self.patch)
     }
 }
 
@@ -88,4 +94,26 @@ pub enum VersionParseError {
     TooManyComponents,
     LeadingZero,
     InvalidNumber,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn display_uses_canonical_semantic_version_shape() {
+        assert_eq!(ProtocolVersion::new(0, 4, 0).to_string(), "0.4.0");
+        assert_eq!(ProtocolVersion::new(12, 34, 56).to_string(), "12.34.56");
+    }
+
+    #[test]
+    fn display_round_trips_through_parser() {
+        for version in [
+            ProtocolVersion::new(0, 4, 0),
+            ProtocolVersion::new(1, 0, 0),
+            ProtocolVersion::new(u16::MAX, u16::MAX, u16::MAX),
+        ] {
+            assert_eq!(version.to_string().parse::<ProtocolVersion>(), Ok(version));
+        }
+    }
 }
