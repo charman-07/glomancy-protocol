@@ -36,6 +36,7 @@ PUBLIC_GLOBS = (
     "support/v1/*.json",
     "contracts/v1/fingerprint.json",
     "conformance/v1/*.json",
+    "examples/v1/**/*.json",
 )
 
 REQUIRED_FILES = (
@@ -51,6 +52,7 @@ REQUIRED_FILES = (
     "support/v1/policy.json",
     "contracts/v1/fingerprint.json",
     "conformance/v1/cli-output.schema.json",
+    "examples/v1/manifest.json",
 )
 
 ALLOWED_PREFIXES = (
@@ -66,6 +68,7 @@ ALLOWED_PREFIXES = (
     "support/v1/",
     "contracts/v1/",
     "conformance/v1/",
+    "examples/v1/",
 )
 
 
@@ -166,6 +169,10 @@ def collect_payload_paths() -> list[str]:
 
     if not any(path.startswith("schemas/v1/") for path in found):
         raise BundleError("bundle contains no public schemas")
+    if not any(path.startswith("examples/v1/valid/") for path in found):
+        raise BundleError("bundle contains no valid conformance fixtures")
+    if not any(path.startswith("examples/v1/invalid/") for path in found):
+        raise BundleError("bundle contains no invalid conformance fixtures")
 
     return sorted(found)
 
