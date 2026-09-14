@@ -24,7 +24,7 @@ Glomancy Protocol is a small Rust library plus versioned JSON Schemas for the bo
 
 <p align="center">
   <a href="docs/GLOMANCY_PRODUCT_VISION.md">
-    <img src="./assets/glomancy-desktop-preview.webp" alt="Glomancy Desktop connected to an Unreal Engine project" width="100%">
+    <img src="https://raw.githubusercontent.com/charman-07/glomancy-protocol/main/assets/glomancy-desktop-preview.webp" alt="Glomancy Desktop connected to an Unreal Engine project" width="100%">
   </a>
 </p>
 

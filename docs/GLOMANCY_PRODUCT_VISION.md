@@ -1,7 +1,7 @@
 # Glomancy — AI-Native Development Intelligence for Unreal Engine
 
 <p align="center">
-  <img src="../assets/glomancy-desktop-preview.webp" alt="Glomancy Desktop connected to an Unreal Engine project" width="100%">
+  <img src="https://raw.githubusercontent.com/charman-07/glomancy-protocol/main/assets/glomancy-desktop-preview.webp" alt="Glomancy Desktop connected to an Unreal Engine project" width="100%">
 </p>
 
 > **Development preview:** Glomancy Desktop connected to an active Unreal Engine project, with the Bridge authenticated and the AI provider ready. The screenshot represents a real development build; the product remains under active development and its current surface does not represent the full planned system.
