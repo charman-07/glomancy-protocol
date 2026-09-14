@@ -34,6 +34,9 @@ jobs:
       - name: Test public crate
         run: cargo test --all-targets
 
+      - name: Test executable Rust documentation
+        run: cargo test --doc
+
       - name: Check downstream consumer
         run: cargo check --manifest-path downstream/rust-consumer/Cargo.toml
 
