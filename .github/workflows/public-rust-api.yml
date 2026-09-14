@@ -1,0 +1,63 @@
+name: Public Rust API compatibility
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-rust-api-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semver:
+    name: Rust API semver against v0.1.0
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history and tags
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Verify published baseline tag is resolvable
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e 'v0.1.0^{commit}'
+          printf 'baseline=%s\n' "$(git rev-parse 'v0.1.0^{commit}')"
+
+      - name: Install current stable Rust
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install stable --profile minimal
+          rustup override set stable
+          rustc --version
+          cargo --version
+
+      - name: Install pinned cargo-semver-checks binary
+        shell: bash
+        env:
+          TOOL_VERSION: '0.50.0'
+          ARCHIVE_SHA256: '52a65dc88dc53fa8b57d6087954eb52cda149ca03bcfca78ce3fdecd23f893c4'
+        run: |
+          set -euo pipefail
+          archive='cargo-semver-checks-x86_64-unknown-linux-gnu.tar.gz'
+          url="https://github.com/obi1kenobi/cargo-semver-checks/releases/download/v${TOOL_VERSION}/${archive}"
+          work="$RUNNER_TEMP/cargo-semver-checks"
+          mkdir -p "$work/bin"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 3 --retry-all-errors \
+            --output "$work/$archive" "$url"
+          printf '%s  %s\n' "$ARCHIVE_SHA256" "$work/$archive" | sha256sum --check --strict
+          tar -xzf "$work/$archive" -C "$work/bin"
+          printf '%s\n' "$work/bin" >> "$GITHUB_PATH"
+          "$work/bin/cargo-semver-checks" --version
+
+      - name: Check public Rust API against published v0.1.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo semver-checks --baseline-rev v0.1.0
