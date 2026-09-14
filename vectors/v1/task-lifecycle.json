@@ -400,6 +400,268 @@
         "evidence_count": 0,
         "reason": "approval-not-requested"
       }
+    },
+    {
+      "id": "failed-terminal-with-evidence",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.read", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "13131313-1313-4313-8313-131313131313",
+          "requested_capabilities": ["editor.read"],
+          "approval_required": false
+        },
+        "events": [
+          {
+            "kind": "task.progress",
+            "task_id": "13131313-1313-4313-8313-131313131313",
+            "status": "planning",
+            "evidence_ids": []
+          },
+          {
+            "kind": "evidence.record",
+            "task_id": "13131313-1313-4313-8313-131313131313",
+            "evidence_id": "14141414-1414-4414-8414-141414141414"
+          },
+          {
+            "kind": "task.error",
+            "task_id": "13131313-1313-4313-8313-131313131313",
+            "status": "failed",
+            "recoverable": true,
+            "rollback_attempted": false,
+            "evidence_ids": ["14141414-1414-4414-8414-141414141414"]
+          }
+        ]
+      },
+      "expected": {
+        "accepted": true,
+        "terminal_status": "failed",
+        "evidence_count": 1,
+        "reason": null
+      }
+    },
+    {
+      "id": "cancel-request-to-cancelled-terminal",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.read", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "15151515-1515-4515-8515-151515151515",
+          "requested_capabilities": ["editor.read"],
+          "approval_required": false
+        },
+        "events": [
+          {
+            "kind": "task.cancel",
+            "task_id": "15151515-1515-4515-8515-151515151515",
+            "reason": "user requested cancellation",
+            "requested_by": "example-user",
+            "force": false
+          },
+          {
+            "kind": "task.error",
+            "task_id": "15151515-1515-4515-8515-151515151515",
+            "status": "cancelled",
+            "recoverable": false,
+            "rollback_attempted": false,
+            "evidence_ids": []
+          }
+        ]
+      },
+      "expected": {
+        "accepted": true,
+        "terminal_status": "cancelled",
+        "evidence_count": 0,
+        "reason": null
+      }
+    },
+    {
+      "id": "rolled-back-terminal-after-approved-execution",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.write", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "16161616-1616-4616-8616-161616161616",
+          "requested_capabilities": ["editor.write"],
+          "approval_required": true
+        },
+        "events": [
+          {
+            "kind": "approval.request",
+            "approval_id": "17171717-1717-4717-8717-171717171717",
+            "task_id": "16161616-1616-4616-8616-161616161616",
+            "expires_at": "2026-09-13T12:00:00Z"
+          },
+          {
+            "kind": "approval.decision",
+            "approval_id": "17171717-1717-4717-8717-171717171717",
+            "task_id": "16161616-1616-4616-8616-161616161616",
+            "decision": "approve",
+            "decided_at": "2026-09-13T11:30:00Z"
+          },
+          {
+            "kind": "task.progress",
+            "task_id": "16161616-1616-4616-8616-161616161616",
+            "status": "running",
+            "evidence_ids": []
+          },
+          {
+            "kind": "evidence.record",
+            "task_id": "16161616-1616-4616-8616-161616161616",
+            "evidence_id": "18181818-1818-4818-8818-181818181818"
+          },
+          {
+            "kind": "task.error",
+            "task_id": "16161616-1616-4616-8616-161616161616",
+            "status": "rolled_back",
+            "recoverable": true,
+            "rollback_attempted": true,
+            "evidence_ids": ["18181818-1818-4818-8818-181818181818"]
+          }
+        ]
+      },
+      "expected": {
+        "accepted": true,
+        "terminal_status": "rolled_back",
+        "evidence_count": 1,
+        "reason": null
+      }
+    },
+    {
+      "id": "reject-error-with-unknown-evidence",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.read", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "19191919-1919-4919-8919-191919191919",
+          "requested_capabilities": ["editor.read"],
+          "approval_required": false
+        },
+        "events": [
+          {
+            "kind": "task.error",
+            "task_id": "19191919-1919-4919-8919-191919191919",
+            "status": "failed",
+            "recoverable": false,
+            "rollback_attempted": false,
+            "evidence_ids": ["20202020-2020-4020-8020-202020202020"]
+          }
+        ]
+      },
+      "expected": {
+        "accepted": false,
+        "terminal_status": null,
+        "evidence_count": 0,
+        "reason": "missing-evidence"
+      }
+    },
+    {
+      "id": "reject-invalid-error-status",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.read", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "21212121-2121-4121-8121-212121212121",
+          "requested_capabilities": ["editor.read"],
+          "approval_required": false
+        },
+        "events": [
+          {
+            "kind": "task.error",
+            "task_id": "21212121-2121-4121-8121-212121212121",
+            "status": "succeeded",
+            "recoverable": false,
+            "rollback_attempted": false,
+            "evidence_ids": []
+          }
+        ]
+      },
+      "expected": {
+        "accepted": false,
+        "terminal_status": null,
+        "evidence_count": 0,
+        "reason": "invalid-error-status"
+      }
+    },
+    {
+      "id": "reject-event-after-terminal-error",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.read", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "23232323-2323-4323-8323-232323232323",
+          "requested_capabilities": ["editor.read"],
+          "approval_required": false
+        },
+        "events": [
+          {
+            "kind": "task.error",
+            "task_id": "23232323-2323-4323-8323-232323232323",
+            "status": "failed",
+            "recoverable": false,
+            "rollback_attempted": false,
+            "evidence_ids": []
+          },
+          {
+            "kind": "task.progress",
+            "task_id": "23232323-2323-4323-8323-232323232323",
+            "status": "planning",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "expected": {
+        "accepted": false,
+        "terminal_status": "failed",
+        "evidence_count": 0,
+        "reason": "event-after-terminal"
+      }
+    },
+    {
+      "id": "cancel-request-does-not-bypass-required-approval",
+      "input": {
+        "selected_capabilities": [
+          { "name": "editor.write", "version": "1.0.0" }
+        ],
+        "task": {
+          "task_id": "24242424-2424-4424-8424-242424242424",
+          "requested_capabilities": ["editor.write"],
+          "approval_required": true
+        },
+        "events": [
+          {
+            "kind": "approval.request",
+            "approval_id": "25252525-2525-4525-8525-252525252525",
+            "task_id": "24242424-2424-4424-8424-242424242424",
+            "expires_at": "2026-09-13T12:00:00Z"
+          },
+          {
+            "kind": "task.cancel",
+            "task_id": "24242424-2424-4424-8424-242424242424",
+            "reason": "user requested cancellation",
+            "requested_by": "example-user",
+            "force": false
+          },
+          {
+            "kind": "task.progress",
+            "task_id": "24242424-2424-4424-8424-242424242424",
+            "status": "running",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "expected": {
+        "accepted": false,
+        "terminal_status": null,
+        "evidence_count": 0,
+        "reason": "approval-required"
+      }
     }
   ]
 }
