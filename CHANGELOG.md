@@ -9,7 +9,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 ### Added
 
 - Versioned, language-neutral consumer conformance vectors in plain JSON for message-kind lookup, wire compatibility, capability negotiation, task-time capability gating, explicit advertised-version selection, and approval-flow correlation/expiry handling.
-- End-to-end task-lifecycle conformance vectors covering approval-gated success, selected-capability enforcement, task correlation, evidence closure, denial/expiry behavior, and terminal-result ordering; the consumer-vector suite advances to `1.2.0`.
+- End-to-end task-lifecycle conformance vectors covering approval-gated success, selected-capability enforcement, task correlation, evidence closure, denial/expiry behavior, terminal-result ordering, and explicit `failed` / `cancelled` / `rolled_back` terminal error outcomes. The suite now distinguishes a `task.cancel` request from a terminal cancellation result and advances to consumer-vector version `1.3.0`.
 - Dependency-free repository validator for the consumer vectors so CI detects drift between expected outcomes and the public registry/compatibility/capability/approval/lifecycle rules.
 - External implementer documentation explaining how non-Rust consumers can run the same expected-outcome suite without depending on the Rust crate or private Glomancy runtime.
 - Stable, versioned machine-readable `--json` output for the public conformance CLI commands `validate`, `fixtures`, and `list-schemas`, while preserving the existing exit-code contract.
@@ -41,6 +41,7 @@ The project follows semantic versioning for the Rust package. Wire-protocol comp
 
 - Handshake version selection is distinct from compatibility classification: consumers select the highest exact version explicitly advertised by both peers and fail closed when no shared advertised version exists.
 - Approval decisions are correlated by both `approval_id` and `task_id`; expired or mismatched decisions are rejected, while a valid deny decision is accepted as a decision but never authorizes execution.
+- `task.cancel` represents a cancellation request, not proof that a task has stopped; terminal cancellation and rollback outcomes are represented by the existing `task.error` status contract.
 - Published schema IDs are immutable identities: a compatible current contract may not silently change the SHA-256 content or message-kind mapping behind a pinned release schema ID.
 - Maintainer-derived implementation notes are tracked separately from genuine external integration feedback; the project does not claim third-party production adoption or feedback that has not occurred.
 - The `v0.1.0` wording describes the first public pre-1.0 release rather than implying that the underlying Glomancy/protocol work began when the public repository was opened.
