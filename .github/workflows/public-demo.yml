@@ -46,5 +46,7 @@ jobs:
           assert steps[3]["result"]["accepted"] is True
           assert steps[3]["result"]["authorized"] is True
           assert steps[4]["result"]["message_kind"] == "evidence.record"
-          assert "not editor authorization" in value["boundary"]
+          boundary = value["boundary"]
+          assert "editor authorization" in boundary
+          assert "integration responsibilities" in boundary
           '
