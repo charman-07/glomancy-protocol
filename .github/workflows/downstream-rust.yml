@@ -1,0 +1,33 @@
+name: Downstream Rust consumer
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: downstream-rust-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  downstream-rust:
+    name: Downstream Rust consumer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Rust 1.85
+        run: rustup toolchain install 1.85.0 --profile minimal
+
+      - name: Set Rust override
+        working-directory: downstream/rust-consumer
+        run: rustup override set 1.85.0
+
+      - name: Check downstream crate
+        run: cargo check --manifest-path downstream/rust-consumer/Cargo.toml
+
+      - name: Run downstream public-API smoke test
+        run: cargo run --manifest-path downstream/rust-consumer/Cargo.toml
