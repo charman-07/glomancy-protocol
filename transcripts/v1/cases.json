@@ -1,0 +1,60 @@
+{
+  "transcript_version": "1.0.0",
+  "wire_protocol_version": "0.4.0",
+  "cases": [
+    {
+      "id": "approval-success",
+      "description": "Exact negotiation, approval, execution, evidence, validation, and terminal success.",
+      "sequence": ["handshake.request", "handshake.response", "task.submit", "approval.request", "approval.approve", "task.progress.running", "evidence.record", "task.progress.validating", "task.result.success"],
+      "expected": {"accepted": true, "selected_version": "0.4.0", "selected_capabilities": ["blueprint.plan@1.0.0", "blueprint.read@1.0.0"], "task_id": "20000000-0000-4000-8000-000000000099", "terminal_status": "succeeded", "evidence_count": 1, "cancel_requested": false, "reason": null}
+    },
+    {
+      "id": "cancel-request-is-nonterminal",
+      "description": "A cancellation request is accepted but is not itself a terminal task outcome.",
+      "sequence": ["handshake.request", "handshake.response", "task.submit", "task.progress.running", "task.cancel"],
+      "expected": {"accepted": true, "selected_version": "0.4.0", "selected_capabilities": ["blueprint.plan@1.0.0", "blueprint.read@1.0.0"], "task_id": "20000000-0000-4000-8000-000000000099", "terminal_status": null, "evidence_count": 0, "cancel_requested": true, "reason": null}
+    },
+    {
+      "id": "reject-execution-after-denial",
+      "description": "Execution fails closed after an explicit approval denial.",
+      "sequence": ["handshake.request", "handshake.response", "task.submit", "approval.request", "approval.deny", "task.progress.running"],
+      "expected": {"accepted": false, "selected_version": "0.4.0", "selected_capabilities": ["blueprint.plan@1.0.0", "blueprint.read@1.0.0"], "task_id": "20000000-0000-4000-8000-000000000099", "terminal_status": null, "evidence_count": 0, "cancel_requested": false, "reason": "approval-denied"}
+    },
+    {
+      "id": "reject-result-with-missing-evidence",
+      "description": "Terminal success cannot cite evidence not previously observed in the transcript.",
+      "sequence": ["handshake.request", "handshake.response", "task.submit", "task.result.missing-evidence"],
+      "expected": {"accepted": false, "selected_version": "0.4.0", "selected_capabilities": ["blueprint.plan@1.0.0", "blueprint.read@1.0.0"], "task_id": "20000000-0000-4000-8000-000000000099", "terminal_status": null, "evidence_count": 0, "cancel_requested": false, "reason": "missing-evidence"}
+    },
+    {
+      "id": "reject-event-after-terminal",
+      "description": "Task-scoped activity after terminal success fails closed.",
+      "sequence": ["handshake.request", "handshake.response", "task.submit", "evidence.record", "task.result.success", "task.progress.after-terminal"],
+      "expected": {"accepted": false, "selected_version": "0.4.0", "selected_capabilities": ["blueprint.plan@1.0.0", "blueprint.read@1.0.0"], "task_id": "20000000-0000-4000-8000-000000000099", "terminal_status": "succeeded", "evidence_count": 1, "cancel_requested": false, "reason": "event-after-terminal"}
+    },
+    {
+      "id": "reject-handshake-correlation-mismatch",
+      "description": "Handshake response must correlate to the handshake request message ID.",
+      "sequence": ["handshake.request", "handshake.response.bad-correlation"],
+      "expected": {"accepted": false, "selected_version": null, "selected_capabilities": [], "task_id": null, "terminal_status": null, "evidence_count": 0, "cancel_requested": false, "reason": "handshake-correlation-mismatch"}
+    },
+    {
+      "id": "reject-unadvertised-selected-version",
+      "description": "Handshake cannot select a wire version the requester did not explicitly advertise.",
+      "sequence": ["handshake.request", "handshake.response.unadvertised-version"],
+      "expected": {"accepted": false, "selected_version": null, "selected_capabilities": [], "task_id": null, "terminal_status": null, "evidence_count": 0, "cancel_requested": false, "reason": "unadvertised-selected-version"}
+    },
+    {
+      "id": "reject-unrequested-selected-capability",
+      "description": "Handshake response cannot select a capability pair not requested by the peer.",
+      "sequence": ["handshake.request", "handshake.response.unrequested-capability"],
+      "expected": {"accepted": false, "selected_version": null, "selected_capabilities": [], "task_id": null, "terminal_status": null, "evidence_count": 0, "cancel_requested": false, "reason": "unrequested-selected-capability"}
+    },
+    {
+      "id": "reject-task-unselected-capability",
+      "description": "A task cannot request a capability that was not selected for the session.",
+      "sequence": ["handshake.request", "handshake.response", "task.submit.unselected-capability"],
+      "expected": {"accepted": false, "selected_version": "0.4.0", "selected_capabilities": ["blueprint.plan@1.0.0", "blueprint.read@1.0.0"], "task_id": "20000000-0000-4000-8000-000000000099", "terminal_status": null, "evidence_count": 0, "cancel_requested": false, "reason": "unselected-task-capability"}
+    }
+  ]
+}
