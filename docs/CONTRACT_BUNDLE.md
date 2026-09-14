@@ -67,6 +67,24 @@ sha256sum -c SHA256SUMS
 
 You can also compare `BUNDLE_MANIFEST.json` with the exact pinned source revision used to build the package.
 
+## Verify an already-built ZIP
+
+When you have the exact matching source checkout, the repository can verify a distributed archive directly:
+
+```bash
+python3 scripts/verify_contract_bundle.py dist/glomancy-protocol-contracts.zip
+```
+
+Machine-readable verification output is available with:
+
+```bash
+python3 scripts/verify_contract_bundle.py dist/glomancy-protocol-contracts.zip --json
+```
+
+The verifier checks archive structure, duplicate members, normalized timestamps/permissions, `BUNDLE_MANIFEST.json`, internal `SHA256SUMS`, payload byte sizes and SHA-256 values, and the public-contract fingerprint against the checked-out source.
+
+Run this verifier from the same pinned tag/commit represented by the archive. A newer or different checkout is expected to fail when the public-contract fingerprint differs.
+
 ## Pin before vendoring
 
 Do not generate a production dependency from a moving `main` branch and then assume it will remain unchanged.
@@ -84,19 +102,33 @@ See [External Adoption Guide](ADOPTION_GUIDE.md) for the broader pinning and upg
 A non-Rust consumer can:
 
 1. pin a Glomancy Protocol tag/commit;
-2. generate the standalone bundle;
-3. vendor the extracted public files into its repository or build system;
-4. verify `SHA256SUMS` in CI;
-5. implement behavior against the JSON Schemas and language-neutral vectors;
-6. validate its parser/validator against the bundled valid and invalid fixtures;
-7. run the public conformance CLI or its own independent vector runner;
-8. review compatibility/release notes before updating the pinned baseline.
+2. obtain the published release bundle when that release provides one, or generate the standalone bundle from the pinned source;
+3. verify the whole-ZIP SHA-256 sidecar when using a published release asset;
+4. vendor the extracted public files into its repository or build system;
+5. verify internal `SHA256SUMS` in CI;
+6. implement behavior against the JSON Schemas and language-neutral vectors;
+7. validate its parser/validator against the bundled valid and invalid fixtures;
+8. run the public conformance CLI or its own independent vector runner;
+9. review compatibility/release notes before updating the pinned baseline.
 
-## Release assets
+## Candidate and release distribution
 
-The existence of this builder does **not** mean a downloadable ZIP has already been published on every GitHub release. Release assets should only be claimed after a maintainer actually attaches and verifies them for a real release.
+The repository includes a dedicated **Contract distribution** GitHub Actions workflow.
 
-Until then, consumers can build the deterministic package directly from a pinned public source revision.
+In manual mode it can package an exact branch, tag, or commit SHA as a 30-day candidate artifact. This is useful for inspecting the exact deterministic ZIP that would be distributed, but it is not a published release and does not replace the separate Release Readiness quality audit.
+
+For future GitHub releases, the release-published mode checks out the exact release tag, verifies the release event SHA/tag identity, validates the tracked fingerprint and deterministic bundle generation, verifies the exact generated ZIP, and then attaches:
+
+```text
+glomancy-protocol-contracts-<tag>.zip
+glomancy-protocol-contracts-<tag>.zip.sha256
+```
+
+The release workflow does not create releases or move tags. Publication remains an explicit maintainer action.
+
+Do not assume historical releases contain these assets. A release created before this workflow existed must not be retrofitted with a bundle built from newer source, because that would misrepresent the historical release contents.
+
+See [Contract Bundle Release Distribution](RELEASE_DISTRIBUTION.md) for the complete publication, verification, permission, and historical-release rules.
 
 ## Assurance boundary
 
