@@ -41,8 +41,8 @@
     },
     {
       "path": "vectors/v1/manifest.json",
-      "sha256": "0af2f57c26e8f85d33ac96c4301c4fbb286a5b0b7fb3dc4970f7306201517c8e"
+      "sha256": "16768102c123476a90e54a4b27ce2f0a56c66e4752c45d29b92ee7e73245d1cd"
     }
   ],
-  "aggregate_sha256": "9078d67f7c99ca8144d43f14c7397d70b3e79c84d7e50bcdee7dff62fe39b485"
+  "aggregate_sha256": "399c5492c7370e1f54273852952e87f97542fe68379c06c0e172f7be8dfb9291"
 }
