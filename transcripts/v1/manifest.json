@@ -1,0 +1,17 @@
+{
+  "transcript_version": "1.0.0",
+  "wire_protocol_version": "0.4.0",
+  "description": "Full-session conformance transcripts built from public Glomancy Protocol message envelopes.",
+  "files": [
+    {
+      "role": "messages",
+      "file": "messages.json",
+      "sha256": "028f4afde6e768aecc08f9b7ae1792bdadf69abcefe32b4e3c732d61353a8665"
+    },
+    {
+      "role": "cases",
+      "file": "cases.json",
+      "sha256": "90edec87c554f2217dc9c99be006168c44834aa97a3de2b3ddb27fdbf0395bde"
+    }
+  ]
+}
