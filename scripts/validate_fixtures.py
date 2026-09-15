@@ -53,10 +53,21 @@ def build_store() -> dict[str, Any]:
 def validator_for(schema_path: Path, store: dict[str, Any]) -> Draft202012Validator:
     schema = load_json(schema_path)
     Draft202012Validator.check_schema(schema)
+
+    # Always register the target schema itself. Tooling schemas outside schemas/v1
+    # may use a URN $id with internal $refs; RefResolver resolves those refs against
+    # the $id and therefore needs the current document available under that identity.
+    resolver_store = dict(store)
+    resolver_store[schema_path.name] = schema
+    resolver_store[schema_path.as_uri()] = schema
+    schema_id = schema.get("$id") if isinstance(schema, dict) else None
+    if isinstance(schema_id, str) and schema_id:
+        resolver_store[schema_id] = schema
+
     resolver = RefResolver(
         base_uri=schema_path.as_uri(),
         referrer=schema,
-        store=store,
+        store=resolver_store,
     )
     return Draft202012Validator(
         schema,
