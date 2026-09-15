@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import sys
 import warnings
@@ -286,10 +287,148 @@ def validate_transcript(messages: list[Any], validators: dict[str, tuple[str, Dr
     }
 
 
+def navigate(container: Any, path: list[Any], case_name: str) -> tuple[Any, Any]:
+    if not path:
+        raise TranscriptError(f"{case_name}: mutation path must not be empty")
+    current = container
+    for part in path[:-1]:
+        try:
+            current = current[part]
+        except (KeyError, IndexError, TypeError) as exc:
+            raise TranscriptError(
+                f"{case_name}: mutation path does not exist: {path!r}"
+            ) from exc
+    return current, path[-1]
+
+
+def materialize_rejected_case(
+    case: dict[str, Any],
+    accepted_by_name: dict[str, list[Any]],
+) -> list[Any]:
+    name = case["name"]
+    base_name = case.get("base")
+    if not isinstance(base_name, str) or base_name not in accepted_by_name:
+        raise TranscriptError(f"{name}: rejected case base is missing or unknown")
+
+    messages = copy.deepcopy(accepted_by_name[base_name])
+    mutations = case.get("mutations")
+    if not isinstance(mutations, list) or not mutations:
+        raise TranscriptError(f"{name}: mutations must be a non-empty array")
+
+    for mutation in mutations:
+        if not isinstance(mutation, dict):
+            raise TranscriptError(f"{name}: mutation must be an object")
+        op = mutation.get("op")
+
+        if op in {"replace", "append", "remove"}:
+            message_index = mutation.get("message")
+            path = mutation.get("path")
+            if not isinstance(message_index, int) or not isinstance(path, list):
+                raise TranscriptError(f"{name}: invalid {op} mutation")
+            try:
+                message = messages[message_index]
+            except IndexError as exc:
+                raise TranscriptError(
+                    f"{name}: mutation message index out of range: {message_index}"
+                ) from exc
+            parent, key = navigate(message, path, name)
+            try:
+                if op == "replace":
+                    parent[key] = copy.deepcopy(mutation["value"])
+                elif op == "append":
+                    target = parent[key]
+                    if not isinstance(target, list):
+                        raise TranscriptError(
+                            f"{name}: append mutation target is not an array: {path!r}"
+                        )
+                    target.append(copy.deepcopy(mutation["value"]))
+                else:
+                    if isinstance(parent, list):
+                        parent.pop(key)
+                    else:
+                        del parent[key]
+            except (KeyError, IndexError, TypeError) as exc:
+                raise TranscriptError(
+                    f"{name}: invalid mutation target: {path!r}"
+                ) from exc
+            continue
+
+        if op == "delete_message":
+            message_index = mutation.get("message")
+            if not isinstance(message_index, int):
+                raise TranscriptError(f"{name}: delete_message requires an integer message")
+            try:
+                messages.pop(message_index)
+            except IndexError as exc:
+                raise TranscriptError(
+                    f"{name}: delete_message index out of range: {message_index}"
+                ) from exc
+            continue
+
+        if op == "move_message":
+            source = mutation.get("from")
+            target = mutation.get("to")
+            if not isinstance(source, int) or not isinstance(target, int):
+                raise TranscriptError(f"{name}: move_message requires integer from/to")
+            try:
+                message = messages.pop(source)
+                messages.insert(target, message)
+            except IndexError as exc:
+                raise TranscriptError(f"{name}: move_message index out of range") from exc
+            continue
+
+        if op == "duplicate_message":
+            source = mutation.get("message")
+            insert_at = mutation.get("insert_at")
+            overrides = mutation.get("overrides", {})
+            if (
+                not isinstance(source, int)
+                or not isinstance(insert_at, int)
+                or not isinstance(overrides, dict)
+            ):
+                raise TranscriptError(f"{name}: invalid duplicate_message mutation")
+            try:
+                duplicate = copy.deepcopy(messages[source])
+            except IndexError as exc:
+                raise TranscriptError(
+                    f"{name}: duplicate_message index out of range: {source}"
+                ) from exc
+            duplicate.update(copy.deepcopy(overrides))
+            messages.insert(insert_at, duplicate)
+            continue
+
+        raise TranscriptError(f"{name}: unsupported mutation op: {op!r}")
+
+    return messages
+
+
+def assert_expected(
+    name: str,
+    result: dict[str, Any],
+    expected: dict[str, Any],
+    expected_acceptance: bool,
+) -> None:
+    if result["accepted"] is not expected_acceptance:
+        raise TranscriptError(
+            f"{name}: acceptance mismatch: expected={expected_acceptance} "
+            f"actual={result['accepted']} reason={result['reason']} "
+            f"message_index={result['message_index']} detail={result['detail']}"
+        )
+    for key in ("accepted", "terminal_status", "reason"):
+        if result.get(key) != expected.get(key):
+            raise TranscriptError(
+                f"{name}: expected {key}={expected.get(key)!r}, got {result.get(key)!r}; "
+                f"message_index={result['message_index']} detail={result['detail']}"
+            )
+
+
 def validate_suite() -> tuple[int, int]:
     suite = load_json(CASES)
     if not isinstance(suite, dict) or suite.get("schema_version") != 1:
         raise TranscriptError("unsupported transcript suite schema_version")
+    if suite.get("suite_version") != "1.0.0":
+        raise TranscriptError("unsupported transcript suite_version")
+
     accepted_cases = suite.get("accepted")
     rejected_cases = suite.get("rejected")
     if not isinstance(accepted_cases, list) or not isinstance(rejected_cases, list):
@@ -297,45 +436,57 @@ def validate_suite() -> tuple[int, int]:
 
     store = build_store()
     mapping = registry_map()
+    registry = load_json(REGISTRY)
+    if suite.get("wire_protocol_version") != registry.get("wire_protocol_version"):
+        raise TranscriptError(
+            "transcript wire_protocol_version does not match canonical registry"
+        )
     validators = {
         kind: (schema_id, validator_for(path, store))
         for kind, (schema_id, path) in mapping.items()
     }
 
     names: set[str] = set()
-    for expected_acceptance, cases in ((True, accepted_cases), (False, rejected_cases)):
-        for case in cases:
-            if not isinstance(case, dict):
-                raise TranscriptError("transcript case must be an object")
-            name = case.get("name")
-            if not isinstance(name, str) or not name:
-                raise TranscriptError("transcript case name must be a non-empty string")
-            if name in names:
-                raise TranscriptError(f"duplicate transcript case: {name}")
-            names.add(name)
+    accepted_by_name: dict[str, list[Any]] = {}
 
-            messages = case.get("messages")
-            expected = case.get("expected")
-            if not isinstance(messages, list) or not messages:
-                raise TranscriptError(f"{name}: messages must be a non-empty array")
-            if not isinstance(expected, dict):
-                raise TranscriptError(f"{name}: expected must be an object")
+    for case in accepted_cases:
+        if not isinstance(case, dict):
+            raise TranscriptError("accepted transcript case must be an object")
+        name = case.get("name")
+        messages = case.get("messages")
+        expected = case.get("expected")
+        if not isinstance(name, str) or not name:
+            raise TranscriptError("transcript case name must be a non-empty string")
+        if name in names:
+            raise TranscriptError(f"duplicate transcript case: {name}")
+        names.add(name)
+        if not isinstance(messages, list) or not messages:
+            raise TranscriptError(f"{name}: messages must be a non-empty array")
+        if not isinstance(expected, dict):
+            raise TranscriptError(f"{name}: expected must be an object")
 
-            result = validate_transcript(messages, validators)
-            if result["accepted"] is not expected_acceptance:
-                raise TranscriptError(
-                    f"{name}: acceptance mismatch: expected={expected_acceptance} "
-                    f"actual={result['accepted']} reason={result['reason']} "
-                    f"message_index={result['message_index']} detail={result['detail']}"
-                )
-            for key in ("accepted", "terminal_status", "reason"):
-                if result.get(key) != expected.get(key):
-                    raise TranscriptError(
-                        f"{name}: expected {key}={expected.get(key)!r}, got {result.get(key)!r}; "
-                        f"message_index={result['message_index']} detail={result['detail']}"
-                    )
+        result = validate_transcript(messages, validators)
+        assert_expected(name, result, expected, True)
+        accepted_by_name[name] = copy.deepcopy(messages)
+        print(json.dumps({"case": name, **result}, sort_keys=True))
 
-            print(json.dumps({"case": name, **result}, sort_keys=True))
+    for case in rejected_cases:
+        if not isinstance(case, dict):
+            raise TranscriptError("rejected transcript case must be an object")
+        name = case.get("name")
+        expected = case.get("expected")
+        if not isinstance(name, str) or not name:
+            raise TranscriptError("transcript case name must be a non-empty string")
+        if name in names:
+            raise TranscriptError(f"duplicate transcript case: {name}")
+        names.add(name)
+        if not isinstance(expected, dict):
+            raise TranscriptError(f"{name}: expected must be an object")
+
+        messages = materialize_rejected_case(case, accepted_by_name)
+        result = validate_transcript(messages, validators)
+        assert_expected(name, result, expected, False)
+        print(json.dumps({"case": name, **result}, sort_keys=True))
 
     return len(accepted_cases), len(rejected_cases)
 
