@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import validate_session_transcripts as core
+import session_transcript_core as core
 
 ROOT = Path(__file__).resolve().parents[1]
 TRANSCRIPTS_DIR = ROOT / "transcripts" / "v1"
