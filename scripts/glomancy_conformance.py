@@ -9,6 +9,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from jsonschema import FormatChecker
+from jsonschema.exceptions import FormatError
+
 import session_transcript_core as session_core
 from validate_fixtures import (
     ConformanceError,
@@ -24,6 +27,7 @@ EXIT_OK = 0
 EXIT_VALIDATION_FAILED = 2
 EXIT_CONFIGURATION_ERROR = 3
 JSON_OUTPUT_VERSION = "1.0.0"
+PROJECT_URI_CHECKER = FormatChecker()
 
 
 def load_registry() -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
@@ -254,6 +258,18 @@ def parse_sender_expectations(values: list[str]) -> dict[str, str]:
     return expected
 
 
+def parse_project_expectation(value: str | None) -> str | None:
+    if value is None:
+        return None
+    if not value:
+        raise ConformanceError("--expect-project must be a non-empty URI")
+    try:
+        PROJECT_URI_CHECKER.check(value, "uri")
+    except FormatError as exc:
+        raise ConformanceError("--expect-project must be a valid URI") from exc
+    return value
+
+
 def load_session_document(path: Path) -> list[Any]:
     try:
         document = json.loads(path.read_text(encoding="utf-8"))
@@ -295,6 +311,33 @@ def observed_senders(messages: list[Any]) -> dict[str, list[str]]:
     return {component: sorted(instance_ids) for component, instance_ids in sorted(observed.items())}
 
 
+def observed_projects(messages: list[Any]) -> list[str]:
+    observed: set[str] = set()
+    for message in messages:
+        if not isinstance(message, dict) or message.get("kind") != "task.submit":
+            continue
+        payload = message.get("payload")
+        if not isinstance(payload, dict):
+            continue
+        context_refs = payload.get("context_refs")
+        if not isinstance(context_refs, list):
+            continue
+        for context_ref in context_refs:
+            if not isinstance(context_ref, dict) or context_ref.get("source_type") != "project":
+                continue
+            uri = context_ref.get("uri")
+            if isinstance(uri, str):
+                observed.add(uri)
+    return sorted(observed)
+
+
+def task_submit_index(messages: list[Any]) -> int | None:
+    for index, message in enumerate(messages):
+        if isinstance(message, dict) and message.get("kind") == "task.submit":
+            return index
+    return None
+
+
 def apply_sender_expectations(
     messages: list[Any],
     expected: dict[str, str],
@@ -333,24 +376,55 @@ def apply_sender_expectations(
     return None
 
 
+def apply_project_expectation(
+    messages: list[Any],
+    expected_project: str | None,
+) -> dict[str, Any] | None:
+    if expected_project is None:
+        return None
+
+    projects = observed_projects(messages)
+    message_index = task_submit_index(messages)
+    if not projects:
+        return session_core.reject(
+            "project-expectation-missing",
+            message_index,
+            f"expected_project_uri={expected_project}",
+        )
+    if expected_project not in projects:
+        return session_core.reject(
+            "project-expectation-mismatch",
+            message_index,
+            f"expected_project_uri={expected_project} observed_project_uris={','.join(projects)}",
+        )
+    return None
+
+
 def command_session(args: argparse.Namespace) -> int:
     transcript_path = Path(args.path).expanduser().resolve()
     if not transcript_path.is_file():
         return emit_configuration_error(args, f"transcript file does not exist: {transcript_path}")
 
     try:
-        expected = parse_sender_expectations(args.expect_sender)
+        expected_senders = parse_sender_expectations(args.expect_sender)
+        expected_project = parse_project_expectation(args.expect_project)
         messages = load_session_document(transcript_path)
         result = session_core.validate_transcript(messages, session_validators())
     except (KeyError, TypeError, ValueError, ConformanceError, session_core.TranscriptError) as exc:
         return emit_configuration_error(args, str(exc))
 
     if result["accepted"]:
-        sender_failure = apply_sender_expectations(messages, expected)
+        sender_failure = apply_sender_expectations(messages, expected_senders)
         if sender_failure is not None:
             result = sender_failure
 
+    if result["accepted"]:
+        project_failure = apply_project_expectation(messages, expected_project)
+        if project_failure is not None:
+            result = project_failure
+
     senders = observed_senders(messages)
+    projects = observed_projects(messages)
     exit_code = EXIT_OK if result["accepted"] else EXIT_VALIDATION_FAILED
 
     if args.json_output:
@@ -367,8 +441,10 @@ def command_session(args: argparse.Namespace) -> int:
             reason=result["reason"],
             message_index=result["message_index"],
             detail=result["detail"],
-            expected_senders={key: expected[key] for key in sorted(expected)},
+            expected_senders={key: expected_senders[key] for key in sorted(expected_senders)},
             observed_senders=senders,
+            expected_project=expected_project,
+            observed_projects=projects,
         )
     elif result["accepted"]:
         print(
@@ -467,6 +543,14 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "require messages from COMPONENT to use INSTANCE_ID; repeat for multiple components; "
             "this is a harness assertion, not a wire authentication rule"
+        ),
+    )
+    session_parser.add_argument(
+        "--expect-project",
+        metavar="URI",
+        help=(
+            "require task.submit to carry an exact source_type=project context URI; "
+            "this is a harness assertion, not project authentication or ID derivation"
         ),
     )
     add_json_option(session_parser)

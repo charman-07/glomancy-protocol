@@ -13,9 +13,9 @@ The runner deliberately validates each message in this order:
 3. Require the envelope `schema_id` to match that registry entry.
 4. Validate the complete public envelope against the registered Draft 2020-12 JSON Schema, including format checks.
 5. Only after schema validation succeeds, evaluate cross-message correlation and session-state rules.
-6. Only after the public session itself is accepted may caller-supplied replay assertions such as sender-instance expectations be evaluated.
+6. Only after the public session itself is accepted may caller-supplied replay assertions such as sender-instance or project-context expectations be evaluated.
 
-A schema-valid message is therefore not automatically a valid session event, and a valid public session does not automatically satisfy an integration's out-of-band rendezvous expectations.
+A schema-valid message is therefore not automatically a valid session event, and a valid public session does not automatically satisfy an integration's out-of-band rendezvous or project expectations.
 
 Run the repository suite with:
 
@@ -45,7 +45,7 @@ The command preserves the public CLI exit-code model:
 - `2` — a message/session rule or explicit replay assertion fails;
 - `3` — the transcript file or CLI configuration cannot be evaluated.
 
-The JSON result includes the terminal status, selected version/capabilities, evidence count, stable rejection reason/index/detail, and observed sender instances.
+The JSON result includes the terminal status, selected version/capabilities, evidence count, stable rejection reason/index/detail, observed sender instances, and observed project context URIs.
 
 ## Optional sender-instance pinning
 
@@ -63,6 +63,28 @@ python3 scripts/glomancy_conformance.py session path/to/session.json \
 This is deliberately an **explicit conformance-harness assertion**, not an implicit protocol topology rule. The protocol does not assume there can only be one instance of a component category in every session. If no sender expectation is supplied, replay does not invent one.
 
 Sender pinning also is **not** authentication, authorization, credential validation, provenance, a cryptographic identity proof, or proof that a process is the intended runtime. It only compares caller-provided expectations with the public sender identity already present in the replayed envelopes.
+
+## Optional project-context binding
+
+A consumer may also know which logical project a captured or generated session is supposed to operate on. The existing `task.submit.payload.context_refs` contract already supports public context references with `source_type: "project"` and a schema-valid URI.
+
+Replay can require an exact project URI with:
+
+```bash
+python3 scripts/glomancy_conformance.py session path/to/session.json \
+  --expect-project glomancy://project/example \
+  --json
+```
+
+When `--expect-project` is provided, the transcript must first pass normal schema and session conformance. The replay harness then inspects project context references carried by `task.submit`:
+
+- if no project context URI is present, replay rejects with `project-expectation-missing`;
+- if project context exists but none exactly matches the caller-provided URI, replay rejects with `project-expectation-mismatch`;
+- if the expected URI is malformed, the command returns configuration exit code `3` before treating it as a conformance assertion.
+
+This does **not** standardize how a product derives a project ID, canonicalizes a filesystem path, discovers a project, authenticates a process, or proves ownership/provenance. The caller chooses the schema-valid URI it can bind consistently. No private project-ID derivation or runtime rendezvous mechanism is part of this public conformance feature.
+
+`--expect-sender` and `--expect-project` may be used together when an integration wants to assert both a known peer instance and a known project context.
 
 ## Corpus layout
 
@@ -101,6 +123,6 @@ The suite stays within semantics established by the public protocol surface:
 
 This is executable public conformance evidence, not formal verification, certification, authorization, provenance, authentication, or proof that a runtime implemented rollback correctly. In particular, a `rolled_back` status is a reported public task outcome; this suite does not certify the underlying rollback implementation.
 
-The transcript suite, replay CLI, sender expectations, and deterministic result objects are test/conformance artifacts. They do not create a new normative wire message or change wire protocol version `0.4.0`, Rust package versioning, or the existing public schema identities.
+The transcript suite, replay CLI, sender expectations, project expectations, and deterministic result objects are test/conformance artifacts. They do not create a new normative wire message or change wire protocol version `0.4.0`, Rust package versioning, or the existing public schema identities.
 
 The transcript corpus itself remains outside the public-contract fingerprint as a test/conformance artifact. The canonical CLI JSON output schema remains fingerprinted because it is a published tooling contract. Consumers should pin a release or exact commit when relying on a particular replay/output shape.
