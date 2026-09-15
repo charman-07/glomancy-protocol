@@ -158,7 +158,9 @@
         "message_index",
         "detail",
         "expected_senders",
-        "observed_senders"
+        "observed_senders",
+        "expected_project",
+        "observed_projects"
       ],
       "properties": {
         "path": { "type": "string", "minLength": 1 },
@@ -175,7 +177,16 @@
         "message_index": { "type": ["integer", "null"], "minimum": 0 },
         "detail": { "type": ["string", "null"] },
         "expected_senders": { "$ref": "#/$defs/senderExpectationMap" },
-        "observed_senders": { "$ref": "#/$defs/observedSenderMap" }
+        "observed_senders": { "$ref": "#/$defs/observedSenderMap" },
+        "expected_project": {
+          "type": ["string", "null"],
+          "format": "uri"
+        },
+        "observed_projects": {
+          "type": "array",
+          "items": { "type": "string", "format": "uri" },
+          "uniqueItems": true
+        }
       }
     },
     "sessionSuccess": {
