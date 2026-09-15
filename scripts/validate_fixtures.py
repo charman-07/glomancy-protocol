@@ -50,13 +50,31 @@ def build_store() -> dict[str, Any]:
     return store
 
 
+def has_external_ref(value: Any) -> bool:
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key == "$ref" and isinstance(child, str) and not child.startswith("#"):
+                return True
+            if has_external_ref(child):
+                return True
+        return False
+    if isinstance(value, list):
+        return any(has_external_ref(item) for item in value)
+    return False
+
+
 def validator_for(schema_path: Path, store: dict[str, Any]) -> Draft202012Validator:
     schema = load_json(schema_path)
     Draft202012Validator.check_schema(schema)
 
-    # Always register the target schema itself. Tooling schemas outside schemas/v1
-    # may use a URN $id with internal $refs; RefResolver resolves those refs against
-    # the $id and therefore needs the current document available under that identity.
+    # Standalone tooling schemas with only local fragment refs are safer to validate
+    # directly. Legacy RefResolver scope handling can lose a URN $id while descending
+    # through nested internal refs even though no external document is needed.
+    if not has_external_ref(schema):
+        return Draft202012Validator(schema, format_checker=FormatChecker())
+
+    # Schemas with external refs still use the explicit public schema store.
+    # Register the target schema itself as well, so its own identity is resolvable.
     resolver_store = dict(store)
     resolver_store[schema_path.name] = schema
     resolver_store[schema_path.as_uri()] = schema
