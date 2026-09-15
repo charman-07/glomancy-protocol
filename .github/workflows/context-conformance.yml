@@ -49,4 +49,5 @@ jobs:
           python3 scripts/glomancy_task_verification.py
           verification/v1/examples/strict-read-back.json
           transcripts/v1/accepted/approval-gated-success-with-evidence.json
+          --snapshot context/v1/examples/context-snapshot.json
           --json
