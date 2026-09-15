@@ -132,6 +132,9 @@ jobs:
       - name: Execute JSON Schema conformance fixtures
         run: python3 scripts/validate_fixtures.py
 
+      - name: Validate full-session transcript conformance
+        run: python3 scripts/validate_session_transcript_suite.py
+
       - name: Smoke-test public conformance CLI
         shell: bash
         run: |
