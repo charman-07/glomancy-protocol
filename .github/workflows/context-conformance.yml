@@ -11,8 +11,8 @@ permissions:
   contents: read
 
 jobs:
-  context-policy-contract:
-    name: Context policy contract
+  context-contracts:
+    name: Context contracts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,9 +24,19 @@ jobs:
       - name: Validate context policy output contract
         run: python3 scripts/validate_context_policy_contract.py
 
+      - name: Validate context snapshot output contract
+        run: python3 scripts/validate_context_snapshot_contract.py
+
       - name: Smoke-test context policy CLI
         run: >-
           python3 scripts/glomancy_context_policy.py
           transcripts/v1/accepted/approval-gated-success-with-evidence.json
           --forbid-source web
+          --json
+
+      - name: Smoke-test context snapshot descriptor
+        run: >-
+          python3 scripts/glomancy_context_snapshot.py
+          validate
+          context/v1/examples/context-snapshot.json
           --json
