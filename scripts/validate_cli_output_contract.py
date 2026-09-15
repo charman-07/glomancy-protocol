@@ -182,6 +182,8 @@ def main() -> int:
                         "bridge=bridge-session",
                         "--expect-project",
                         PROJECT_URI,
+                        "--expect-evidence-type",
+                        "read-back",
                         "--json",
                     ],
                     0,
@@ -225,6 +227,17 @@ def main() -> int:
                     2,
                 ),
                 (
+                    "session-evidence-expectation-missing",
+                    [
+                        "session",
+                        str(ACCEPTED_SESSION),
+                        "--expect-evidence-type",
+                        "test",
+                        "--json",
+                    ],
+                    2,
+                ),
+                (
                     "session-sender-configuration-error",
                     [
                         "session",
@@ -242,6 +255,30 @@ def main() -> int:
                         str(ACCEPTED_SESSION),
                         "--expect-project",
                         "not a valid uri",
+                        "--json",
+                    ],
+                    3,
+                ),
+                (
+                    "session-evidence-duplicate-configuration-error",
+                    [
+                        "session",
+                        str(ACCEPTED_SESSION),
+                        "--expect-evidence-type",
+                        "read-back",
+                        "--expect-evidence-type",
+                        "read-back",
+                        "--json",
+                    ],
+                    3,
+                ),
+                (
+                    "session-evidence-unsupported-configuration-error",
+                    [
+                        "session",
+                        str(ACCEPTED_SESSION),
+                        "--expect-evidence-type",
+                        "not-a-public-evidence-type",
                         "--json",
                     ],
                     3,
