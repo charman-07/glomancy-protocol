@@ -1,6 +1,6 @@
 # Protocol Conformance
 
-Glomancy Protocol ships a public fixture corpus, language-neutral expected-outcome vectors, and small validation tools so external implementations can verify protocol behavior without depending on the private commercial Glomancy runtime.
+Glomancy Protocol ships a public fixture corpus, language-neutral expected-outcome vectors, full-session transcripts, and small validation tools so external implementations can verify protocol behavior without depending on the private commercial Glomancy runtime.
 
 If you are integrating the protocol into another project, start with the [External Adoption Guide](ADOPTION_GUIDE.md). It explains how to pin a released baseline or exact commit, vendor and verify schemas, consume the Rust package by Git tag, and upgrade without silently tracking mutable pre-1.0 `main` state.
 
@@ -12,7 +12,7 @@ From the repository root:
 python3 -m pip install -r requirements-conformance.txt
 ```
 
-The payload validator uses JSON Schema Draft 2020-12 with format checking enabled. Schema resolution is local to this repository; the CLI does not fetch schemas from the network.
+The payload and session validators use JSON Schema Draft 2020-12 with format checking enabled. Schema resolution is local to this repository; the CLI does not fetch schemas from the network.
 
 ## Validate one payload
 
@@ -37,15 +37,37 @@ python3 scripts/glomancy_conformance.py validate payload.json --kind task.submit
 
 If `schema_id` and `kind` resolve to different registry entries, validation fails closed rather than guessing.
 
+## Replay one complete session
+
+The public CLI can validate one complete transcript through the same registry-resolved JSON Schema layer and then the published cross-message session rules:
+
+```bash
+python3 scripts/glomancy_conformance.py session \
+  transcripts/v1/accepted/approval-gated-success-with-evidence.json
+```
+
+An integration may optionally pin an out-of-band expected public sender instance:
+
+```bash
+python3 scripts/glomancy_conformance.py session path/to/session.json \
+  --expect-sender bridge=bridge-session \
+  --expect-sender desktop=desktop-session
+```
+
+`--expect-sender` is repeatable. It is a caller-supplied replay assertion only. It does not create a new wire field, require a single global instance per component category, authenticate a peer, authorize execution, validate credentials, or prove process provenance. If no expectation is supplied, no instance topology is invented.
+
+Session replay validates the public transcript first. Explicit sender expectations are evaluated only after the transcript itself passes schema and session conformance. See [Full-session transcript conformance](SESSION_TRANSCRIPT_CONFORMANCE.md) for the validation order and assurance boundary.
+
 ## Machine-readable JSON output
 
-`validate`, `fixtures`, and `list-schemas` support `--json` for CI systems and other tools that should not parse human terminal text.
+`validate`, `fixtures`, `session`, and `list-schemas` support `--json` for CI systems and other tools that should not parse human terminal text.
 
 Examples:
 
 ```bash
 python3 scripts/glomancy_conformance.py validate message.json --json
 python3 scripts/glomancy_conformance.py fixtures --json
+python3 scripts/glomancy_conformance.py session path/to/session.json --json
 python3 scripts/glomancy_conformance.py list-schemas --json
 ```
 
@@ -54,7 +76,7 @@ Each invocation emits exactly one JSON object to stdout. The top-level fields ar
 | Field | Meaning |
 | --- | --- |
 | `output_version` | version of the CLI JSON output contract; currently `1.0.0` |
-| `command` | `validate`, `fixtures`, or `list-schemas` |
+| `command` | `validate`, `fixtures`, `session`, or `list-schemas` |
 | `ok` | whether the command succeeded for its requested operation |
 | `exit_code` | the same stable process exit code returned by the CLI |
 
@@ -86,13 +108,29 @@ A successful run reports:
 
 Fixture conformance failure keeps exit code `2` and emits a structured error object.
 
+### `session --json`
+
+A successful replay reports:
+
+- `accepted: true`;
+- `terminal_status`;
+- `selected_version`;
+- `selected_capabilities`;
+- `evidence_count`;
+- `expected_senders` supplied by the caller;
+- `observed_senders` found in the transcript.
+
+A rejected replay keeps exit code `2` and reports `accepted: false` plus stable `reason`, `message_index`, and `detail` fields when available. Explicit sender pin failures use conformance reasons such as `sender-expectation-mismatch` or `sender-expectation-missing`.
+
+Malformed transcript input or malformed `--expect-sender` syntax keeps exit code `3` and uses the ordinary structured configuration-error shape.
+
 ### `list-schemas --json`
 
 The result contains `schema_count` and a `schemas` array. Each entry includes `kind`, `schema_id`, and `version` from the canonical registry.
 
 ### Stability
 
-The `output_version` field allows future tooling to detect incompatible JSON-output changes. Within output version `1.x`, new additive fields may appear, but existing fields should not silently change meaning. A breaking output-shape change requires a new output major version and release notes.
+The `output_version` field allows future tooling to detect incompatible JSON-output changes. Within output version `1.x`, additive command-specific fields or output variants may appear, but existing fields should not silently change meaning. A breaking output-shape change requires a new output major version and release notes.
 
 Human-readable output remains the default, and process exit codes are identical in human and JSON modes.
 
@@ -117,7 +155,8 @@ This version is intentionally **independent** from:
 - the Rust crate version;
 - the Glomancy wire-protocol version;
 - individual protocol message-schema versions;
-- the language-neutral consumer-vector version.
+- the language-neutral consumer-vector version;
+- the full-session transcript suite version.
 
 A CLI-output contract change therefore does not imply a wire-protocol change, and a wire-protocol change does not automatically require a CLI-output major version bump.
 
@@ -127,7 +166,7 @@ Repository CI validates representative real CLI outputs against the published sc
 python3 scripts/validate_cli_output_contract.py
 ```
 
-The contract test exercises successful schema listing, successful payload validation, successful fixture execution, invalid-payload output, and a real configuration-error path. The fixture-conformance failure shape is also schema-checked without deliberately corrupting the repository fixture corpus.
+The contract test exercises successful schema listing, successful payload validation, successful fixture execution, successful session replay, session-semantic rejection, sender-expectation rejection, invalid-payload output, and real configuration-error paths. The fixture-conformance failure shape is also schema-checked without deliberately corrupting the repository fixture corpus.
 
 ## Execute the fixture corpus
 
@@ -141,6 +180,14 @@ The manifest at `examples/v1/manifest.json` has two groups:
 - `invalid`: every fixture must be rejected, and the validator must observe the declared `expected_keyword` such as `required`, `pattern`, `format`, `enum`, or `uniqueItems`.
 
 This catches cases where an invalid fixture still fails, but for a different reason than the contract intended to test.
+
+## Execute the full-session transcript suite
+
+```bash
+python3 scripts/validate_session_transcript_suite.py
+```
+
+The suite under `transcripts/v1/` covers complete accepted sessions plus deterministic rejected mutations. It is a conformance artifact rather than a new wire message surface. The single-session `session` command reuses the same registry-resolved schema and cross-message validation core for arbitrary complete transcript files.
 
 ## Language-neutral consumer vectors
 
@@ -181,7 +228,7 @@ The command prints message kind, schema ID, and schema version from the canonica
 | Code | Meaning |
 | ---: | --- |
 | `0` | validation/conformance passed |
-| `2` | payload or fixture validation failed |
+| `2` | payload, fixture, session, or explicit replay assertion failed |
 | `3` | configuration, schema selection, registry, or input-file error |
 
 These exit codes are stable for the `0.1.x` public line and are intended for CI usage. JSON mode preserves the same codes and also includes the code inside the emitted JSON object.
@@ -193,12 +240,13 @@ A non-Rust consumer can vendor or check out a **pinned release or exact commit**
 ```bash
 python3 -m pip install -r requirements-conformance.txt
 python3 scripts/glomancy_conformance.py validate path/to/generated-message.json --json
+python3 scripts/glomancy_conformance.py session path/to/captured-session.json --json
 python3 scripts/validate_consumer_vectors.py
 python3 scripts/validate_compatibility_snapshots.py
 python3 scripts/validate_cli_output_contract.py
 ```
 
-A failing payload returns exit code `2`, while consumer-vector, compatibility-snapshot, or CLI-output-contract consistency failures return non-zero, so ordinary CI shells will fail the step automatically. Automation can parse the CLI JSON object for structured diagnostics and validate that object against the published output schema without changing the process-code contract.
+A failing payload/session returns exit code `2`, while consumer-vector, compatibility-snapshot, or CLI-output-contract consistency failures return non-zero, so ordinary CI shells will fail the step automatically. Automation can parse the CLI JSON object for structured diagnostics and validate that object against the published output schema without changing the process-code contract.
 
 Do not point production CI at mutable `main` and assume pre-1.0 behavior is frozen. The [External Adoption Guide](ADOPTION_GUIDE.md) describes release/tag and exact-commit pinning.
 
@@ -214,9 +262,11 @@ A conforming consumer should not silently accept or downgrade:
 - task capability names not selected for the session;
 - malformed or mis-correlated approval decisions;
 - malformed identifiers, timestamps, URIs, hashes, or bounded fields;
-- messages that fail the declared JSON Schema.
+- messages that fail the declared JSON Schema;
+- full-session lifecycle/correlation failures when session conformance is being evaluated;
+- an explicitly requested sender-instance replay expectation that does not match the transcript.
 
-Protocol validation is still not authorization. Passing a schema, compatibility check, capability gate, or approval-correlation check only establishes agreement with the public protocol contract; product policy, user approval, authentication, authorization, and execution safety remain separate responsibilities.
+Protocol validation is still not authorization. Passing a schema, compatibility check, capability gate, approval-correlation check, session replay, or sender assertion only establishes agreement with the public protocol/conformance conditions being tested; product policy, user approval, authentication, authorization, credential handling, and execution safety remain separate responsibilities.
 
 ## Adding fixtures or vectors
 
@@ -236,4 +286,4 @@ When adding a consumer vector:
 4. run `python3 scripts/validate_consumer_vectors.py`;
 5. update normative compatibility/capability/approval documentation if the rule itself changed.
 
-Do not add fixtures, vectors, or CLI output containing credentials, customer data, private infrastructure details, proprietary source, or machine-specific paths.
+Do not add fixtures, vectors, transcripts, sender expectations, or CLI output containing credentials, customer data, private infrastructure details, proprietary source, or machine-specific secrets.
