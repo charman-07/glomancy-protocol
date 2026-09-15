@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Public conformance CLI for Glomancy Protocol payloads and fixtures."""
+"""Public conformance CLI for Glomancy Protocol payloads, fixtures, and sessions."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import session_transcript_core as session_core
 from validate_fixtures import (
     ConformanceError,
     ROOT,
@@ -239,6 +240,155 @@ def command_fixtures(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def parse_sender_expectations(values: list[str]) -> dict[str, str]:
+    expected: dict[str, str] = {}
+    for raw in values:
+        component, separator, instance_id = raw.partition("=")
+        if not separator or not component or not instance_id:
+            raise ConformanceError(
+                "--expect-sender must use component=instance_id with both values non-empty"
+            )
+        if component in expected:
+            raise ConformanceError(f"duplicate --expect-sender component: {component}")
+        expected[component] = instance_id
+    return expected
+
+
+def load_session_document(path: Path) -> list[Any]:
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise ConformanceError(f"cannot read transcript file: {path}: {exc}") from exc
+    except json.JSONDecodeError as exc:
+        raise ConformanceError(f"invalid transcript JSON: {path}: {exc}") from exc
+
+    if not isinstance(document, dict):
+        raise ConformanceError("transcript top level must be an object")
+    if document.get("schema_version") != 1:
+        raise ConformanceError("transcript schema_version must be 1")
+    messages = document.get("messages")
+    if not isinstance(messages, list) or not messages:
+        raise ConformanceError("transcript messages must be a non-empty array")
+    return messages
+
+
+def session_validators() -> dict[str, tuple[str, Any]]:
+    store = session_core.build_store()
+    return {
+        kind: (schema_id, session_core.validator_for(path, store))
+        for kind, (schema_id, path) in session_core.registry_map().items()
+    }
+
+
+def observed_senders(messages: list[Any]) -> dict[str, list[str]]:
+    observed: dict[str, set[str]] = {}
+    for message in messages:
+        if not isinstance(message, dict):
+            continue
+        sender = message.get("sender")
+        if not isinstance(sender, dict):
+            continue
+        component = sender.get("component")
+        instance_id = sender.get("instance_id")
+        if isinstance(component, str) and isinstance(instance_id, str):
+            observed.setdefault(component, set()).add(instance_id)
+    return {component: sorted(instance_ids) for component, instance_ids in sorted(observed.items())}
+
+
+def apply_sender_expectations(
+    messages: list[Any],
+    expected: dict[str, str],
+) -> dict[str, Any] | None:
+    if not expected:
+        return None
+
+    seen: set[str] = set()
+    for index, message in enumerate(messages):
+        if not isinstance(message, dict):
+            continue
+        sender = message.get("sender")
+        if not isinstance(sender, dict):
+            continue
+        component = sender.get("component")
+        instance_id = sender.get("instance_id")
+        if not isinstance(component, str) or component not in expected:
+            continue
+        seen.add(component)
+        expected_instance = expected[component]
+        if instance_id != expected_instance:
+            return session_core.reject(
+                "sender-expectation-mismatch",
+                index,
+                f"component={component} expected_instance_id={expected_instance} "
+                f"actual_instance_id={instance_id}",
+            )
+
+    missing = sorted(set(expected) - seen)
+    if missing:
+        return session_core.reject(
+            "sender-expectation-missing",
+            None,
+            "missing components: " + ",".join(missing),
+        )
+    return None
+
+
+def command_session(args: argparse.Namespace) -> int:
+    transcript_path = Path(args.path).expanduser().resolve()
+    if not transcript_path.is_file():
+        return emit_configuration_error(args, f"transcript file does not exist: {transcript_path}")
+
+    try:
+        expected = parse_sender_expectations(args.expect_sender)
+        messages = load_session_document(transcript_path)
+        result = session_core.validate_transcript(messages, session_validators())
+    except (KeyError, TypeError, ValueError, ConformanceError, session_core.TranscriptError) as exc:
+        return emit_configuration_error(args, str(exc))
+
+    if result["accepted"]:
+        sender_failure = apply_sender_expectations(messages, expected)
+        if sender_failure is not None:
+            result = sender_failure
+
+    senders = observed_senders(messages)
+    exit_code = EXIT_OK if result["accepted"] else EXIT_VALIDATION_FAILED
+
+    if args.json_output:
+        emit_json(
+            "session",
+            bool(result["accepted"]),
+            exit_code,
+            path=str(transcript_path),
+            accepted=bool(result["accepted"]),
+            terminal_status=result["terminal_status"],
+            selected_version=result["selected_version"],
+            selected_capabilities=result["selected_capabilities"],
+            evidence_count=result["evidence_count"],
+            reason=result["reason"],
+            message_index=result["message_index"],
+            detail=result["detail"],
+            expected_senders={key: expected[key] for key in sorted(expected)},
+            observed_senders=senders,
+        )
+    elif result["accepted"]:
+        print(
+            f"session valid: {transcript_path}: terminal_status={result['terminal_status']} "
+            f"selected_version={result['selected_version']} evidence_count={result['evidence_count']}"
+        )
+    else:
+        suffix = ""
+        if result["message_index"] is not None:
+            suffix += f" message_index={result['message_index']}"
+        if result["detail"]:
+            suffix += f" detail={result['detail']}"
+        print(
+            f"session invalid: {transcript_path}: reason={result['reason']}{suffix}",
+            file=sys.stderr,
+        )
+
+    return exit_code
+
+
 def command_list(args: argparse.Namespace) -> int:
     try:
         _, by_kind = load_registry()
@@ -280,7 +430,7 @@ def add_json_option(parser: argparse.ArgumentParser) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="glomancy-conformance",
-        description="Validate Glomancy Protocol payloads and the public fixture corpus.",
+        description="Validate Glomancy Protocol payloads, fixtures, and full-session transcripts.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -304,6 +454,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_json_option(fixtures_parser)
     fixtures_parser.set_defaults(handler=command_fixtures)
+
+    session_parser = subparsers.add_parser(
+        "session", help="validate and replay one complete public session transcript"
+    )
+    session_parser.add_argument("path", help="path to a transcript JSON document")
+    session_parser.add_argument(
+        "--expect-sender",
+        action="append",
+        default=[],
+        metavar="COMPONENT=INSTANCE_ID",
+        help=(
+            "require messages from COMPONENT to use INSTANCE_ID; repeat for multiple components; "
+            "this is a harness assertion, not a wire authentication rule"
+        ),
+    )
+    add_json_option(session_parser)
+    session_parser.set_defaults(handler=command_session)
 
     list_parser = subparsers.add_parser("list-schemas", help="list registered message schemas")
     add_json_option(list_parser)
