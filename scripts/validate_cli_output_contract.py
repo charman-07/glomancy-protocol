@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,13 @@ from jsonschema import Draft202012Validator
 ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "scripts" / "glomancy_conformance.py"
 OUTPUT_SCHEMA = ROOT / "conformance" / "v1" / "cli-output.schema.json"
+ACCEPTED_SESSION = (
+    ROOT
+    / "transcripts"
+    / "v1"
+    / "accepted"
+    / "approval-gated-success-with-evidence.json"
+)
 
 
 class ContractError(RuntimeError):
@@ -89,6 +97,22 @@ def run_cli_case(
     validate_payload(validator, name, payload)
 
 
+def write_semantically_invalid_session(directory: Path) -> Path:
+    document = load_json(ACCEPTED_SESSION)
+    if not isinstance(document, dict):
+        raise ContractError("accepted session fixture must be an object")
+    messages = document.get("messages")
+    if not isinstance(messages, list) or len(messages) < 2:
+        raise ContractError("accepted session fixture must contain handshake messages")
+    response = messages[1]
+    if not isinstance(response, dict) or not isinstance(response.get("payload"), dict):
+        raise ContractError("accepted session fixture handshake response is malformed")
+    response["payload"]["selected_version"] = "9.9.9"
+    path = directory / "unadvertised-version-session.json"
+    path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
 def main() -> int:
     try:
         schema = load_json(OUTPUT_SCHEMA)
@@ -98,46 +122,88 @@ def main() -> int:
         Draft202012Validator.check_schema(schema)
         validator = Draft202012Validator(schema)
 
-        real_cases = [
-            (
-                "list-schemas-success",
-                ["list-schemas", "--json"],
-                0,
-            ),
-            (
-                "validate-success",
-                ["validate", "examples/v1/valid/task.submit.json", "--json"],
-                0,
-            ),
-            (
-                "fixtures-success",
-                ["fixtures", "--json"],
-                0,
-            ),
-            (
-                "validate-payload-failure",
-                [
-                    "validate",
-                    "examples/v1/invalid/bad-message-id-format.json",
-                    "--json",
-                ],
-                2,
-            ),
-            (
-                "validate-configuration-error",
-                [
-                    "validate",
-                    "examples/v1/valid/task.submit.json",
-                    "--kind",
-                    "heartbeat",
-                    "--json",
-                ],
-                3,
-            ),
-        ]
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            invalid_session = write_semantically_invalid_session(Path(temporary_directory))
+            real_cases = [
+                (
+                    "list-schemas-success",
+                    ["list-schemas", "--json"],
+                    0,
+                ),
+                (
+                    "validate-success",
+                    ["validate", "examples/v1/valid/task.submit.json", "--json"],
+                    0,
+                ),
+                (
+                    "fixtures-success",
+                    ["fixtures", "--json"],
+                    0,
+                ),
+                (
+                    "session-success",
+                    [
+                        "session",
+                        str(ACCEPTED_SESSION),
+                        "--expect-sender",
+                        "desktop=desktop-session",
+                        "--expect-sender",
+                        "bridge=bridge-session",
+                        "--json",
+                    ],
+                    0,
+                ),
+                (
+                    "session-semantic-failure",
+                    ["session", str(invalid_session), "--json"],
+                    2,
+                ),
+                (
+                    "session-sender-expectation-failure",
+                    [
+                        "session",
+                        str(ACCEPTED_SESSION),
+                        "--expect-sender",
+                        "bridge=unexpected-bridge",
+                        "--json",
+                    ],
+                    2,
+                ),
+                (
+                    "session-configuration-error",
+                    [
+                        "session",
+                        str(ACCEPTED_SESSION),
+                        "--expect-sender",
+                        "missing-separator",
+                        "--json",
+                    ],
+                    3,
+                ),
+                (
+                    "validate-payload-failure",
+                    [
+                        "validate",
+                        "examples/v1/invalid/bad-message-id-format.json",
+                        "--json",
+                    ],
+                    2,
+                ),
+                (
+                    "validate-configuration-error",
+                    [
+                        "validate",
+                        "examples/v1/valid/task.submit.json",
+                        "--kind",
+                        "heartbeat",
+                        "--json",
+                    ],
+                    3,
+                ),
+            ]
 
-        for name, arguments, expected_exit in real_cases:
-            run_cli_case(validator, name, arguments, expected_exit)
+            for name, arguments, expected_exit in real_cases:
+                run_cli_case(validator, name, arguments, expected_exit)
 
         # A fixture-conformance failure requires a deliberately broken fixture corpus,
         # so validate that published failure shape without mutating repository fixtures.
