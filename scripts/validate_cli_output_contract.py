@@ -22,6 +22,7 @@ ACCEPTED_SESSION = (
     / "accepted"
     / "approval-gated-success-with-evidence.json"
 )
+PROJECT_URI = "glomancy://project/conformance-demo"
 
 
 class ContractError(RuntimeError):
@@ -113,6 +114,34 @@ def write_semantically_invalid_session(directory: Path) -> Path:
     return path
 
 
+def write_project_bound_session(directory: Path) -> Path:
+    document = load_json(ACCEPTED_SESSION)
+    if not isinstance(document, dict):
+        raise ContractError("accepted session fixture must be an object")
+    messages = document.get("messages")
+    if not isinstance(messages, list):
+        raise ContractError("accepted session fixture messages must be an array")
+
+    task_submit: dict[str, Any] | None = None
+    for message in messages:
+        if isinstance(message, dict) and message.get("kind") == "task.submit":
+            task_submit = message
+            break
+    if task_submit is None or not isinstance(task_submit.get("payload"), dict):
+        raise ContractError("accepted session fixture must contain task.submit")
+
+    task_submit["payload"]["context_refs"] = [
+        {
+            "source_type": "project",
+            "uri": PROJECT_URI,
+            "revision": "fixture-1",
+        }
+    ]
+    path = directory / "project-bound-session.json"
+    path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
 def main() -> int:
     try:
         schema = load_json(OUTPUT_SCHEMA)
@@ -123,7 +152,9 @@ def main() -> int:
         validator = Draft202012Validator(schema)
 
         with tempfile.TemporaryDirectory() as temporary_directory:
-            invalid_session = write_semantically_invalid_session(Path(temporary_directory))
+            temporary_path = Path(temporary_directory)
+            invalid_session = write_semantically_invalid_session(temporary_path)
+            project_session = write_project_bound_session(temporary_path)
             real_cases = [
                 (
                     "list-schemas-success",
@@ -144,11 +175,13 @@ def main() -> int:
                     "session-success",
                     [
                         "session",
-                        str(ACCEPTED_SESSION),
+                        str(project_session),
                         "--expect-sender",
                         "desktop=desktop-session",
                         "--expect-sender",
                         "bridge=bridge-session",
+                        "--expect-project",
+                        PROJECT_URI,
                         "--json",
                     ],
                     0,
@@ -170,12 +203,45 @@ def main() -> int:
                     2,
                 ),
                 (
-                    "session-configuration-error",
+                    "session-project-expectation-failure",
+                    [
+                        "session",
+                        str(project_session),
+                        "--expect-project",
+                        "glomancy://project/other",
+                        "--json",
+                    ],
+                    2,
+                ),
+                (
+                    "session-project-expectation-missing",
+                    [
+                        "session",
+                        str(ACCEPTED_SESSION),
+                        "--expect-project",
+                        PROJECT_URI,
+                        "--json",
+                    ],
+                    2,
+                ),
+                (
+                    "session-sender-configuration-error",
                     [
                         "session",
                         str(ACCEPTED_SESSION),
                         "--expect-sender",
                         "missing-separator",
+                        "--json",
+                    ],
+                    3,
+                ),
+                (
+                    "session-project-configuration-error",
+                    [
+                        "session",
+                        str(ACCEPTED_SESSION),
+                        "--expect-project",
+                        "not a valid uri",
                         "--json",
                     ],
                     3,
