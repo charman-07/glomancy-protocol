@@ -27,6 +27,9 @@ jobs:
       - name: Validate context snapshot output contract
         run: python3 scripts/validate_context_snapshot_contract.py
 
+      - name: Validate task verification output contract
+        run: python3 scripts/validate_task_verification_contract.py
+
       - name: Smoke-test context policy CLI
         run: >-
           python3 scripts/glomancy_context_policy.py
@@ -39,4 +42,11 @@ jobs:
           python3 scripts/glomancy_context_snapshot.py
           validate
           context/v1/examples/context-snapshot.json
+          --json
+
+      - name: Smoke-test task verification profile
+        run: >-
+          python3 scripts/glomancy_task_verification.py
+          verification/v1/examples/strict-read-back.json
+          transcripts/v1/accepted/approval-gated-success-with-evidence.json
           --json
