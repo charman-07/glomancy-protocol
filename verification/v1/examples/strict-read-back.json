@@ -1,0 +1,9 @@
+{
+  "profile_version": "1.0.0",
+  "require_success": true,
+  "require_context_snapshot_match": true,
+  "require_read_back_verified": true,
+  "required_evidence_types": [
+    "read-back"
+  ]
+}
