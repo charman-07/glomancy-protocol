@@ -175,6 +175,10 @@ def main() -> int:
                     "asset",
                     "--forbid-source",
                     "web",
+                    "--require-revision-source",
+                    "project",
+                    "--require-revision-source",
+                    "asset",
                 ],
                 0,
             )
@@ -190,6 +194,17 @@ def main() -> int:
                 "project": 1,
             }:
                 raise ContractError("context-policy-success: unexpected observed source counts")
+            if success.get("observed_revisioned_source_counts") != {
+                "asset": 1,
+                "project": 1,
+            }:
+                raise ContractError(
+                    "context-policy-success: unexpected observed revisioned source counts"
+                )
+            if success.get("revision_required_sources") != ["asset", "project"]:
+                raise ContractError(
+                    "context-policy-success: revision_required_sources must be deterministic"
+                )
 
             run_case(
                 validator,
@@ -204,6 +219,20 @@ def main() -> int:
                 [str(web_session), "--forbid-source", "web"],
                 2,
                 "context-source-forbidden",
+            )
+            run_case(
+                validator,
+                "missing-required-revision",
+                [str(context_session), "--require-revision-source", "memory"],
+                2,
+                "context-source-revision-missing",
+            )
+            run_case(
+                validator,
+                "missing-required-revision-source",
+                [str(context_session), "--require-revision-source", "artifact"],
+                2,
+                "context-source-revision-missing",
             )
             invalid = run_case(
                 validator,
@@ -237,8 +266,22 @@ def main() -> int:
                     ],
                 ),
                 (
+                    "duplicate-revision-source",
+                    [
+                        str(context_session),
+                        "--require-revision-source",
+                        "project",
+                        "--require-revision-source",
+                        "project",
+                    ],
+                ),
+                (
                     "unsupported-source",
                     [str(context_session), "--expect-source", "runtime"],
+                ),
+                (
+                    "unsupported-revision-source",
+                    [str(context_session), "--require-revision-source", "runtime"],
                 ),
                 (
                     "expect-forbid-conflict",
@@ -251,6 +294,16 @@ def main() -> int:
                     ],
                 ),
                 (
+                    "revision-forbid-conflict",
+                    [
+                        str(context_session),
+                        "--require-revision-source",
+                        "project",
+                        "--forbid-source",
+                        "project",
+                    ],
+                ),
+                (
                     "missing-transcript",
                     [str(directory / "does-not-exist.json"), "--expect-source", "project"],
                 ),
@@ -259,7 +312,7 @@ def main() -> int:
                 run_case(validator, name, arguments, 3)
 
         print(
-            "context policy output contract passed for 4 conformance paths and "
+            "context policy output contract passed for 6 conformance paths and "
             f"{len(configuration_cases)} configuration paths"
         )
         return 0
