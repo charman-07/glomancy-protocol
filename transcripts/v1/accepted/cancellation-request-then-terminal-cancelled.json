@@ -1,0 +1,200 @@
+{
+  "transcript_suite_version": "1.0.0",
+  "wire_protocol_version": "0.4.0",
+  "category": "accepted",
+  "id": "cancellation-request-then-terminal-cancelled",
+  "description": "Cancellation is a request; terminal cancellation is reported later by task.error.",
+  "harness": {
+    "responder_supported_versions": [
+      "0.4.0"
+    ],
+    "responder_capabilities": [
+      {
+        "name": "asset.read",
+        "version": "1.0.0"
+      },
+      {
+        "name": "result.evidence",
+        "version": "1.0.0"
+      },
+      {
+        "name": "asset.write",
+        "version": "1.0.0"
+      }
+    ]
+  },
+  "messages": [
+    {
+      "protocol_version": "0.4.0",
+      "message_id": "00000003-0000-4000-8000-00000000012d",
+      "sent_at": "2026-09-15T12:01:00Z",
+      "sender": {
+        "component": "desktop",
+        "instance_id": "desktop-03"
+      },
+      "trace": {
+        "trace_id": "00000000000000000000000000000003",
+        "span_id": "000000000000012d",
+        "sampled": true
+      },
+      "schema_id": "urn:glomancy:protocol:handshake.request:1.0.0",
+      "kind": "handshake.request",
+      "payload": {
+        "component": "desktop",
+        "supported_versions": [
+          "0.3.0",
+          "0.4.0"
+        ],
+        "capabilities": [
+          {
+            "name": "asset.read",
+            "version": "1.0.0",
+            "required": true
+          },
+          {
+            "name": "result.evidence",
+            "version": "1.0.0",
+            "required": true
+          },
+          {
+            "name": "asset.write",
+            "version": "1.0.0",
+            "required": false
+          }
+        ],
+        "max_message_bytes": 1048576,
+        "locale": "en-US"
+      }
+    },
+    {
+      "protocol_version": "0.4.0",
+      "message_id": "00000003-0000-4000-8000-00000000012e",
+      "sent_at": "2026-09-15T12:02:00Z",
+      "sender": {
+        "component": "bridge",
+        "instance_id": "bridge-03"
+      },
+      "trace": {
+        "trace_id": "00000000000000000000000000000003",
+        "span_id": "000000000000012e",
+        "sampled": true
+      },
+      "schema_id": "urn:glomancy:protocol:handshake.response:1.0.0",
+      "kind": "handshake.response",
+      "payload": {
+        "accepted": true,
+        "selected_version": "0.4.0",
+        "selected_capabilities": [
+          {
+            "name": "asset.read",
+            "version": "1.0.0",
+            "required": true
+          },
+          {
+            "name": "result.evidence",
+            "version": "1.0.0",
+            "required": true
+          },
+          {
+            "name": "asset.write",
+            "version": "1.0.0",
+            "required": false
+          }
+        ],
+        "max_message_bytes": 1048576
+      },
+      "correlation_id": "00000003-0000-4000-8000-00000000012d"
+    },
+    {
+      "protocol_version": "0.4.0",
+      "message_id": "00000003-0000-4000-8000-00000000012f",
+      "sent_at": "2026-09-15T12:03:00Z",
+      "sender": {
+        "component": "desktop",
+        "instance_id": "desktop-03"
+      },
+      "trace": {
+        "trace_id": "00000000000000000000000000000003",
+        "span_id": "000000000000012f",
+        "sampled": true
+      },
+      "schema_id": "urn:glomancy:protocol:task.submit:1.0.0",
+      "kind": "task.submit",
+      "payload": {
+        "task_id": "00000003-0000-4000-8000-000000000186",
+        "user_instruction": "Run public transcript test.",
+        "language": "en-US",
+        "execution_mode": "dry-run",
+        "risk_ceiling": "R1",
+        "requested_capabilities": [
+          "asset.read"
+        ],
+        "context_refs": [],
+        "idempotency_key": "tx:03:attempt:1"
+      }
+    },
+    {
+      "protocol_version": "0.4.0",
+      "message_id": "00000003-0000-4000-8000-000000000130",
+      "sent_at": "2026-09-15T12:04:00Z",
+      "sender": {
+        "component": "desktop",
+        "instance_id": "desktop-03"
+      },
+      "trace": {
+        "trace_id": "00000000000000000000000000000003",
+        "span_id": "0000000000000130",
+        "sampled": true
+      },
+      "schema_id": "urn:glomancy:protocol:task.cancel:1.0.0",
+      "kind": "task.cancel",
+      "payload": {
+        "task_id": "00000003-0000-4000-8000-000000000186",
+        "reason": "User requested cancellation.",
+        "requested_by": "user",
+        "force": false
+      }
+    },
+    {
+      "protocol_version": "0.4.0",
+      "message_id": "00000003-0000-4000-8000-000000000131",
+      "sent_at": "2026-09-15T12:05:00Z",
+      "sender": {
+        "component": "bridge",
+        "instance_id": "bridge-03"
+      },
+      "trace": {
+        "trace_id": "00000000000000000000000000000003",
+        "span_id": "0000000000000131",
+        "sampled": true
+      },
+      "schema_id": "urn:glomancy:protocol:task.error:1.0.0",
+      "kind": "task.error",
+      "payload": {
+        "task_id": "00000003-0000-4000-8000-000000000186",
+        "status": "cancelled",
+        "error": {
+          "code": "GLM-PROTO-1005",
+          "category": "cancelled",
+          "message": "Public test terminal outcome.",
+          "retryable": false
+        },
+        "recoverable": true,
+        "rollback_attempted": false,
+        "evidence_ids": []
+      }
+    }
+  ],
+  "expected": {
+    "accepted": true,
+    "terminal_status": "cancelled",
+    "selected_version": "0.4.0",
+    "selected_capabilities": [
+      "asset.read",
+      "result.evidence",
+      "asset.write"
+    ],
+    "evidence_count": 0,
+    "reason": null
+  }
+}
