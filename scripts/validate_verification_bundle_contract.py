@@ -332,7 +332,7 @@ def main() -> int:
                 "tampered-payload",
                 ["verify", str(tampered_payload)],
                 2,
-                "SHA-256 mismatch",
+                "bundle payload size mismatch",
             )
 
             tampered_manifest = root / "tampered-manifest"
