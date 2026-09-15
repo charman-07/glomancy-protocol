@@ -66,16 +66,30 @@ def parse_source_list(flag: str, values: list[str], allowed: set[str]) -> list[s
     return sorted(parsed)
 
 
-def parse_policy(expect_values: list[str], forbid_values: list[str]) -> tuple[list[str], list[str]]:
+def parse_policy(
+    expect_values: list[str],
+    forbid_values: list[str],
+    revision_values: list[str],
+) -> tuple[list[str], list[str], list[str]]:
     allowed = source_type_values()
     expected = parse_source_list("--expect-source", expect_values, allowed)
     forbidden = parse_source_list("--forbid-source", forbid_values, allowed)
+    revision_required = parse_source_list("--require-revision-source", revision_values, allowed)
+
     conflicts = sorted(set(expected) & set(forbidden))
     if conflicts:
         raise ContextPolicyError(
             "context source cannot be both expected and forbidden: " + ",".join(conflicts)
         )
-    return expected, forbidden
+
+    revision_conflicts = sorted(set(revision_required) & set(forbidden))
+    if revision_conflicts:
+        raise ContextPolicyError(
+            "context source cannot require revision metadata while forbidden: "
+            + ",".join(revision_conflicts)
+        )
+
+    return expected, forbidden, revision_required
 
 
 def task_submit_index(messages: list[Any]) -> int | None:
@@ -85,8 +99,11 @@ def task_submit_index(messages: list[Any]) -> int | None:
     return None
 
 
-def context_summary(messages: list[Any]) -> tuple[dict[str, int], int, int]:
+def context_summary(
+    messages: list[Any],
+) -> tuple[dict[str, int], dict[str, int], int, int]:
     counts: dict[str, int] = {}
+    revision_counts: dict[str, int] = {}
     total = 0
     revisioned = 0
 
@@ -110,8 +127,14 @@ def context_summary(messages: list[Any]) -> tuple[dict[str, int], int, int]:
             revision = ref.get("revision")
             if isinstance(revision, str) and revision:
                 revisioned += 1
+                revision_counts[source_type] = revision_counts.get(source_type, 0) + 1
 
-    return ({key: counts[key] for key in sorted(counts)}, total, revisioned)
+    return (
+        {key: counts[key] for key in sorted(counts)},
+        {key: revision_counts[key] for key in sorted(revision_counts)},
+        total,
+        revisioned,
+    )
 
 
 def emit_json(ok: bool, exit_code: int, **fields: Any) -> None:
@@ -141,8 +164,18 @@ def evaluate_policy(
     messages: list[Any],
     expected: list[str],
     forbidden: list[str],
-) -> tuple[str | None, int | None, str | None, dict[str, int], int, int]:
-    counts, total, revisioned = context_summary(messages)
+    revision_required: list[str],
+) -> tuple[
+    str | None,
+    int | None,
+    str | None,
+    dict[str, int],
+    dict[str, int],
+    int,
+    int,
+]:
+    counts, revision_counts, total, revisioned = context_summary(messages)
+
     missing = [source for source in expected if counts.get(source, 0) == 0]
     if missing:
         observed_text = ",".join(f"{key}:{value}" for key, value in counts.items()) or "<none>"
@@ -151,6 +184,7 @@ def evaluate_policy(
             task_submit_index(messages),
             f"missing_sources={','.join(missing)} observed_sources={observed_text}",
             counts,
+            revision_counts,
             total,
             revisioned,
         )
@@ -163,11 +197,29 @@ def evaluate_policy(
             task_submit_index(messages),
             f"forbidden_sources={','.join(present_forbidden)} observed_sources={observed_text}",
             counts,
+            revision_counts,
             total,
             revisioned,
         )
 
-    return None, None, None, counts, total, revisioned
+    incomplete_revision_sources: list[str] = []
+    for source in revision_required:
+        observed_count = counts.get(source, 0)
+        revision_count = revision_counts.get(source, 0)
+        if observed_count == 0 or revision_count != observed_count:
+            incomplete_revision_sources.append(f"{source}:{revision_count}/{observed_count}")
+    if incomplete_revision_sources:
+        return (
+            "context-source-revision-missing",
+            task_submit_index(messages),
+            "revision_coverage=" + ",".join(incomplete_revision_sources),
+            counts,
+            revision_counts,
+            total,
+            revisioned,
+        )
+
+    return None, None, None, counts, revision_counts, total, revisioned
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -194,6 +246,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="reject any task context reference with TYPE; repeat for multiple types",
     )
     parser.add_argument(
+        "--require-revision-source",
+        action="append",
+        default=[],
+        metavar="TYPE",
+        help=(
+            "require TYPE to be present and every reference of TYPE to carry non-empty revision "
+            "metadata; repeat for multiple types"
+        ),
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         dest="json_output",
@@ -211,7 +273,11 @@ def main() -> int:
         )
 
     try:
-        expected, forbidden = parse_policy(args.expect_source, args.forbid_source)
+        expected, forbidden, revision_required = parse_policy(
+            args.expect_source,
+            args.forbid_source,
+            args.require_revision_source,
+        )
         messages = conformance_cli.load_session_document(transcript_path)
         session_result = session_core.validate_transcript(
             messages,
@@ -241,7 +307,9 @@ def main() -> int:
                 detail=session_result["detail"],
                 expected_sources=expected,
                 forbidden_sources=forbidden,
+                revision_required_sources=revision_required,
                 observed_source_counts={},
+                observed_revisioned_source_counts={},
                 context_ref_count=0,
                 revisioned_context_ref_count=0,
             )
@@ -258,11 +326,15 @@ def main() -> int:
             )
         return EXIT_POLICY_FAILED
 
-    reason, message_index, detail, counts, total, revisioned = evaluate_policy(
-        messages,
-        expected,
-        forbidden,
-    )
+    (
+        reason,
+        message_index,
+        detail,
+        counts,
+        revision_counts,
+        total,
+        revisioned,
+    ) = evaluate_policy(messages, expected, forbidden, revision_required)
     policy_passed = reason is None
     exit_code = EXIT_OK if policy_passed else EXIT_POLICY_FAILED
 
@@ -279,7 +351,9 @@ def main() -> int:
             detail=detail,
             expected_sources=expected,
             forbidden_sources=forbidden,
+            revision_required_sources=revision_required,
             observed_source_counts=counts,
+            observed_revisioned_source_counts=revision_counts,
             context_ref_count=total,
             revisioned_context_ref_count=revisioned,
         )

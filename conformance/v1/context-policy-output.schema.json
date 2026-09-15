@@ -49,7 +49,9 @@
         "detail",
         "expected_sources",
         "forbidden_sources",
+        "revision_required_sources",
         "observed_source_counts",
+        "observed_revisioned_source_counts",
         "context_ref_count",
         "revisioned_context_ref_count"
       ],
@@ -63,7 +65,9 @@
         "detail": { "type": ["string", "null"] },
         "expected_sources": { "$ref": "#/$defs/sourceList" },
         "forbidden_sources": { "$ref": "#/$defs/sourceList" },
+        "revision_required_sources": { "$ref": "#/$defs/sourceList" },
         "observed_source_counts": { "$ref": "#/$defs/sourceCountMap" },
+        "observed_revisioned_source_counts": { "$ref": "#/$defs/sourceCountMap" },
         "context_ref_count": { "type": "integer", "minimum": 0, "maximum": 256 },
         "revisioned_context_ref_count": { "type": "integer", "minimum": 0, "maximum": 256 }
       }
