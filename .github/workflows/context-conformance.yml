@@ -1,0 +1,32 @@
+name: Context conformance
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  context-policy-contract:
+    name: Context policy contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Install conformance requirements
+        run: python3 -m pip install --disable-pip-version-check -r requirements-conformance.txt
+
+      - name: Validate context policy output contract
+        run: python3 scripts/validate_context_policy_contract.py
+
+      - name: Smoke-test context policy CLI
+        run: >-
+          python3 scripts/glomancy_context_policy.py
+          transcripts/v1/accepted/approval-gated-success-with-evidence.json
+          --forbid-source web
+          --json
