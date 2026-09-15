@@ -1,0 +1,215 @@
+# Deterministic task verification bundles
+
+Task Verification Profiles let an integration evaluate structural conditions across a complete public session, optional Context Snapshot, terminal outcome, and terminal-referenced evidence.
+
+A **Verification Bundle** makes one successful evaluation portable and reproducible by binding the exact input bytes and normalized verification result with deterministic SHA-256 integrity metadata.
+
+The bundle is a non-wire tooling artifact. It does not change Glomancy Protocol `0.4.0` or any existing message schema identity.
+
+## Bundle contents
+
+A bundle created with a Context Snapshot contains:
+
+```text
+profile.json
+session.json
+snapshot.json
+verification-result.json
+manifest.json
+SHA256SUMS
+```
+
+Without a snapshot, `snapshot.json` is omitted.
+
+### `profile.json`
+
+An exact byte copy of the caller-supplied Task Verification Profile.
+
+### `session.json`
+
+An exact byte copy of the complete public session transcript that was evaluated.
+
+### `snapshot.json`
+
+When supplied, an exact byte copy of the Context Snapshot Descriptor.
+
+### `verification-result.json`
+
+The successful result produced by the existing portable Task Verification evaluator.
+
+Machine-local absolute paths are normalized to fixed bundle-relative names:
+
+- `profile.json`;
+- `session.json`;
+- `snapshot.json` when included.
+
+The rest of the verification result uses the already-published task-verification output contract. This normalization is what allows identical inputs to produce identical bundle bytes on different machines.
+
+### `manifest.json`
+
+Validated against:
+
+```text
+verification/v1/bundle-manifest.schema.json
+```
+
+The manifest records:
+
+- bundle format version;
+- task-verification output version;
+- whether a snapshot is included;
+- the exact payload filename set;
+- each payload file's byte count;
+- each payload file's SHA-256;
+- a deterministic aggregate SHA-256;
+- explicit false claims for signature, provenance, attestation, producer authentication, authorization, certification, and execution correctness.
+
+The aggregate digest is SHA-256 over UTF-8 records in lexicographic filename order:
+
+```text
+<filename>\t<sha256>\n
+```
+
+The manifest does not recursively hash itself.
+
+### `SHA256SUMS`
+
+Covers every payload file plus `manifest.json`. The checksum file intentionally does not hash itself.
+
+## Create a bundle
+
+```bash
+python3 scripts/glomancy_verification_bundle.py create \
+  --profile path/to/profile.json \
+  --transcript path/to/session.json \
+  --snapshot path/to/snapshot.json \
+  --out-dir path/to/bundle
+```
+
+JSON output:
+
+```bash
+python3 scripts/glomancy_verification_bundle.py create \
+  --profile path/to/profile.json \
+  --transcript path/to/session.json \
+  --snapshot path/to/snapshot.json \
+  --out-dir path/to/bundle \
+  --json
+```
+
+Creation first runs the existing Task Verification evaluator. If the requested profile does not pass, no successful verification bundle is produced.
+
+A profile that does not require a snapshot may be bundled without `--snapshot`.
+
+## Verify and replay a bundle
+
+```bash
+python3 scripts/glomancy_verification_bundle.py verify path/to/bundle
+```
+
+JSON output:
+
+```bash
+python3 scripts/glomancy_verification_bundle.py verify path/to/bundle --json
+```
+
+Verification is intentionally stronger than checking `SHA256SUMS` alone.
+
+The verifier:
+
+1. validates `manifest.json` against its published schema;
+2. requires the exact fixed bundle file set and rejects missing or unexpected files;
+3. verifies each payload byte count and SHA-256 recorded by the manifest;
+4. recomputes the manifest aggregate SHA-256;
+5. verifies `SHA256SUMS` for every payload plus the manifest;
+6. validates `verification-result.json` against the published Task Verification output schema;
+7. re-runs Task Verification from bundled `profile.json`, `session.json`, and optional `snapshot.json`;
+8. normalizes that newly computed result to bundle-relative paths;
+9. requires the recomputed result to equal `verification-result.json` exactly.
+
+This final replay step matters. An actor can edit `verification-result.json` and recompute ordinary hashes. The bundle still fails unless the edited result is exactly what the public verification logic independently recomputes from the bundled inputs.
+
+## Determinism
+
+For identical input bytes and the same public verification implementation/contract version, repeated bundle generation is required to produce byte-identical bundle files.
+
+The repository contract tests generate the same bundle twice and compare every file byte-for-byte.
+
+The bundle intentionally contains no generation timestamp, hostname, username, absolute path, random identifier, or other machine-local metadata.
+
+The Context Snapshot itself may contain a caller-defined `captured_at` value and snapshot UUID because those values are part of the caller's input, not generated by the bundler.
+
+## Machine-readable tool output
+
+The `--json` output of bundle creation and verification is published at:
+
+```text
+conformance/v1/verification-bundle-output.schema.json
+```
+
+Bundle-tool output reports structural status and the aggregate digest. It does not copy context URIs, context revisions, evidence claims, evidence hashes, artifact URIs, user instructions, or private runtime state into the summary.
+
+## Relationship to Glomancy
+
+Glomancy's private product architecture is moving toward evidence-gated execution:
+
+```text
+intent
+  -> live project/context observation
+  -> target resolution
+  -> plan/risk
+  -> before-state
+  -> dry run / preflight
+  -> execution
+  -> compile / structural / runtime validation
+  -> Unreal read-back
+  -> evidence
+  -> truthful terminal report
+  -> restore/recovery when required
+```
+
+The public bundle does not expose how those private phases are implemented. Instead, it provides a portable envelope for the public artifacts an integration chooses to publish at the interoperability boundary.
+
+That supports a useful future property: a CI system, editor integration, audit tool, or independent consumer can retain one self-contained public verification package and later replay the same structural verification rules without requiring the private Glomancy runtime.
+
+## Assurance boundary
+
+A valid Verification Bundle establishes only:
+
+- the exact included bytes match the manifest and checksum records;
+- the manifest's deterministic aggregate digest is correct;
+- the bundled verification result satisfies the published output schema;
+- the bundled inputs still reproduce that successful public verification result under the verifier being run.
+
+It does **not** establish:
+
+- a digital signature;
+- provenance or chain of custody;
+- producer identity or authentication;
+- authorization;
+- evidence truth;
+- artifact existence or correctness;
+- that an evidence hash was independently recomputed from a private artifact;
+- that context was fresh, complete, authoritative, or consumed by a model/runtime;
+- that Unreal compile, PIE, read-back, mutation, rollback, restore, build, test, or self-repair behavior was technically correct;
+- certification or production readiness.
+
+SHA-256 binds bytes. It does not prove who created those bytes or whether their claims are true.
+
+## Public/private boundary
+
+The following remain private implementation details:
+
+- Unreal/editor execution implementation;
+- before-state capture and restore implementation;
+- evidence-generation internals;
+- compile/PIE/read-back verification algorithms;
+- bounded self-repair logic;
+- planner/orchestrator algorithms;
+- live-state precedence and conflict resolution;
+- proprietary context retrieval/RAG and project digital-twin internals;
+- provider prompts and credentials;
+- private authentication/trust infrastructure;
+- commercial runtime logic.
+
+The bundle is intentionally limited to public, versioned, independently testable interoperability artifacts.
