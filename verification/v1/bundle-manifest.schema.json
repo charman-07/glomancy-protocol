@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:conformance:task-verification-bundle-manifest:1.0.0",
+  "title": "Glomancy Task Verification Bundle Manifest",
+  "description": "Deterministic non-wire integrity manifest for portable task verification bundles.",
+  "type": "object",
+  "required": [
+    "bundle_format_version",
+    "verification_output_version",
+    "verification_status",
+    "snapshot_included",
+    "payload_files",
+    "files",
+    "aggregate_sha256",
+    "claims"
+  ],
+  "properties": {
+    "bundle_format_version": {
+      "const": "1.0.0"
+    },
+    "verification_output_version": {
+      "const": "1.0.0"
+    },
+    "verification_status": {
+      "const": "verified"
+    },
+    "snapshot_included": {
+      "type": "boolean"
+    },
+    "payload_files": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "profile.json",
+          "session.json",
+          "snapshot.json",
+          "verification-result.json"
+        ]
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["name", "sha256", "bytes"],
+        "properties": {
+          "name": {
+            "enum": [
+              "profile.json",
+              "session.json",
+              "snapshot.json",
+              "verification-result.json"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "aggregate_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "claims": {
+      "type": "object",
+      "required": [
+        "signed",
+        "provenance",
+        "attestation",
+        "producer_authentication",
+        "authorization",
+        "certification",
+        "execution_correctness"
+      ],
+      "properties": {
+        "signed": { "const": false },
+        "provenance": { "const": false },
+        "attestation": { "const": false },
+        "producer_authentication": { "const": false },
+        "authorization": { "const": false },
+        "certification": { "const": false },
+        "execution_correctness": { "const": false }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

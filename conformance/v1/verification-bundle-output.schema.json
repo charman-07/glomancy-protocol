@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:conformance:verification-bundle-output:1.0.0",
+  "title": "Glomancy Verification Bundle Tool Output",
+  "description": "Machine-readable output contract for glomancy_verification_bundle.py --json.",
+  "oneOf": [
+    { "$ref": "#/$defs/createSuccess" },
+    { "$ref": "#/$defs/verifySuccess" },
+    { "$ref": "#/$defs/failure" }
+  ],
+  "$defs": {
+    "payloadFiles": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "enum": ["profile.json", "session.json", "snapshot.json", "verification-result.json"]
+      }
+    },
+    "evidenceTypeCountMap": {
+      "type": "object",
+      "propertyNames": {
+        "enum": ["log", "screenshot", "asset-registry", "read-back", "build", "test", "diff", "rollback"]
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
+    "claims": {
+      "type": "object",
+      "required": [
+        "signed",
+        "provenance",
+        "attestation",
+        "producer_authentication",
+        "authorization",
+        "certification",
+        "execution_correctness"
+      ],
+      "properties": {
+        "signed": { "const": false },
+        "provenance": { "const": false },
+        "attestation": { "const": false },
+        "producer_authentication": { "const": false },
+        "authorization": { "const": false },
+        "certification": { "const": false },
+        "execution_correctness": { "const": false }
+      },
+      "additionalProperties": false
+    },
+    "base": {
+      "type": "object",
+      "required": ["output_version", "command", "ok", "exit_code"],
+      "properties": {
+        "output_version": { "const": "1.0.0" },
+        "command": { "enum": ["create", "verify"] },
+        "ok": { "type": "boolean" },
+        "exit_code": { "enum": [0, 2] }
+      }
+    },
+    "createSuccess": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "required": [
+            "bundle_dir",
+            "bundle_format_version",
+            "snapshot_included",
+            "payload_files",
+            "aggregate_sha256"
+          ],
+          "properties": {
+            "command": { "const": "create" },
+            "ok": { "const": true },
+            "exit_code": { "const": 0 },
+            "bundle_dir": { "type": "string", "minLength": 1 },
+            "bundle_format_version": { "const": "1.0.0" },
+            "snapshot_included": { "type": "boolean" },
+            "payload_files": { "$ref": "#/$defs/payloadFiles" },
+            "aggregate_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+          }
+        }
+      ]
+    },
+    "verifySuccess": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "required": [
+            "bundle_dir",
+            "bundle_format_version",
+            "verified",
+            "snapshot_included",
+            "payload_files",
+            "aggregate_sha256",
+            "terminal_status",
+            "read_back_verified",
+            "terminal_referenced_evidence_type_counts",
+            "claims"
+          ],
+          "properties": {
+            "command": { "const": "verify" },
+            "ok": { "const": true },
+            "exit_code": { "const": 0 },
+            "bundle_dir": { "type": "string", "minLength": 1 },
+            "bundle_format_version": { "const": "1.0.0" },
+            "verified": { "const": true },
+            "snapshot_included": { "type": "boolean" },
+            "payload_files": { "$ref": "#/$defs/payloadFiles" },
+            "aggregate_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "terminal_status": { "type": "string", "minLength": 1 },
+            "read_back_verified": { "type": ["boolean", "null"] },
+            "terminal_referenced_evidence_type_counts": { "$ref": "#/$defs/evidenceTypeCountMap" },
+            "claims": { "$ref": "#/$defs/claims" }
+          }
+        }
+      ]
+    },
+    "failure": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "required": ["error"],
+          "properties": {
+            "ok": { "const": false },
+            "exit_code": { "const": 2 },
+            "error": {
+              "type": "object",
+              "required": ["type", "message"],
+              "properties": {
+                "type": { "const": "bundle" },
+                "message": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    }
+  }
+}
