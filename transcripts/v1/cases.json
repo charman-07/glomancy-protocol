@@ -2,7 +2,28 @@
   "schema_version": 1,
   "suite_version": "1.0.0",
   "wire_protocol_version": "0.4.0",
-  "description": "Language-neutral full-envelope session transcript conformance cases. Expected results are test/conformance outcomes, not a normative wire protocol contract.",
-  "accepted": [],
-  "rejected": []
+  "description": "Language-neutral full-envelope session transcript conformance. Accepted cases are complete transcript files; rejected cases deterministically mutate an accepted base into a complete transcript before validation. Expected results are test/conformance outcomes, not a normative wire protocol contract.",
+  "accepted": [
+    {"name":"approval-gated-success-with-evidence","file":"accepted/approval-gated-success-with-evidence.json","expected":{"accepted":true,"terminal_status":"succeeded","reason":null}},
+    {"name":"read-only-success-without-approval","file":"accepted/read-only-success-without-approval.json","expected":{"accepted":true,"terminal_status":"succeeded","reason":null}},
+    {"name":"cancellation-request-then-terminal-cancelled","file":"accepted/cancellation-request-then-terminal-cancelled.json","expected":{"accepted":true,"terminal_status":"cancelled","reason":null}},
+    {"name":"approved-write-then-rolled-back","file":"accepted/approved-write-then-rolled-back.json","expected":{"accepted":true,"terminal_status":"rolled_back","reason":null}},
+    {"name":"terminal-failure-with-evidence","file":"accepted/terminal-failure-with-evidence.json","expected":{"accepted":true,"terminal_status":"failed","reason":null}}
+  ],
+  "rejected": [
+    {"name":"unadvertised-selected-version","base":"approval-gated-success-with-evidence","mutations":[{"op":"replace","message":1,"path":["payload","selected_version"],"value":"0.5.0"}],"expected":{"accepted":false,"terminal_status":null,"reason":"unadvertised-selected-version"}},
+    {"name":"unadvertised-selected-capability","base":"approval-gated-success-with-evidence","mutations":[{"op":"append","message":1,"path":["payload","selected_capabilities"],"value":{"name":"secret.capability","version":"1.0.0","required":false}}],"expected":{"accepted":false,"terminal_status":null,"reason":"unadvertised-selected-capability"}},
+    {"name":"task-requests-unselected-capability","base":"read-only-success-without-approval","mutations":[{"op":"replace","message":2,"path":["payload","requested_capabilities"],"value":["project.write"]}],"expected":{"accepted":false,"terminal_status":null,"reason":"task-requests-unselected-capability"}},
+    {"name":"approval-task-id-mismatch","base":"approval-gated-success-with-evidence","mutations":[{"op":"replace","message":3,"path":["payload","task_id"],"value":"20000000-0000-4000-8000-000000000099"}],"expected":{"accepted":false,"terminal_status":null,"reason":"approval-task-id-mismatch"}},
+    {"name":"approval-id-mismatch","base":"approval-gated-success-with-evidence","mutations":[{"op":"replace","message":4,"path":["payload","approval_id"],"value":"30000000-0000-4000-8000-000000000099"}],"expected":{"accepted":false,"terminal_status":null,"reason":"approval-id-mismatch"}},
+    {"name":"approval-decision-before-request","base":"approval-gated-success-with-evidence","mutations":[{"op":"move_message","from":4,"to":3}],"expected":{"accepted":false,"terminal_status":null,"reason":"approval-decision-before-request"}},
+    {"name":"expired-approval","base":"approval-gated-success-with-evidence","mutations":[{"op":"replace","message":3,"path":["payload","expires_at"],"value":"2026-09-15T10:00:03Z"}],"expected":{"accepted":false,"terminal_status":null,"reason":"expired-approval"}},
+    {"name":"running-before-required-approval","base":"approval-gated-success-with-evidence","mutations":[{"op":"delete_message","message":4}],"expected":{"accepted":false,"terminal_status":null,"reason":"running-before-required-approval"}},
+    {"name":"duplicate-evidence","base":"approval-gated-success-with-evidence","mutations":[{"op":"duplicate_message","message":6,"insert_at":7,"overrides":{"message_id":"50000000-0000-4000-8000-000000000099","sent_at":"2026-09-15T10:00:07Z"}}],"expected":{"accepted":false,"terminal_status":null,"reason":"duplicate-evidence"}},
+    {"name":"unknown-evidence-reference","base":"approval-gated-success-with-evidence","mutations":[{"op":"replace","message":7,"path":["payload","evidence_ids"],"value":["50000000-0000-4000-8000-000000000099"]}],"expected":{"accepted":false,"terminal_status":null,"reason":"unknown-evidence-reference"}},
+    {"name":"task-id-mismatch","base":"read-only-success-without-approval","mutations":[{"op":"replace","message":3,"path":["payload","task_id"],"value":"20000000-0000-4000-8000-000000000099"}],"expected":{"accepted":false,"terminal_status":null,"reason":"task-id-mismatch"}},
+    {"name":"event-after-terminal-result","base":"read-only-success-without-approval","mutations":[{"op":"duplicate_message","message":3,"insert_at":6,"overrides":{"message_id":"40000000-0000-4000-8000-000000000099","sent_at":"2026-09-15T10:00:09Z"}}],"expected":{"accepted":false,"terminal_status":null,"reason":"event-after-terminal"}},
+    {"name":"event-after-terminal-error","base":"terminal-failure-with-evidence","mutations":[{"op":"duplicate_message","message":3,"insert_at":6,"overrides":{"message_id":"40000000-0000-4000-8000-000000000099","sent_at":"2026-09-15T10:00:09Z"}}],"expected":{"accepted":false,"terminal_status":null,"reason":"event-after-terminal"}},
+    {"name":"malformed-message-fails-schema-first","base":"approval-gated-success-with-evidence","mutations":[{"op":"remove","message":2,"path":["payload","task_id"]}],"expected":{"accepted":false,"terminal_status":null,"reason":"schema-validation"}}
+  ]
 }
