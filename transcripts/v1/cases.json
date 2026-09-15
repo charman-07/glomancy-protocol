@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "suite_version": "1.0.0",
+  "wire_protocol_version": "0.4.0",
+  "description": "Language-neutral full-envelope session transcript conformance cases. Expected results are test/conformance outcomes, not a normative wire protocol contract.",
+  "accepted": [],
+  "rejected": []
+}
