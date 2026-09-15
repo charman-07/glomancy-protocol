@@ -81,9 +81,71 @@ The tool returns:
 
 Before any context policy is checked, the complete transcript is validated through the canonical public session validator. Context policy is therefore not a shortcut around schema, registry, capability, approval, evidence, or lifecycle validation.
 
+## Portable Context Snapshot Descriptor
+
+The optional descriptor at `context/v1/snapshot.schema.json` is a **non-wire tooling artifact** for describing the bounded public context observed at a caller-defined snapshot boundary.
+
+It contains only:
+
+- `snapshot_format_version`;
+- `snapshot_id`;
+- `captured_at`;
+- `sources`, using the existing public `source_ref` contract.
+
+Example:
+
+```json
+{
+  "snapshot_format_version": "1.0.0",
+  "snapshot_id": "77777777-7777-4777-8777-777777777777",
+  "captured_at": "2026-09-15T10:00:05Z",
+  "sources": [
+    {
+      "source_type": "project",
+      "uri": "glomancy://project/example",
+      "revision": "project-r1"
+    }
+  ]
+}
+```
+
+Validate a descriptor with:
+
+```bash
+python3 scripts/glomancy_context_snapshot.py validate \
+  context/v1/examples/context-snapshot.json
+```
+
+Compare a descriptor with a complete public session:
+
+```bash
+python3 scripts/glomancy_context_snapshot.py compare \
+  path/to/snapshot.json \
+  path/to/session.json \
+  --json
+```
+
+Comparison is deliberately structural and fail-closed:
+
+1. the snapshot descriptor must satisfy its Draft 2020-12 schema;
+2. the full transcript must satisfy canonical public session conformance;
+3. every `task.submit.context_refs` entry must exist in the snapshot by exact public `source_type + uri` identity;
+4. when the task context reference carries `revision`, the snapshot reference must carry the same revision;
+5. extra sources in the descriptor are allowed and reported as a count, because a producer may capture a broader bounded snapshot than one task ultimately references.
+
+Stable comparison failures include:
+
+- `context-ref-not-in-snapshot`;
+- `context-revision-mismatch`;
+- `session-conformance-failed`.
+
+The descriptor validator also rejects ambiguous duplicate source identities where two descriptor entries use the same `source_type + uri`, even if their revision labels differ.
+
+Machine-readable snapshot output intentionally does **not** echo context URIs or revision values. It reports bounded structural information such as source counts, source-type counts, task context counts, matched counts, and extra descriptor-source counts.
+
 ## Deterministic context summary
 
-JSON mode publishes only a bounded structural summary:
+Context-policy JSON mode publishes only a bounded structural summary:
 
 - `expected_sources`;
 - `forbidden_sources`;
@@ -128,6 +190,8 @@ At a high level, the product can combine live project/editor state, selected pro
 
 Those product behaviors are **not** standardized here. The public protocol exposes only the stable interoperability boundary needed to describe context references and to test caller-defined policy around source categories and revision-metadata coverage.
 
+The Context Snapshot Descriptor is the same kind of boundary: it gives external tooling a small portable representation of **which public references belonged to one observed snapshot**, without exposing how the product assembled that snapshot.
+
 A public revision requirement therefore does not encode Glomancy's private rule for deciding which context wins when sources disagree. It only lets an integration require that selected public references carry a producer-defined revision label.
 
 ## Future evolution
@@ -146,9 +210,11 @@ Non-normative future directions may include integrations that internally build o
 - bounded self-repair evidence;
 - controlled specialist-agent context views.
 
-A future product may derive one or more ordinary public `project`, `asset`, `file`, `memory`, or `artifact` references from those systems without requiring the private implementation itself to become public. Revision metadata can provide a lightweight public handle for a producer's chosen snapshot/version boundary without defining how that snapshot was constructed.
+A private digital twin or semantic map may internally contain thousands of nodes, dependency edges, editor objects, confidence values, timestamps, cached observations, or product-specific knowledge. The public descriptor does **not** mirror that object graph. A producer can instead expose the bounded public references selected from that richer internal representation for one task/snapshot.
 
-If the public ecosystem later demonstrates a real interoperability need that cannot be represented safely by existing `source_ref` categories and optional revision labels, any new normative field or source category should be versioned deliberately and tested for backward compatibility. The protocol should not add fields merely to mirror one private product's internal object graph.
+This preserves an important architectural property: Glomancy can evolve toward a much richer project model while the interoperability surface remains small, versioned, provider-neutral, and independently testable.
+
+If the public ecosystem later demonstrates a real interoperability need that cannot be represented safely by existing `source_ref` categories, optional revision labels, and the descriptor boundary, any new normative field or source category should be versioned deliberately and tested for backward compatibility. The protocol should not add fields merely to mirror one private product's internal object graph.
 
 ## Assurance boundary
 
@@ -158,7 +224,9 @@ Passing context-policy conformance means only that:
 2. its public `task.submit.context_refs` categories satisfied the caller's explicit expect/forbid policy; and
 3. any caller-selected revision requirements had complete non-empty `revision` coverage for those source categories.
 
-It does **not** prove:
+Passing Context Snapshot comparison means only that the task's public context references are structurally represented by the caller-supplied descriptor under the documented identity/revision rules.
+
+Neither result proves:
 
 - that referenced content was fetched;
 - that a model or runtime actually consumed it;
@@ -166,6 +234,8 @@ It does **not** prove:
 - that `revision` identifies an immutable or authentic snapshot;
 - that two equal revision strings identify equal content;
 - that a higher/newer-looking revision is actually fresher;
+- that `captured_at` proves when a live editor/runtime observation occurred;
+- that the descriptor was produced by an intended or authenticated runtime;
 - that a URI belongs to the intended project or user;
 - that context selection was complete or optimal;
 - provenance, authentication, authorization, confidentiality, or certification;
@@ -181,6 +251,7 @@ The following remain private implementation details and are not required for pro
 - live-state precedence and conflict-resolution policy;
 - relevance-selection and ranking algorithms;
 - proprietary project-memory or RAG implementation;
+- semantic-map and project-digital-twin object graphs;
 - provider prompt construction;
 - planner/orchestrator internals;
 - private trust/authentication infrastructure;
