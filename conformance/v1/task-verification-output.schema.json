@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:conformance:task-verification-output:1.0.0",
+  "title": "Glomancy Task Verification Output",
+  "description": "Machine-readable output contract for glomancy_task_verification.py --json. This tooling contract is separate from wire-protocol and message-schema versioning.",
+  "oneOf": [
+    { "$ref": "#/$defs/verificationSuccess" },
+    { "$ref": "#/$defs/verificationFailure" },
+    { "$ref": "#/$defs/configurationError" }
+  ],
+  "$defs": {
+    "evidenceTypeList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["log", "screenshot", "asset-registry", "read-back", "build", "test", "diff", "rollback"]
+      },
+      "uniqueItems": true
+    },
+    "evidenceTypeCountMap": {
+      "type": "object",
+      "propertyNames": {
+        "enum": ["log", "screenshot", "asset-registry", "read-back", "build", "test", "diff", "rollback"]
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
+    "base": {
+      "type": "object",
+      "required": ["output_version", "command", "ok", "exit_code"],
+      "properties": {
+        "output_version": { "const": "1.0.0" },
+        "command": { "const": "verify-task" },
+        "ok": { "type": "boolean" },
+        "exit_code": { "enum": [0, 2, 3] }
+      }
+    },
+    "resultFields": {
+      "type": "object",
+      "required": [
+        "profile_path",
+        "transcript_path",
+        "snapshot_path",
+        "verified",
+        "reason",
+        "detail",
+        "session_accepted",
+        "terminal_kind",
+        "terminal_status",
+        "read_back_verified",
+        "snapshot_required",
+        "snapshot_match",
+        "require_success",
+        "require_read_back_verified",
+        "required_evidence_types",
+        "observed_evidence_type_counts",
+        "terminal_referenced_evidence_type_counts",
+        "evidence_count",
+        "terminal_referenced_evidence_count"
+      ],
+      "properties": {
+        "profile_path": { "type": "string", "minLength": 1 },
+        "transcript_path": { "type": "string", "minLength": 1 },
+        "snapshot_path": { "type": ["string", "null"] },
+        "verified": { "type": "boolean" },
+        "reason": { "type": ["string", "null"] },
+        "detail": { "type": ["string", "null"] },
+        "session_accepted": { "type": "boolean" },
+        "terminal_kind": { "type": ["string", "null"], "enum": ["task.result", "task.error", null] },
+        "terminal_status": { "type": ["string", "null"] },
+        "read_back_verified": { "type": ["boolean", "null"] },
+        "snapshot_required": { "type": "boolean" },
+        "snapshot_match": { "type": ["boolean", "null"] },
+        "require_success": { "type": "boolean" },
+        "require_read_back_verified": { "type": "boolean" },
+        "required_evidence_types": { "$ref": "#/$defs/evidenceTypeList" },
+        "observed_evidence_type_counts": { "$ref": "#/$defs/evidenceTypeCountMap" },
+        "terminal_referenced_evidence_type_counts": { "$ref": "#/$defs/evidenceTypeCountMap" },
+        "evidence_count": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "terminal_referenced_evidence_count": { "type": "integer", "minimum": 0, "maximum": 256 }
+      }
+    },
+    "verificationSuccess": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        { "$ref": "#/$defs/resultFields" },
+        {
+          "type": "object",
+          "properties": {
+            "ok": { "const": true },
+            "exit_code": { "const": 0 },
+            "verified": { "const": true },
+            "session_accepted": { "const": true },
+            "reason": { "type": "null" },
+            "detail": { "type": "null" }
+          }
+        }
+      ]
+    },
+    "verificationFailure": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        { "$ref": "#/$defs/resultFields" },
+        {
+          "type": "object",
+          "properties": {
+            "ok": { "const": false },
+            "exit_code": { "const": 2 },
+            "verified": { "const": false },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "configurationError": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "required": ["error"],
+          "properties": {
+            "ok": { "const": false },
+            "exit_code": { "const": 3 },
+            "error": {
+              "type": "object",
+              "required": ["type", "message"],
+              "properties": {
+                "type": { "const": "configuration" },
+                "message": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": true
+            }
+          }
+        }
+      ]
+    }
+  }
+}
