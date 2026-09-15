@@ -17,7 +17,7 @@
     },
     {
       "path": "conformance/v1/cli-output.schema.json",
-      "sha256": "9626b3b19e522914c2eec2d8f4b00b9cf659a480bb5abff7965133314fef5e1a"
+      "sha256": "00cc790e12bdb8f813d593e5bd1030feafb11e7a4b837270fa24b10b9afa1dc7"
     },
     {
       "path": "errors/v1/catalog.json",
@@ -44,5 +44,5 @@
       "sha256": "16768102c123476a90e54a4b27ce2f0a56c66e4752c45d29b92ee7e73245d1cd"
     }
   ],
-  "aggregate_sha256": "cf8276708dc6debf1a2b9da6cc7146044ea5e4f8888ef8edae4c4d3021ffd89e"
+  "aggregate_sha256": "b8116c971e02eb24954645069360ceaa4d9077a44b72c3f2073cc0682a81b54d"
 }
