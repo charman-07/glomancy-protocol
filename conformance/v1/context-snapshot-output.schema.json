@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:conformance:context-snapshot-output:1.0.0",
+  "title": "Glomancy Context Snapshot Tool Output",
+  "description": "Machine-readable output contract for glomancy_context_snapshot.py --json. This tooling contract is versioned separately from the wire protocol.",
+  "oneOf": [
+    { "$ref": "#/$defs/validateSuccess" },
+    { "$ref": "#/$defs/validateFailure" },
+    { "$ref": "#/$defs/compareSuccess" },
+    { "$ref": "#/$defs/compareFailure" },
+    { "$ref": "#/$defs/configurationError" }
+  ],
+  "$defs": {
+    "sourceCountMap": {
+      "type": "object",
+      "propertyNames": {
+        "enum": ["project", "asset", "file", "memory", "artifact", "web"]
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
+    "base": {
+      "type": "object",
+      "required": ["output_version", "command", "ok", "exit_code"],
+      "properties": {
+        "output_version": { "const": "1.0.0" },
+        "command": { "enum": ["validate", "compare"] },
+        "ok": { "type": "boolean" },
+        "exit_code": { "enum": [0, 2, 3] }
+      }
+    },
+    "validateFields": {
+      "type": "object",
+      "required": [
+        "path",
+        "valid",
+        "reason",
+        "snapshot_id",
+        "source_count",
+        "source_type_counts",
+        "revisioned_source_count",
+        "error_count",
+        "first_error_keyword",
+        "first_error_path"
+      ],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "valid": { "type": "boolean" },
+        "reason": { "type": ["string", "null"] },
+        "snapshot_id": { "type": ["string", "null"] },
+        "source_count": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "source_type_counts": { "$ref": "#/$defs/sourceCountMap" },
+        "revisioned_source_count": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "error_count": { "type": "integer", "minimum": 0 },
+        "first_error_keyword": { "type": ["string", "null"] },
+        "first_error_path": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "compareFields": {
+      "type": "object",
+      "required": [
+        "snapshot_path",
+        "transcript_path",
+        "snapshot_id",
+        "session_accepted",
+        "matched",
+        "reason",
+        "session_reason",
+        "message_index",
+        "detail",
+        "snapshot_source_count",
+        "task_context_ref_count",
+        "matched_context_ref_count",
+        "extra_snapshot_source_count",
+        "snapshot_revisioned_source_count",
+        "snapshot_source_type_counts",
+        "task_source_type_counts"
+      ],
+      "properties": {
+        "snapshot_path": { "type": "string", "minLength": 1 },
+        "transcript_path": { "type": "string", "minLength": 1 },
+        "snapshot_id": { "type": ["string", "null"] },
+        "session_accepted": { "type": "boolean" },
+        "matched": { "type": "boolean" },
+        "reason": { "type": ["string", "null"] },
+        "session_reason": { "type": ["string", "null"] },
+        "message_index": { "type": ["integer", "null"], "minimum": 0 },
+        "detail": { "type": ["string", "null"] },
+        "snapshot_source_count": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "task_context_ref_count": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "matched_context_ref_count": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "extra_snapshot_source_count": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "snapshot_revisioned_source_count": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "snapshot_source_type_counts": { "$ref": "#/$defs/sourceCountMap" },
+        "task_source_type_counts": { "$ref": "#/$defs/sourceCountMap" }
+      }
+    },
+    "validateSuccess": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        { "$ref": "#/$defs/validateFields" },
+        {
+          "type": "object",
+          "properties": {
+            "command": { "const": "validate" },
+            "ok": { "const": true },
+            "exit_code": { "const": 0 },
+            "valid": { "const": true },
+            "reason": { "type": "null" },
+            "error_count": { "const": 0 },
+            "first_error_keyword": { "type": "null" },
+            "first_error_path": { "maxItems": 0 }
+          }
+        }
+      ]
+    },
+    "validateFailure": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        { "$ref": "#/$defs/validateFields" },
+        {
+          "type": "object",
+          "properties": {
+            "command": { "const": "validate" },
+            "ok": { "const": false },
+            "exit_code": { "const": 2 },
+            "valid": { "const": false },
+            "reason": { "type": "string", "minLength": 1 },
+            "error_count": { "type": "integer", "minimum": 1 }
+          }
+        }
+      ]
+    },
+    "compareSuccess": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        { "$ref": "#/$defs/compareFields" },
+        {
+          "type": "object",
+          "properties": {
+            "command": { "const": "compare" },
+            "ok": { "const": true },
+            "exit_code": { "const": 0 },
+            "session_accepted": { "const": true },
+            "matched": { "const": true },
+            "reason": { "type": "null" },
+            "session_reason": { "type": "null" },
+            "message_index": { "type": "null" },
+            "detail": { "type": "null" }
+          }
+        }
+      ]
+    },
+    "compareFailure": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        { "$ref": "#/$defs/compareFields" },
+        {
+          "type": "object",
+          "properties": {
+            "command": { "const": "compare" },
+            "ok": { "const": false },
+            "exit_code": { "const": 2 },
+            "matched": { "const": false },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "configurationError": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "required": ["error"],
+          "properties": {
+            "ok": { "const": false },
+            "exit_code": { "const": 3 },
+            "error": {
+              "type": "object",
+              "required": ["type", "message"],
+              "properties": {
+                "type": { "const": "configuration" },
+                "message": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": true
+            }
+          }
+        }
+      ]
+    }
+  }
+}
