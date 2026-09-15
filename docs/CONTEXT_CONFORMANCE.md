@@ -34,7 +34,8 @@ Examples:
 - a code-editing integration may require both `project` and `file` context;
 - an editor workflow may require `project` plus selected `asset` context;
 - an offline or high-control environment may forbid `web` context;
-- a privacy-sensitive integration may forbid `memory` while allowing project-local sources.
+- a privacy-sensitive integration may forbid `memory` while allowing project-local sources;
+- an integration that relies on stable project/editor snapshots may require revision metadata on `project` or `asset` references.
 
 Those are integration policies, not universal Glomancy Protocol rules.
 
@@ -47,11 +48,27 @@ python3 scripts/glomancy_context_policy.py path/to/session.json \
   --forbid-source web
 ```
 
+An integration may also require revision metadata for selected source categories:
+
+```bash
+python3 scripts/glomancy_context_policy.py path/to/session.json \
+  --require-revision-source project \
+  --require-revision-source asset
+```
+
+`--require-revision-source TYPE` means:
+
+1. at least one public context reference of `TYPE` must be present; and
+2. every observed reference of that type must carry a non-empty `revision` string.
+
+It does **not** assign meaning to that string beyond its presence. The producer/caller remains responsible for deciding whether a revision is a changelist, content version, editor snapshot identifier, database version, timestamp-like token, or another stable reference label.
+
 Machine-readable output:
 
 ```bash
 python3 scripts/glomancy_context_policy.py path/to/session.json \
   --expect-source project \
+  --require-revision-source project \
   --forbid-source web \
   --json
 ```
@@ -70,13 +87,17 @@ JSON mode publishes only a bounded structural summary:
 
 - `expected_sources`;
 - `forbidden_sources`;
+- `revision_required_sources`;
 - `observed_source_counts`;
+- `observed_revisioned_source_counts`;
 - `context_ref_count`;
 - `revisioned_context_ref_count`.
 
-The context-policy output intentionally does **not** echo context URIs. The original transcript already carries those public references; repeating them in derived CI artifacts would unnecessarily multiply project/file/asset identifiers.
+The context-policy output intentionally does **not** echo context URIs or revision values. The original transcript already carries those public references; repeating them in derived CI artifacts would unnecessarily multiply project/file/asset identifiers and revision labels.
 
-`revisioned_context_ref_count` reports only the presence of revision metadata. It does not prove that a revision is fresh, immutable, authentic, content-addressed, or still available.
+`observed_revisioned_source_counts` reports how many references of each public source category carry non-empty revision metadata. `revisioned_context_ref_count` is the total across all categories.
+
+These counts establish only metadata coverage. They do not prove that a revision is fresh, immutable, authentic, content-addressed, monotonically increasing, correctly bound to the URI, or still available.
 
 ## Fail-closed policy behavior
 
@@ -84,25 +105,30 @@ Allowed values are read from the canonical `common.schema.json` `source_ref.sour
 
 The tool rejects configuration when:
 
-- an expected or forbidden source type is not a registered public source category;
+- an expected, forbidden, or revision-required source type is not a registered public source category;
 - the same expectation is repeated;
 - the same prohibition is repeated;
-- a source category is both expected and forbidden.
+- the same revision requirement is repeated;
+- a source category is both expected and forbidden;
+- a source category is both revision-required and forbidden.
 
 After a session passes public conformance:
 
 - a missing required source produces `context-source-expectation-missing`;
-- an observed forbidden source produces `context-source-forbidden`.
+- an observed forbidden source produces `context-source-forbidden`;
+- a revision-required source that is absent or not fully revisioned produces `context-source-revision-missing`.
 
-No source category is globally required or globally forbidden by this tooling. In particular, `web` and `memory` are not inherently trusted or untrusted; the caller chooses policy for its environment.
+No source category is globally required, globally forbidden, or globally required to have revision metadata by this tooling. In particular, `web` and `memory` are not inherently trusted or untrusted; the caller chooses policy for its environment.
 
 ## How this relates to Glomancy
 
 Glomancy's product architecture increasingly treats context as a first-class input to planning and verification rather than as unstructured prompt text.
 
-At a high level, the product can combine live project/editor state, selected project objects/assets, retained project knowledge, generated artifacts, and external research before planning or execution. Product policy can prefer current local project/runtime evidence over stale memory or outside research.
+At a high level, the product can combine live project/editor state, selected project objects/assets, retained project knowledge, generated artifacts, and external research before planning or execution. Product policy may distinguish newer live/local state from older retained knowledge and may carry snapshot/revision identity internally so later planning or verification can reason about which state was observed.
 
-Those product behaviors are **not** standardized here. The public protocol exposes only the stable interoperability boundary needed to describe context references and to test caller-defined policy around those references.
+Those product behaviors are **not** standardized here. The public protocol exposes only the stable interoperability boundary needed to describe context references and to test caller-defined policy around source categories and revision-metadata coverage.
+
+A public revision requirement therefore does not encode Glomancy's private rule for deciding which context wins when sources disagree. It only lets an integration require that selected public references carry a producer-defined revision label.
 
 ## Future evolution
 
@@ -120,27 +146,30 @@ Non-normative future directions may include integrations that internally build o
 - bounded self-repair evidence;
 - controlled specialist-agent context views.
 
-A future product may derive one or more ordinary public `project`, `asset`, `file`, `memory`, or `artifact` references from those systems without requiring the private implementation itself to become public.
+A future product may derive one or more ordinary public `project`, `asset`, `file`, `memory`, or `artifact` references from those systems without requiring the private implementation itself to become public. Revision metadata can provide a lightweight public handle for a producer's chosen snapshot/version boundary without defining how that snapshot was constructed.
 
-If the public ecosystem later demonstrates a real interoperability need that cannot be represented safely by existing `source_ref` categories, any new normative field or source category should be versioned deliberately and tested for backward compatibility. The protocol should not add fields merely to mirror one private product's internal object graph.
+If the public ecosystem later demonstrates a real interoperability need that cannot be represented safely by existing `source_ref` categories and optional revision labels, any new normative field or source category should be versioned deliberately and tested for backward compatibility. The protocol should not add fields merely to mirror one private product's internal object graph.
 
 ## Assurance boundary
 
 Passing context-policy conformance means only that:
 
 1. the transcript first passed public session conformance; and
-2. its public `task.submit.context_refs` categories satisfied the caller's explicit expect/forbid policy.
+2. its public `task.submit.context_refs` categories satisfied the caller's explicit expect/forbid policy; and
+3. any caller-selected revision requirements had complete non-empty `revision` coverage for those source categories.
 
 It does **not** prove:
 
 - that referenced content was fetched;
 - that a model or runtime actually consumed it;
 - that the referenced content is true or current;
-- that `revision` identifies an immutable snapshot;
+- that `revision` identifies an immutable or authentic snapshot;
+- that two equal revision strings identify equal content;
+- that a higher/newer-looking revision is actually fresher;
 - that a URI belongs to the intended project or user;
 - that context selection was complete or optimal;
 - provenance, authentication, authorization, confidentiality, or certification;
-- correctness of private retrieval, ranking, caching, RAG, semantic-map, or digital-twin implementations.
+- correctness of private retrieval, ranking, caching, RAG, semantic-map, digital-twin, or snapshot-construction implementations.
 
 Those responsibilities remain outside this public conformance layer.
 
@@ -149,6 +178,7 @@ Those responsibilities remain outside this public conformance layer.
 The following remain private implementation details and are not required for protocol compatibility:
 
 - editor-thread snapshot/caching implementation;
+- live-state precedence and conflict-resolution policy;
 - relevance-selection and ranking algorithms;
 - proprietary project-memory or RAG implementation;
 - provider prompt construction;
