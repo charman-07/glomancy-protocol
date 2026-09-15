@@ -258,6 +258,47 @@ def parse_sender_expectations(values: list[str]) -> dict[str, str]:
     return expected
 
 
+def evidence_type_values() -> set[str]:
+    _, by_kind = load_registry()
+    entry = by_kind.get("evidence.record")
+    if entry is None:
+        raise ConformanceError("registry does not contain evidence.record")
+
+    schema = load_json(resolve_schema_file(entry))
+    try:
+        values = schema["allOf"][1]["properties"]["payload"]["properties"]["evidence_type"]["enum"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise ConformanceError(
+            "evidence.record schema does not expose the expected evidence_type enum"
+        ) from exc
+
+    if (
+        not isinstance(values, list)
+        or not values
+        or any(not isinstance(value, str) or not value for value in values)
+        or len(set(values)) != len(values)
+    ):
+        raise ConformanceError("evidence.record evidence_type enum is invalid")
+    return set(values)
+
+
+def parse_evidence_type_expectations(values: list[str]) -> list[str]:
+    allowed = evidence_type_values()
+    expected: set[str] = set()
+    for value in values:
+        if not value:
+            raise ConformanceError("--expect-evidence-type must be non-empty")
+        if value not in allowed:
+            supported = ",".join(sorted(allowed))
+            raise ConformanceError(
+                f"unsupported --expect-evidence-type: {value}; supported: {supported}"
+            )
+        if value in expected:
+            raise ConformanceError(f"duplicate --expect-evidence-type: {value}")
+        expected.add(value)
+    return sorted(expected)
+
+
 def parse_project_expectation(value: str | None) -> str | None:
     if value is None:
         return None
@@ -331,6 +372,20 @@ def observed_projects(messages: list[Any]) -> list[str]:
     return sorted(observed)
 
 
+def observed_evidence_type_counts(messages: list[Any]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for message in messages:
+        if not isinstance(message, dict) or message.get("kind") != "evidence.record":
+            continue
+        payload = message.get("payload")
+        if not isinstance(payload, dict):
+            continue
+        evidence_type = payload.get("evidence_type")
+        if isinstance(evidence_type, str):
+            counts[evidence_type] = counts.get(evidence_type, 0) + 1
+    return {evidence_type: counts[evidence_type] for evidence_type in sorted(counts)}
+
+
 def task_submit_index(messages: list[Any]) -> int | None:
     for index, message in enumerate(messages):
         if isinstance(message, dict) and message.get("kind") == "task.submit":
@@ -400,6 +455,28 @@ def apply_project_expectation(
     return None
 
 
+def apply_evidence_type_expectations(
+    messages: list[Any],
+    expected_types: list[str],
+) -> dict[str, Any] | None:
+    if not expected_types:
+        return None
+
+    observed = observed_evidence_type_counts(messages)
+    missing = [evidence_type for evidence_type in expected_types if observed.get(evidence_type, 0) == 0]
+    if not missing:
+        return None
+
+    observed_text = ",".join(
+        f"{evidence_type}:{count}" for evidence_type, count in sorted(observed.items())
+    ) or "<none>"
+    return session_core.reject(
+        "evidence-type-expectation-missing",
+        None,
+        f"missing_evidence_types={','.join(missing)} observed_evidence_types={observed_text}",
+    )
+
+
 def command_session(args: argparse.Namespace) -> int:
     transcript_path = Path(args.path).expanduser().resolve()
     if not transcript_path.is_file():
@@ -408,6 +485,7 @@ def command_session(args: argparse.Namespace) -> int:
     try:
         expected_senders = parse_sender_expectations(args.expect_sender)
         expected_project = parse_project_expectation(args.expect_project)
+        expected_evidence_types = parse_evidence_type_expectations(args.expect_evidence_type)
         messages = load_session_document(transcript_path)
         result = session_core.validate_transcript(messages, session_validators())
     except (KeyError, TypeError, ValueError, ConformanceError, session_core.TranscriptError) as exc:
@@ -423,8 +501,14 @@ def command_session(args: argparse.Namespace) -> int:
         if project_failure is not None:
             result = project_failure
 
+    if result["accepted"]:
+        evidence_failure = apply_evidence_type_expectations(messages, expected_evidence_types)
+        if evidence_failure is not None:
+            result = evidence_failure
+
     senders = observed_senders(messages)
     projects = observed_projects(messages)
+    evidence_type_counts = observed_evidence_type_counts(messages)
     exit_code = EXIT_OK if result["accepted"] else EXIT_VALIDATION_FAILED
 
     if args.json_output:
@@ -445,6 +529,8 @@ def command_session(args: argparse.Namespace) -> int:
             observed_senders=senders,
             expected_project=expected_project,
             observed_projects=projects,
+            expected_evidence_types=expected_evidence_types,
+            observed_evidence_type_counts=evidence_type_counts,
         )
     elif result["accepted"]:
         print(
@@ -551,6 +637,16 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "require task.submit to carry an exact source_type=project context URI; "
             "this is a harness assertion, not project authentication or ID derivation"
+        ),
+    )
+    session_parser.add_argument(
+        "--expect-evidence-type",
+        action="append",
+        default=[],
+        metavar="TYPE",
+        help=(
+            "require at least one evidence.record with TYPE; repeat for multiple public evidence "
+            "types; this checks category presence, not evidence truth or provenance"
         ),
     )
     add_json_option(session_parser)
