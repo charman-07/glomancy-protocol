@@ -145,6 +145,16 @@
         "uniqueItems": true
       }
     },
+    "evidenceTypeList": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidenceTypeCountMap": {
+      "type": "object",
+      "propertyNames": { "type": "string", "minLength": 1 },
+      "additionalProperties": { "type": "integer", "minimum": 1 }
+    },
     "sessionFields": {
       "type": "object",
       "required": [
@@ -160,7 +170,9 @@
         "expected_senders",
         "observed_senders",
         "expected_project",
-        "observed_projects"
+        "observed_projects",
+        "expected_evidence_types",
+        "observed_evidence_type_counts"
       ],
       "properties": {
         "path": { "type": "string", "minLength": 1 },
@@ -186,7 +198,9 @@
           "type": "array",
           "items": { "type": "string", "format": "uri" },
           "uniqueItems": true
-        }
+        },
+        "expected_evidence_types": { "$ref": "#/$defs/evidenceTypeList" },
+        "observed_evidence_type_counts": { "$ref": "#/$defs/evidenceTypeCountMap" }
       }
     },
     "sessionSuccess": {
