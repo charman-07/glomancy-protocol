@@ -3,15 +3,24 @@
   "wire_protocol_version": "0.4.0",
   "description": "Language-neutral full-session transcript conformance fixtures. Harness metadata is test input, not a wire message or protocol authorization contract.",
   "files": [
-    {
-      "category": "accepted",
-      "file": "accepted.json",
-      "case_count": 5
-    },
-    {
-      "category": "rejected",
-      "file": "rejected.json",
-      "case_count": 14
-    }
+    {"category": "accepted", "id": "approval-gated-success-with-evidence", "file": "accepted/approval-gated-success-with-evidence.json"},
+    {"category": "accepted", "id": "approved-write-then-rolled-back", "file": "accepted/approved-write-then-rolled-back.json"},
+    {"category": "accepted", "id": "cancellation-request-then-terminal-cancelled", "file": "accepted/cancellation-request-then-terminal-cancelled.json"},
+    {"category": "accepted", "id": "read-only-success-without-approval", "file": "accepted/read-only-success-without-approval.json"},
+    {"category": "accepted", "id": "terminal-failure-with-evidence", "file": "accepted/terminal-failure-with-evidence.json"},
+    {"category": "rejected", "id": "approval-decision-before-request", "file": "rejected/approval-decision-before-request.json"},
+    {"category": "rejected", "id": "approval-id-mismatch", "file": "rejected/approval-id-mismatch.json"},
+    {"category": "rejected", "id": "approval-task-id-mismatch", "file": "rejected/approval-task-id-mismatch.json"},
+    {"category": "rejected", "id": "duplicate-evidence", "file": "rejected/duplicate-evidence.json"},
+    {"category": "rejected", "id": "event-after-terminal-error", "file": "rejected/event-after-terminal-error.json"},
+    {"category": "rejected", "id": "event-after-terminal-result", "file": "rejected/event-after-terminal-result.json"},
+    {"category": "rejected", "id": "expired-approval", "file": "rejected/expired-approval.json"},
+    {"category": "rejected", "id": "malformed-message-fails-schema-before-lifecycle", "file": "rejected/malformed-message-fails-schema-before-lifecycle.json"},
+    {"category": "rejected", "id": "running-before-required-approval", "file": "rejected/running-before-required-approval.json"},
+    {"category": "rejected", "id": "task-id-mismatch", "file": "rejected/task-id-mismatch.json"},
+    {"category": "rejected", "id": "task-requests-unselected-capability", "file": "rejected/task-requests-unselected-capability.json"},
+    {"category": "rejected", "id": "unadvertised-selected-capability", "file": "rejected/unadvertised-selected-capability.json"},
+    {"category": "rejected", "id": "unadvertised-selected-version", "file": "rejected/unadvertised-selected-version.json"},
+    {"category": "rejected", "id": "unknown-evidence-reference", "file": "rejected/unknown-evidence-reference.json"}
   ]
 }
