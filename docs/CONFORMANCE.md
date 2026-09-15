@@ -54,9 +54,20 @@ python3 scripts/glomancy_conformance.py session path/to/session.json \
   --expect-sender desktop=desktop-session
 ```
 
+It may also require the task to carry an exact public project context URI that the integration already knows:
+
+```bash
+python3 scripts/glomancy_conformance.py session path/to/session.json \
+  --expect-project glomancy://project/example
+```
+
+The two assertion types can be combined.
+
 `--expect-sender` is repeatable. It is a caller-supplied replay assertion only. It does not create a new wire field, require a single global instance per component category, authenticate a peer, authorize execution, validate credentials, or prove process provenance. If no expectation is supplied, no instance topology is invented.
 
-Session replay validates the public transcript first. Explicit sender expectations are evaluated only after the transcript itself passes schema and session conformance. See [Full-session transcript conformance](SESSION_TRANSCRIPT_CONFORMANCE.md) for the validation order and assurance boundary.
+`--expect-project` compares the caller-provided URI with `task.submit.payload.context_refs` entries whose `source_type` is `project`. It does not standardize project-ID derivation, filesystem path canonicalization, launcher/rendezvous behavior, project discovery, authentication, authorization, or provenance. A consumer may use any schema-valid project URI it can bind consistently.
+
+Session replay validates the public transcript first. Explicit sender/project expectations are evaluated only after the transcript itself passes schema and session conformance. See [Full-session transcript conformance](SESSION_TRANSCRIPT_CONFORMANCE.md) for the validation order and assurance boundary.
 
 ## Machine-readable JSON output
 
@@ -118,11 +129,13 @@ A successful replay reports:
 - `selected_capabilities`;
 - `evidence_count`;
 - `expected_senders` supplied by the caller;
-- `observed_senders` found in the transcript.
+- `observed_senders` found in the transcript;
+- `expected_project` supplied by the caller, or `null`;
+- `observed_projects` found in project context references on `task.submit`.
 
-A rejected replay keeps exit code `2` and reports `accepted: false` plus stable `reason`, `message_index`, and `detail` fields when available. Explicit sender pin failures use conformance reasons such as `sender-expectation-mismatch` or `sender-expectation-missing`.
+A rejected replay keeps exit code `2` and reports `accepted: false` plus stable `reason`, `message_index`, and `detail` fields when available. Explicit sender pin failures use reasons such as `sender-expectation-mismatch` or `sender-expectation-missing`; explicit project binding failures use `project-expectation-mismatch` or `project-expectation-missing`.
 
-Malformed transcript input or malformed `--expect-sender` syntax keeps exit code `3` and uses the ordinary structured configuration-error shape.
+Malformed transcript input, malformed `--expect-sender` syntax, or a malformed `--expect-project` URI keeps exit code `3` and uses the ordinary structured configuration-error shape.
 
 ### `list-schemas --json`
 
@@ -166,7 +179,7 @@ Repository CI validates representative real CLI outputs against the published sc
 python3 scripts/validate_cli_output_contract.py
 ```
 
-The contract test exercises successful schema listing, successful payload validation, successful fixture execution, successful session replay, session-semantic rejection, sender-expectation rejection, invalid-payload output, and real configuration-error paths. The fixture-conformance failure shape is also schema-checked without deliberately corrupting the repository fixture corpus.
+The contract test exercises successful schema listing, successful payload validation, successful fixture execution, successful session replay, session-semantic rejection, sender-expectation rejection, project-expectation match/mismatch/missing cases, invalid sender/project configuration, invalid-payload output, and real configuration-error paths. URI formats in published session output are checked with the JSON Schema format checker.
 
 ## Execute the fixture corpus
 
@@ -264,9 +277,10 @@ A conforming consumer should not silently accept or downgrade:
 - malformed identifiers, timestamps, URIs, hashes, or bounded fields;
 - messages that fail the declared JSON Schema;
 - full-session lifecycle/correlation failures when session conformance is being evaluated;
-- an explicitly requested sender-instance replay expectation that does not match the transcript.
+- an explicitly requested sender-instance replay expectation that does not match the transcript;
+- an explicitly requested project-context replay expectation that is absent or does not match the task's public project context reference.
 
-Protocol validation is still not authorization. Passing a schema, compatibility check, capability gate, approval-correlation check, session replay, or sender assertion only establishes agreement with the public protocol/conformance conditions being tested; product policy, user approval, authentication, authorization, credential handling, and execution safety remain separate responsibilities.
+Protocol validation is still not authorization. Passing a schema, compatibility check, capability gate, approval-correlation check, session replay, sender assertion, or project assertion only establishes agreement with the public protocol/conformance conditions being tested; product policy, user approval, authentication, authorization, credential handling, project discovery/derivation, and execution safety remain separate responsibilities.
 
 ## Adding fixtures or vectors
 
@@ -286,4 +300,4 @@ When adding a consumer vector:
 4. run `python3 scripts/validate_consumer_vectors.py`;
 5. update normative compatibility/capability/approval documentation if the rule itself changed.
 
-Do not add fixtures, vectors, transcripts, sender expectations, or CLI output containing credentials, customer data, private infrastructure details, proprietary source, or machine-specific secrets.
+Do not add fixtures, vectors, transcripts, sender expectations, project expectations, or CLI output containing credentials, customer data, private infrastructure details, proprietary source, machine-specific secrets, or private project-identity derivation inputs.
