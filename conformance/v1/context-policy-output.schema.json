@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:conformance:context-policy-output:1.0.0",
+  "title": "Glomancy Context Policy Conformance Output",
+  "description": "Machine-readable output contract for glomancy_context_policy.py --json. This tooling contract is separate from wire-protocol and message-schema versioning.",
+  "oneOf": [
+    { "$ref": "#/$defs/success" },
+    { "$ref": "#/$defs/policyFailure" },
+    { "$ref": "#/$defs/configurationError" }
+  ],
+  "$defs": {
+    "base": {
+      "type": "object",
+      "required": ["output_version", "command", "ok", "exit_code"],
+      "properties": {
+        "output_version": { "const": "1.0.0" },
+        "command": { "const": "context-policy" },
+        "ok": { "type": "boolean" },
+        "exit_code": { "enum": [0, 2, 3] }
+      }
+    },
+    "sourceList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["project", "asset", "file", "memory", "artifact", "web"]
+      },
+      "uniqueItems": true
+    },
+    "sourceCountMap": {
+      "type": "object",
+      "propertyNames": {
+        "enum": ["project", "asset", "file", "memory", "artifact", "web"]
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
+    "resultFields": {
+      "type": "object",
+      "required": [
+        "path",
+        "session_accepted",
+        "policy_passed",
+        "reason",
+        "session_reason",
+        "message_index",
+        "detail",
+        "expected_sources",
+        "forbidden_sources",
+        "observed_source_counts",
+        "context_ref_count",
+        "revisioned_context_ref_count"
+      ],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "session_accepted": { "type": "boolean" },
+        "policy_passed": { "type": "boolean" },
+        "reason": { "type": ["string", "null"] },
+        "session_reason": { "type": ["string", "null"] },
+        "message_index": { "type": ["integer", "null"], "minimum": 0 },
+        "detail": { "type": ["string", "null"] },
+        "expected_sources": { "$ref": "#/$defs/sourceList" },
+        "forbidden_sources": { "$ref": "#/$defs/sourceList" },
+        "observed_source_counts": { "$ref": "#/$defs/sourceCountMap" },
+        "context_ref_count": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "revisioned_context_ref_count": { "type": "integer", "minimum": 0, "maximum": 256 }
+      }
+    },
+    "success": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        { "$ref": "#/$defs/resultFields" },
+        {
+          "type": "object",
+          "properties": {
+            "ok": { "const": true },
+            "exit_code": { "const": 0 },
+            "session_accepted": { "const": true },
+            "policy_passed": { "const": true },
+            "reason": { "type": "null" },
+            "session_reason": { "type": "null" },
+            "message_index": { "type": "null" },
+            "detail": { "type": "null" }
+          }
+        }
+      ]
+    },
+    "policyFailure": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        { "$ref": "#/$defs/resultFields" },
+        {
+          "type": "object",
+          "properties": {
+            "ok": { "const": false },
+            "exit_code": { "const": 2 },
+            "policy_passed": { "const": false },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "configurationError": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "required": ["error"],
+          "properties": {
+            "ok": { "const": false },
+            "exit_code": { "const": 3 },
+            "error": {
+              "type": "object",
+              "required": ["type", "message"],
+              "properties": {
+                "type": { "const": "configuration" },
+                "message": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": true
+            }
+          }
+        }
+      ]
+    }
+  }
+}
