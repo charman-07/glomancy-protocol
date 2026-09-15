@@ -30,6 +30,9 @@ jobs:
       - name: Validate task verification output contract
         run: python3 scripts/validate_task_verification_contract.py
 
+      - name: Validate deterministic verification bundle contract
+        run: python3 scripts/validate_verification_bundle_contract.py
+
       - name: Smoke-test context policy CLI
         run: >-
           python3 scripts/glomancy_context_policy.py
@@ -51,3 +54,15 @@ jobs:
           transcripts/v1/accepted/approval-gated-success-with-evidence.json
           --snapshot context/v1/examples/context-snapshot.json
           --json
+
+      - name: Smoke-test deterministic verification bundle
+        shell: bash
+        run: |
+          tmp_dir="$(mktemp -d)"
+          python3 scripts/glomancy_verification_bundle.py create \
+            --profile verification/v1/examples/strict-read-back.json \
+            --transcript transcripts/v1/accepted/approval-gated-success-with-evidence.json \
+            --snapshot context/v1/examples/context-snapshot.json \
+            --out-dir "$tmp_dir/bundle" \
+            --json
+          python3 scripts/glomancy_verification_bundle.py verify "$tmp_dir/bundle" --json
