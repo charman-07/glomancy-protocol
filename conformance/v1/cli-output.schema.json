@@ -4,105 +4,43 @@
   "title": "Glomancy Conformance CLI JSON Output",
   "description": "Machine-readable output contract for glomancy_conformance.py --json, version 1.0.0. This tooling contract is versioned separately from Glomancy wire-protocol and message schemas.",
   "oneOf": [
-    {
-      "$ref": "#/$defs/validateSuccess"
-    },
-    {
-      "$ref": "#/$defs/validateFailure"
-    },
-    {
-      "$ref": "#/$defs/fixturesSuccess"
-    },
-    {
-      "$ref": "#/$defs/listSchemasSuccess"
-    },
-    {
-      "$ref": "#/$defs/configurationError"
-    },
-    {
-      "$ref": "#/$defs/fixtureConformanceError"
-    }
+    { "$ref": "#/$defs/validateSuccess" },
+    { "$ref": "#/$defs/validateFailure" },
+    { "$ref": "#/$defs/fixturesSuccess" },
+    { "$ref": "#/$defs/listSchemasSuccess" },
+    { "$ref": "#/$defs/sessionSuccess" },
+    { "$ref": "#/$defs/sessionFailure" },
+    { "$ref": "#/$defs/configurationError" },
+    { "$ref": "#/$defs/fixtureConformanceError" }
   ],
   "$defs": {
     "base": {
       "type": "object",
-      "required": [
-        "output_version",
-        "command",
-        "ok",
-        "exit_code"
-      ],
+      "required": ["output_version", "command", "ok", "exit_code"],
       "properties": {
-        "output_version": {
-          "const": "1.0.0"
-        },
-        "command": {
-          "enum": [
-            "validate",
-            "fixtures",
-            "list-schemas"
-          ]
-        },
-        "ok": {
-          "type": "boolean"
-        },
-        "exit_code": {
-          "enum": [
-            0,
-            2,
-            3
-          ]
-        }
+        "output_version": { "const": "1.0.0" },
+        "command": { "enum": ["validate", "fixtures", "list-schemas", "session"] },
+        "ok": { "type": "boolean" },
+        "exit_code": { "enum": [0, 2, 3] }
       }
     },
     "validationError": {
       "type": "object",
-      "required": [
-        "keyword",
-        "path",
-        "path_text",
-        "message"
-      ],
+      "required": ["keyword", "path", "path_text", "message"],
       "properties": {
-        "keyword": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "path": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "path_text": {
-          "type": "string",
-          "minLength": 1
-        },
-        "message": {
-          "type": "string",
-          "minLength": 1
-        }
+        "keyword": { "type": ["string", "null"] },
+        "path": { "type": "array", "items": { "type": "string" } },
+        "path_text": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 }
       },
       "additionalProperties": true
     },
     "schemaEntry": {
       "type": "object",
-      "required": [
-        "kind",
-        "schema_id",
-        "version"
-      ],
+      "required": ["kind", "schema_id", "version"],
       "properties": {
-        "kind": {
-          "type": "string",
-          "minLength": 1
-        },
-        "schema_id": {
-          "type": "string",
-          "minLength": 1
-        },
+        "kind": { "type": "string", "minLength": 1 },
+        "schema_id": { "type": "string", "minLength": 1 },
         "version": {
           "type": "string",
           "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
@@ -112,247 +50,181 @@
     },
     "structuredError": {
       "type": "object",
-      "required": [
-        "type",
-        "message"
-      ],
+      "required": ["type", "message"],
       "properties": {
-        "type": {
-          "type": "string",
-          "minLength": 1
-        },
-        "message": {
-          "type": "string",
-          "minLength": 1
-        }
+        "type": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 }
       },
       "additionalProperties": true
     },
     "validateSuccess": {
       "allOf": [
-        {
-          "$ref": "#/$defs/base"
-        },
+        { "$ref": "#/$defs/base" },
         {
           "type": "object",
-          "required": [
-            "path",
-            "schema_id",
-            "kind",
-            "valid",
-            "error_count",
-            "errors",
-            "truncated_error_count"
-          ],
+          "required": ["path", "schema_id", "kind", "valid", "error_count", "errors", "truncated_error_count"],
           "properties": {
-            "command": {
-              "const": "validate"
-            },
-            "ok": {
-              "const": true
-            },
-            "exit_code": {
-              "const": 0
-            },
-            "path": {
-              "type": "string",
-              "minLength": 1
-            },
-            "schema_id": {
-              "type": "string",
-              "minLength": 1
-            },
-            "kind": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "valid": {
-              "const": true
-            },
-            "error_count": {
-              "const": 0
-            },
-            "errors": {
-              "type": "array",
-              "maxItems": 0
-            },
-            "truncated_error_count": {
-              "const": 0
-            }
+            "command": { "const": "validate" },
+            "ok": { "const": true },
+            "exit_code": { "const": 0 },
+            "path": { "type": "string", "minLength": 1 },
+            "schema_id": { "type": "string", "minLength": 1 },
+            "kind": { "type": ["string", "null"] },
+            "valid": { "const": true },
+            "error_count": { "const": 0 },
+            "errors": { "type": "array", "maxItems": 0 },
+            "truncated_error_count": { "const": 0 }
           }
         }
       ]
     },
     "validateFailure": {
       "allOf": [
-        {
-          "$ref": "#/$defs/base"
-        },
+        { "$ref": "#/$defs/base" },
         {
           "type": "object",
-          "required": [
-            "path",
-            "schema_id",
-            "kind",
-            "valid",
-            "error_count",
-            "errors",
-            "truncated_error_count"
-          ],
+          "required": ["path", "schema_id", "kind", "valid", "error_count", "errors", "truncated_error_count"],
           "properties": {
-            "command": {
-              "const": "validate"
-            },
-            "ok": {
-              "const": false
-            },
-            "exit_code": {
-              "const": 2
-            },
-            "path": {
-              "type": "string",
-              "minLength": 1
-            },
-            "schema_id": {
-              "type": "string",
-              "minLength": 1
-            },
-            "kind": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "valid": {
-              "const": false
-            },
-            "error_count": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "errors": {
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "$ref": "#/$defs/validationError"
-              }
-            },
-            "truncated_error_count": {
-              "type": "integer",
-              "minimum": 0
-            }
+            "command": { "const": "validate" },
+            "ok": { "const": false },
+            "exit_code": { "const": 2 },
+            "path": { "type": "string", "minLength": 1 },
+            "schema_id": { "type": "string", "minLength": 1 },
+            "kind": { "type": ["string", "null"] },
+            "valid": { "const": false },
+            "error_count": { "type": "integer", "minimum": 1 },
+            "errors": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/validationError" } },
+            "truncated_error_count": { "type": "integer", "minimum": 0 }
           }
         }
       ]
     },
     "fixturesSuccess": {
       "allOf": [
-        {
-          "$ref": "#/$defs/base"
-        },
+        { "$ref": "#/$defs/base" },
         {
           "type": "object",
-          "required": [
-            "passed",
-            "valid_fixtures_accepted",
-            "invalid_fixtures_rejected",
-            "total_fixtures"
-          ],
+          "required": ["passed", "valid_fixtures_accepted", "invalid_fixtures_rejected", "total_fixtures"],
           "properties": {
-            "command": {
-              "const": "fixtures"
-            },
-            "ok": {
-              "const": true
-            },
-            "exit_code": {
-              "const": 0
-            },
-            "passed": {
-              "const": true
-            },
-            "valid_fixtures_accepted": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "invalid_fixtures_rejected": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "total_fixtures": {
-              "type": "integer",
-              "minimum": 0
-            }
+            "command": { "const": "fixtures" },
+            "ok": { "const": true },
+            "exit_code": { "const": 0 },
+            "passed": { "const": true },
+            "valid_fixtures_accepted": { "type": "integer", "minimum": 0 },
+            "invalid_fixtures_rejected": { "type": "integer", "minimum": 0 },
+            "total_fixtures": { "type": "integer", "minimum": 0 }
           }
         }
       ]
     },
     "listSchemasSuccess": {
       "allOf": [
-        {
-          "$ref": "#/$defs/base"
-        },
+        { "$ref": "#/$defs/base" },
         {
           "type": "object",
-          "required": [
-            "schema_count",
-            "schemas"
-          ],
+          "required": ["schema_count", "schemas"],
           "properties": {
-            "command": {
-              "const": "list-schemas"
-            },
-            "ok": {
-              "const": true
-            },
-            "exit_code": {
-              "const": 0
-            },
-            "schema_count": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "schemas": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/schemaEntry"
-              }
-            }
+            "command": { "const": "list-schemas" },
+            "ok": { "const": true },
+            "exit_code": { "const": 0 },
+            "schema_count": { "type": "integer", "minimum": 0 },
+            "schemas": { "type": "array", "items": { "$ref": "#/$defs/schemaEntry" } }
+          }
+        }
+      ]
+    },
+    "senderExpectationMap": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "observedSenderMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string", "minLength": 1 },
+        "uniqueItems": true
+      }
+    },
+    "sessionFields": {
+      "type": "object",
+      "required": [
+        "path",
+        "accepted",
+        "terminal_status",
+        "selected_version",
+        "selected_capabilities",
+        "evidence_count",
+        "reason",
+        "message_index",
+        "detail",
+        "expected_senders",
+        "observed_senders"
+      ],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "accepted": { "type": "boolean" },
+        "terminal_status": { "type": ["string", "null"] },
+        "selected_version": { "type": ["string", "null"] },
+        "selected_capabilities": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "evidence_count": { "type": "integer", "minimum": 0 },
+        "reason": { "type": ["string", "null"] },
+        "message_index": { "type": ["integer", "null"], "minimum": 0 },
+        "detail": { "type": ["string", "null"] },
+        "expected_senders": { "$ref": "#/$defs/senderExpectationMap" },
+        "observed_senders": { "$ref": "#/$defs/observedSenderMap" }
+      }
+    },
+    "sessionSuccess": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        { "$ref": "#/$defs/sessionFields" },
+        {
+          "type": "object",
+          "properties": {
+            "command": { "const": "session" },
+            "ok": { "const": true },
+            "exit_code": { "const": 0 },
+            "accepted": { "const": true },
+            "reason": { "type": "null" },
+            "message_index": { "type": "null" },
+            "detail": { "type": "null" }
+          }
+        }
+      ]
+    },
+    "sessionFailure": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        { "$ref": "#/$defs/sessionFields" },
+        {
+          "type": "object",
+          "properties": {
+            "command": { "const": "session" },
+            "ok": { "const": false },
+            "exit_code": { "const": 2 },
+            "accepted": { "const": false },
+            "reason": { "type": "string", "minLength": 1 }
           }
         }
       ]
     },
     "configurationError": {
       "allOf": [
-        {
-          "$ref": "#/$defs/base"
-        },
+        { "$ref": "#/$defs/base" },
         {
           "type": "object",
-          "required": [
-            "error"
-          ],
+          "required": ["error"],
           "properties": {
-            "ok": {
-              "const": false
-            },
-            "exit_code": {
-              "const": 3
-            },
+            "ok": { "const": false },
+            "exit_code": { "const": 3 },
             "error": {
               "allOf": [
-                {
-                  "$ref": "#/$defs/structuredError"
-                },
-                {
-                  "properties": {
-                    "type": {
-                      "const": "configuration"
-                    }
-                  }
-                }
+                { "$ref": "#/$defs/structuredError" },
+                { "properties": { "type": { "const": "configuration" } } }
               ]
             }
           }
@@ -361,40 +233,19 @@
     },
     "fixtureConformanceError": {
       "allOf": [
-        {
-          "$ref": "#/$defs/base"
-        },
+        { "$ref": "#/$defs/base" },
         {
           "type": "object",
-          "required": [
-            "passed",
-            "error"
-          ],
+          "required": ["passed", "error"],
           "properties": {
-            "command": {
-              "const": "fixtures"
-            },
-            "ok": {
-              "const": false
-            },
-            "exit_code": {
-              "const": 2
-            },
-            "passed": {
-              "const": false
-            },
+            "command": { "const": "fixtures" },
+            "ok": { "const": false },
+            "exit_code": { "const": 2 },
+            "passed": { "const": false },
             "error": {
               "allOf": [
-                {
-                  "$ref": "#/$defs/structuredError"
-                },
-                {
-                  "properties": {
-                    "type": {
-                      "const": "fixture-conformance"
-                    }
-                  }
-                }
+                { "$ref": "#/$defs/structuredError" },
+                { "properties": { "type": { "const": "fixture-conformance" } } }
               ]
             }
           }
