@@ -1,0 +1,17 @@
+{
+  "transcript_suite_version": "1.0.0",
+  "wire_protocol_version": "0.4.0",
+  "description": "Language-neutral full-session transcript conformance fixtures. Harness metadata is test input, not a wire message or protocol authorization contract.",
+  "files": [
+    {
+      "category": "accepted",
+      "file": "accepted.json",
+      "case_count": 5
+    },
+    {
+      "category": "rejected",
+      "file": "rejected.json",
+      "case_count": 14
+    }
+  ]
+}
