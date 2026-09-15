@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glomancy:conformance:context-snapshot:1.0.0",
+  "title": "Glomancy Context Snapshot Descriptor",
+  "description": "Non-wire tooling descriptor for a bounded set of public context source references observed at a caller-defined snapshot boundary.",
+  "type": "object",
+  "required": [
+    "snapshot_format_version",
+    "snapshot_id",
+    "captured_at",
+    "sources"
+  ],
+  "properties": {
+    "snapshot_format_version": {
+      "const": "1.0.0"
+    },
+    "snapshot_id": {
+      "$ref": "urn:glomancy:protocol:common:1.0.0#/$defs/uuid"
+    },
+    "captured_at": {
+      "$ref": "urn:glomancy:protocol:common:1.0.0#/$defs/timestamp"
+    },
+    "sources": {
+      "type": "array",
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "urn:glomancy:protocol:common:1.0.0#/$defs/source_ref"
+      }
+    }
+  },
+  "additionalProperties": false
+}
