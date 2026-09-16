@@ -1,0 +1,16 @@
+{
+  "profile_version": "1.0.0",
+  "require_success": true,
+  "require_context_snapshot_match": true,
+  "require_read_back_verified": true,
+  "required_evidence_types": [
+    "read-back"
+  ],
+  "evidence_coverage": {
+    "minimum_terminal_referenced_evidence_count": 1,
+    "minimum_terminal_referenced_evidence_type_counts": {
+      "read-back": 1
+    },
+    "maximum_unreferenced_evidence_count": 0
+  }
+}

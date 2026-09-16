@@ -106,14 +106,18 @@ def profile(
     require_snapshot: bool = False,
     require_read_back: bool = False,
     evidence_types: list[str] | None = None,
+    evidence_coverage: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    return {
+    value: dict[str, Any] = {
         "profile_version": "1.0.0",
         "require_success": require_success,
         "require_context_snapshot_match": require_snapshot,
         "require_read_back_verified": require_read_back,
         "required_evidence_types": evidence_types or [],
     }
+    if evidence_coverage is not None:
+        value["evidence_coverage"] = evidence_coverage
+    return value
 
 
 def mutate_terminal_result(document: dict[str, Any], *, read_back_verified: bool | None = None) -> None:
@@ -143,6 +147,36 @@ def mutate_evidence_type(document: dict[str, Any], evidence_type: str) -> None:
             payload["evidence_type"] = evidence_type
             return
     raise ContractError("session must contain evidence.record")
+
+
+def add_unreferenced_evidence(document: dict[str, Any]) -> None:
+    messages = document.get("messages")
+    if not isinstance(messages, list):
+        raise ContractError("session messages must be an array")
+
+    source: dict[str, Any] | None = None
+    terminal_index: int | None = None
+    for index, message in enumerate(messages):
+        if isinstance(message, dict) and message.get("kind") == "evidence.record" and source is None:
+            source = message
+        if isinstance(message, dict) and message.get("kind") in {"task.result", "task.error"}:
+            terminal_index = index
+            break
+    if source is None or terminal_index is None:
+        raise ContractError("session must contain evidence and terminal messages")
+
+    extra = copy.deepcopy(source)
+    extra["message_id"] = "50000000-0000-4000-8000-000000000099"
+    extra["sent_at"] = "2026-09-15T10:00:07Z"
+    payload = extra.get("payload")
+    if not isinstance(payload, dict):
+        raise ContractError("evidence.record payload must be an object")
+    payload["evidence_id"] = "50000000-0000-4000-8000-000000000098"
+    payload["evidence_type"] = "log"
+    payload["captured_at"] = "2026-09-15T10:00:07Z"
+    payload["sha256"] = "2" * 64
+    payload["claims"] = ["Additional public log evidence."]
+    messages.insert(terminal_index, extra)
 
 
 def mutate_invalid_selected_version(document: dict[str, Any]) -> None:
@@ -251,6 +285,43 @@ def main() -> int:
                 "read-back-profile.json",
                 profile(require_success=True, require_read_back=True),
             )
+            coverage_profile = write_json(
+                directory,
+                "coverage-profile.json",
+                profile(
+                    require_success=True,
+                    require_read_back=True,
+                    evidence_types=["read-back"],
+                    evidence_coverage={
+                        "minimum_terminal_referenced_evidence_count": 1,
+                        "minimum_terminal_referenced_evidence_type_counts": {"read-back": 1},
+                        "maximum_unreferenced_evidence_count": 0,
+                    },
+                ),
+            )
+            coverage_total_profile = write_json(
+                directory,
+                "coverage-total-profile.json",
+                profile(
+                    evidence_coverage={"minimum_terminal_referenced_evidence_count": 2},
+                ),
+            )
+            coverage_type_profile = write_json(
+                directory,
+                "coverage-type-profile.json",
+                profile(
+                    evidence_coverage={
+                        "minimum_terminal_referenced_evidence_type_counts": {"read-back": 2}
+                    },
+                ),
+            )
+            coverage_all_referenced_profile = write_json(
+                directory,
+                "coverage-all-referenced-profile.json",
+                profile(
+                    evidence_coverage={"maximum_unreferenced_evidence_count": 0},
+                ),
+            )
 
             success = run_case(
                 validator,
@@ -268,6 +339,64 @@ def main() -> int:
                 raise ContractError(
                     "verification-success: expected one terminal-referenced read-back evidence"
                 )
+            if success.get("minimum_terminal_referenced_evidence_count") != 0:
+                raise ContractError("verification-success: legacy profile must default minimum count to 0")
+            if success.get("minimum_terminal_referenced_evidence_type_counts") != {}:
+                raise ContractError("verification-success: legacy profile must default type counts to empty")
+            if success.get("maximum_unreferenced_evidence_count") is not None:
+                raise ContractError("verification-success: legacy profile must default max unreferenced to null")
+            if success.get("unreferenced_evidence_count") != 0:
+                raise ContractError("verification-success: expected zero unreferenced evidence")
+
+            coverage_success = run_case(
+                validator,
+                "evidence-coverage-success",
+                [str(coverage_profile), str(base_session)],
+                0,
+            )
+            if coverage_success.get("minimum_terminal_referenced_evidence_count") != 1:
+                raise ContractError("evidence-coverage-success: minimum count was not preserved")
+            if coverage_success.get("minimum_terminal_referenced_evidence_type_counts") != {"read-back": 1}:
+                raise ContractError("evidence-coverage-success: type counts were not preserved")
+            if coverage_success.get("maximum_unreferenced_evidence_count") != 0:
+                raise ContractError("evidence-coverage-success: maximum unreferenced was not preserved")
+
+            run_case(
+                validator,
+                "evidence-total-below-minimum",
+                [str(coverage_total_profile), str(base_session)],
+                2,
+                "terminal-evidence-count-below-minimum",
+            )
+
+            run_case(
+                validator,
+                "evidence-type-count-below-minimum",
+                [str(coverage_type_profile), str(base_session)],
+                2,
+                "terminal-evidence-type-count-below-minimum",
+            )
+
+            unreferenced_document = copy.deepcopy(base_session_document)
+            add_unreferenced_evidence(unreferenced_document)
+            unreferenced_session = write_json(
+                directory,
+                "unreferenced-evidence.json",
+                unreferenced_document,
+            )
+            unreferenced_result = run_case(
+                validator,
+                "unreferenced-evidence-exceeds-maximum",
+                [str(coverage_all_referenced_profile), str(unreferenced_session)],
+                2,
+                "unreferenced-evidence-count-exceeds-maximum",
+            )
+            if unreferenced_result.get("evidence_count") != 2:
+                raise ContractError("unreferenced evidence case must observe two evidence records")
+            if unreferenced_result.get("terminal_referenced_evidence_count") != 1:
+                raise ContractError("unreferenced evidence case must terminal-reference one evidence record")
+            if unreferenced_result.get("unreferenced_evidence_count") != 1:
+                raise ContractError("unreferenced evidence case must report one unreferenced record")
 
             run_case(
                 validator,
@@ -358,6 +487,15 @@ def main() -> int:
             invalid_profile_document["profile_version"] = "2.0.0"
             invalid_profile = write_json(directory, "invalid-profile.json", invalid_profile_document)
 
+            invalid_coverage_profile_document = profile(
+                evidence_coverage={"minimum_terminal_referenced_evidence_count": -1}
+            )
+            invalid_coverage_profile = write_json(
+                directory,
+                "invalid-coverage-profile.json",
+                invalid_coverage_profile_document,
+            )
+
             invalid_snapshot_document = snapshot_document()
             invalid_snapshot_document["captured_at"] = "not-a-timestamp"
             invalid_snapshot = write_json(directory, "invalid-snapshot.json", invalid_snapshot_document)
@@ -370,6 +508,10 @@ def main() -> int:
                 (
                     "invalid-profile",
                     [str(invalid_profile), str(base_session)],
+                ),
+                (
+                    "invalid-coverage-profile",
+                    [str(invalid_coverage_profile), str(base_session)],
                 ),
                 (
                     "missing-transcript",
@@ -389,7 +531,7 @@ def main() -> int:
                 run_case(validator, name, arguments, 3)
 
         print(
-            "task verification output contract passed for 8 verification paths and "
+            "task verification output contract passed for 12 verification paths and "
             f"{len(configuration_cases)} configuration paths"
         )
         return 0

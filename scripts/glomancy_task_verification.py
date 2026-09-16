@@ -95,6 +95,36 @@ def evidence_type_counts(records: dict[str, dict[str, Any]]) -> dict[str, int]:
     return {key: counts[key] for key in sorted(counts)}
 
 
+def evidence_coverage_requirements(
+    profile: dict[str, Any],
+) -> tuple[int, dict[str, int], int | None]:
+    coverage = profile.get("evidence_coverage")
+    if not isinstance(coverage, dict):
+        return 0, {}, None
+
+    minimum_count = coverage.get("minimum_terminal_referenced_evidence_count", 0)
+    if not isinstance(minimum_count, int) or isinstance(minimum_count, bool):
+        raise VerificationError("minimum terminal-referenced evidence count must be an integer")
+
+    raw_type_counts = coverage.get("minimum_terminal_referenced_evidence_type_counts", {})
+    if not isinstance(raw_type_counts, dict):
+        raise VerificationError("minimum terminal-referenced evidence type counts must be an object")
+    type_counts: dict[str, int] = {}
+    for evidence_type in sorted(raw_type_counts):
+        count = raw_type_counts[evidence_type]
+        if not isinstance(evidence_type, str) or not isinstance(count, int) or isinstance(count, bool):
+            raise VerificationError("evidence coverage type-count requirements are malformed")
+        type_counts[evidence_type] = count
+
+    maximum_unreferenced = coverage.get("maximum_unreferenced_evidence_count")
+    if maximum_unreferenced is not None and (
+        not isinstance(maximum_unreferenced, int) or isinstance(maximum_unreferenced, bool)
+    ):
+        raise VerificationError("maximum unreferenced evidence count must be an integer")
+
+    return minimum_count, type_counts, maximum_unreferenced
+
+
 def terminal_message(messages: list[Any]) -> tuple[dict[str, Any] | None, int | None]:
     for index in range(len(messages) - 1, -1, -1):
         message = messages[index]
@@ -151,6 +181,9 @@ def base_result_fields(
             flag = payload.get("read_back_verified")
             read_back_verified = flag if isinstance(flag, bool) else None
 
+    minimum_count, minimum_type_counts, maximum_unreferenced = evidence_coverage_requirements(profile)
+    unreferenced_count = max(len(records) - len(referenced), 0)
+
     return {
         "profile_path": str(profile_path),
         "transcript_path": str(transcript_path),
@@ -167,10 +200,14 @@ def base_result_fields(
         "require_success": bool(profile["require_success"]),
         "require_read_back_verified": bool(profile["require_read_back_verified"]),
         "required_evidence_types": sorted(profile["required_evidence_types"]),
+        "minimum_terminal_referenced_evidence_count": minimum_count,
+        "minimum_terminal_referenced_evidence_type_counts": minimum_type_counts,
+        "maximum_unreferenced_evidence_count": maximum_unreferenced,
         "observed_evidence_type_counts": evidence_type_counts(records),
         "terminal_referenced_evidence_type_counts": evidence_type_counts(referenced),
         "evidence_count": len(records),
         "terminal_referenced_evidence_count": len(referenced),
+        "unreferenced_evidence_count": unreferenced_count,
     }
 
 
@@ -302,6 +339,45 @@ def verify(
             ),
         )
 
+    minimum_count = fields["minimum_terminal_referenced_evidence_count"]
+    if len(referenced) < minimum_count:
+        return (
+            EXIT_VERIFICATION_FAILED,
+            fail_result(
+                fields,
+                "terminal-evidence-count-below-minimum",
+                f"required_minimum={minimum_count} observed={len(referenced)}",
+            ),
+        )
+
+    minimum_type_counts = fields["minimum_terminal_referenced_evidence_type_counts"]
+    deficient_type_counts = [
+        (evidence_type, required_count, referenced_counts.get(evidence_type, 0))
+        for evidence_type, required_count in minimum_type_counts.items()
+        if referenced_counts.get(evidence_type, 0) < required_count
+    ]
+    if deficient_type_counts:
+        detail = ",".join(
+            f"{evidence_type}:required={required_count}:observed={observed_count}"
+            for evidence_type, required_count, observed_count in deficient_type_counts
+        )
+        return (
+            EXIT_VERIFICATION_FAILED,
+            fail_result(fields, "terminal-evidence-type-count-below-minimum", detail),
+        )
+
+    maximum_unreferenced = fields["maximum_unreferenced_evidence_count"]
+    unreferenced_count = fields["unreferenced_evidence_count"]
+    if maximum_unreferenced is not None and unreferenced_count > maximum_unreferenced:
+        return (
+            EXIT_VERIFICATION_FAILED,
+            fail_result(
+                fields,
+                "unreferenced-evidence-count-exceeds-maximum",
+                f"maximum={maximum_unreferenced} observed={unreferenced_count}",
+            ),
+        )
+
     if profile["require_read_back_verified"]:
         if terminal.get("kind") != "task.result" or terminal_payload.get("read_back_verified") is not True:
             return (
@@ -370,6 +446,7 @@ def main() -> int:
             "task verification passed: "
             f"terminal_status={result['terminal_status']} "
             f"evidence={result['terminal_referenced_evidence_count']} "
+            f"unreferenced={result['unreferenced_evidence_count']} "
             f"snapshot_match={result['snapshot_match']}"
         )
     else:

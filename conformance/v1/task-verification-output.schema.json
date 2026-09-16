@@ -24,7 +24,8 @@
       },
       "additionalProperties": {
         "type": "integer",
-        "minimum": 1
+        "minimum": 1,
+        "maximum": 256
       }
     },
     "base": {
@@ -55,10 +56,14 @@
         "require_success",
         "require_read_back_verified",
         "required_evidence_types",
+        "minimum_terminal_referenced_evidence_count",
+        "minimum_terminal_referenced_evidence_type_counts",
+        "maximum_unreferenced_evidence_count",
         "observed_evidence_type_counts",
         "terminal_referenced_evidence_type_counts",
         "evidence_count",
-        "terminal_referenced_evidence_count"
+        "terminal_referenced_evidence_count",
+        "unreferenced_evidence_count"
       ],
       "properties": {
         "profile_path": { "type": "string", "minLength": 1 },
@@ -76,10 +81,22 @@
         "require_success": { "type": "boolean" },
         "require_read_back_verified": { "type": "boolean" },
         "required_evidence_types": { "$ref": "#/$defs/evidenceTypeList" },
+        "minimum_terminal_referenced_evidence_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 256
+        },
+        "minimum_terminal_referenced_evidence_type_counts": { "$ref": "#/$defs/evidenceTypeCountMap" },
+        "maximum_unreferenced_evidence_count": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 256
+        },
         "observed_evidence_type_counts": { "$ref": "#/$defs/evidenceTypeCountMap" },
         "terminal_referenced_evidence_type_counts": { "$ref": "#/$defs/evidenceTypeCountMap" },
         "evidence_count": { "type": "integer", "minimum": 0, "maximum": 256 },
-        "terminal_referenced_evidence_count": { "type": "integer", "minimum": 0, "maximum": 256 }
+        "terminal_referenced_evidence_count": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "unreferenced_evidence_count": { "type": "integer", "minimum": 0, "maximum": 256 }
       }
     },
     "verificationSuccess": {
