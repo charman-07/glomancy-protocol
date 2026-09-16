@@ -31,6 +31,44 @@
       "items": {
         "$ref": "urn:glomancy:protocol:evidence.record:1.0.0#/allOf/1/properties/payload/properties/evidence_type"
       }
+    },
+    "evidence_coverage": {
+      "type": "object",
+      "description": "Optional fail-closed structural coverage requirements over public evidence records and terminal evidence_ids references.",
+      "properties": {
+        "minimum_terminal_referenced_evidence_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 256
+        },
+        "minimum_terminal_referenced_evidence_type_counts": {
+          "type": "object",
+          "maxProperties": 8,
+          "propertyNames": {
+            "enum": [
+              "log",
+              "screenshot",
+              "asset-registry",
+              "read-back",
+              "build",
+              "test",
+              "diff",
+              "rollback"
+            ]
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 256
+          }
+        },
+        "maximum_unreferenced_evidence_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 256
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
