@@ -69,6 +69,45 @@
         }
       },
       "additionalProperties": false
+    },
+    "terminal_outcome_policy": {
+      "type": "object",
+      "description": "Optional structural policy for accepted terminal statuses, status-specific terminal-linked evidence, and reported rollback attempts.",
+      "properties": {
+        "allowed_statuses": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["succeeded", "failed", "cancelled", "rolled_back"]
+          }
+        },
+        "required_evidence_types_by_status": {
+          "type": "object",
+          "maxProperties": 4,
+          "propertyNames": {
+            "enum": ["succeeded", "failed", "cancelled", "rolled_back"]
+          },
+          "additionalProperties": {
+            "type": "array",
+            "maxItems": 8,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "urn:glomancy:protocol:evidence.record:1.0.0#/allOf/1/properties/payload/properties/evidence_type"
+            }
+          }
+        },
+        "require_rollback_attempted_for_statuses": {
+          "type": "array",
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["failed", "cancelled", "rolled_back"]
+          }
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
