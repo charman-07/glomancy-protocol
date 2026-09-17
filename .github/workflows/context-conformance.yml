@@ -33,6 +33,9 @@ jobs:
       - name: Validate outcome-specific verification contract
         run: python3 scripts/validate_outcome_verification_contract.py
 
+      - name: Validate ordered evidence sequence contract
+        run: python3 scripts/validate_evidence_sequence_contract.py
+
       - name: Validate deterministic verification bundle contract
         run: python3 scripts/validate_verification_bundle_contract.py
 

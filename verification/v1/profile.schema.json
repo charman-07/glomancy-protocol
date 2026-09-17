@@ -12,18 +12,10 @@
     "required_evidence_types"
   ],
   "properties": {
-    "profile_version": {
-      "const": "1.0.0"
-    },
-    "require_success": {
-      "type": "boolean"
-    },
-    "require_context_snapshot_match": {
-      "type": "boolean"
-    },
-    "require_read_back_verified": {
-      "type": "boolean"
-    },
+    "profile_version": { "const": "1.0.0" },
+    "require_success": { "type": "boolean" },
+    "require_context_snapshot_match": { "type": "boolean" },
+    "require_read_back_verified": { "type": "boolean" },
     "required_evidence_types": {
       "type": "array",
       "maxItems": 8,
@@ -45,16 +37,7 @@
           "type": "object",
           "maxProperties": 8,
           "propertyNames": {
-            "enum": [
-              "log",
-              "screenshot",
-              "asset-registry",
-              "read-back",
-              "build",
-              "test",
-              "diff",
-              "rollback"
-            ]
+            "enum": ["log", "screenshot", "asset-registry", "read-back", "build", "test", "diff", "rollback"]
           },
           "additionalProperties": {
             "type": "integer",
@@ -104,6 +87,21 @@
           "uniqueItems": true,
           "items": {
             "enum": ["failed", "cancelled", "rolled_back"]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence_sequence": {
+      "type": "object",
+      "description": "Optional ordered-subsequence requirement over terminal-linked evidence records in transcript order.",
+      "properties": {
+        "required_terminal_evidence_sequence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "$ref": "urn:glomancy:protocol:evidence.record:1.0.0#/allOf/1/properties/payload/properties/evidence_type"
           }
         }
       },

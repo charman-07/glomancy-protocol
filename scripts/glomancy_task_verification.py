@@ -82,12 +82,35 @@ def terminal_outcome_requirements(
     )
 
 
+def evidence_sequence_requirement(profile: dict[str, Any]) -> list[str]:
+    policy = profile.get("evidence_sequence")
+    if not isinstance(policy, dict):
+        return []
+    sequence = policy.get("required_terminal_evidence_sequence", [])
+    if not isinstance(sequence, list):
+        raise VerificationError("required terminal evidence sequence must be an array")
+    return [str(value) for value in sequence]
+
+
+def ordered_subsequence_matches(required: list[str], observed: list[str]) -> bool:
+    if not required:
+        return True
+    required_index = 0
+    for evidence_type in observed:
+        if evidence_type == required[required_index]:
+            required_index += 1
+            if required_index == len(required):
+                return True
+    return False
+
+
 def validate_profile_semantics(profile: dict[str, Any]) -> None:
     allowed_statuses, _by_status, _rollback_statuses = terminal_outcome_requirements(profile)
     if profile.get("require_success") is True and allowed_statuses and "succeeded" not in allowed_statuses:
         raise VerificationError(
             "require_success=true conflicts with terminal_outcome_policy.allowed_statuses excluding succeeded"
         )
+    evidence_sequence_requirement(profile)
 
 
 def load_profile(path: Path) -> dict[str, Any]:
@@ -196,12 +219,39 @@ def terminal_referenced_evidence(
     return referenced, unknown
 
 
+def terminal_referenced_evidence_sequence(
+    messages: list[Any], terminal: dict[str, Any] | None
+) -> list[str]:
+    if terminal is None:
+        return []
+    payload = terminal.get("payload")
+    if not isinstance(payload, dict):
+        return []
+    refs = payload.get("evidence_ids")
+    if not isinstance(refs, list):
+        return []
+    referenced_ids = {value for value in refs if isinstance(value, str)}
+    sequence: list[str] = []
+    for message in messages:
+        if not isinstance(message, dict) or message.get("kind") != "evidence.record":
+            continue
+        evidence_payload = message.get("payload")
+        if not isinstance(evidence_payload, dict):
+            continue
+        evidence_id = evidence_payload.get("evidence_id")
+        evidence_type = evidence_payload.get("evidence_type")
+        if evidence_id in referenced_ids and isinstance(evidence_type, str):
+            sequence.append(evidence_type)
+    return sequence
+
+
 def base_result_fields(
     profile_path: Path,
     transcript_path: Path,
     snapshot_path: Path | None,
     profile: dict[str, Any],
     session_accepted: bool,
+    messages: list[Any],
     terminal: dict[str, Any] | None,
     records: dict[str, dict[str, Any]],
     referenced: dict[str, dict[str, Any]],
@@ -227,6 +277,9 @@ def base_result_fields(
     allowed_statuses, by_status, rollback_statuses = terminal_outcome_requirements(profile)
     status_required_types = by_status.get(terminal_status or "", [])
     rollback_attempt_required = terminal_status in rollback_statuses if terminal_status is not None else False
+    required_sequence = evidence_sequence_requirement(profile)
+    observed_sequence = terminal_referenced_evidence_sequence(messages, terminal)
+    sequence_matched = ordered_subsequence_matches(required_sequence, observed_sequence)
     unreferenced_count = max(len(records) - len(referenced), 0)
 
     return {
@@ -252,6 +305,9 @@ def base_result_fields(
         "allowed_terminal_statuses": allowed_statuses,
         "terminal_required_evidence_types": status_required_types,
         "rollback_attempt_required": rollback_attempt_required,
+        "required_terminal_evidence_sequence": required_sequence,
+        "observed_terminal_evidence_sequence": observed_sequence,
+        "terminal_evidence_sequence_matched": sequence_matched,
         "observed_evidence_type_counts": evidence_type_counts(records),
         "terminal_referenced_evidence_type_counts": evidence_type_counts(referenced),
         "evidence_count": len(records),
@@ -297,6 +353,7 @@ def verify(
         snapshot_path,
         profile,
         bool(session_result["accepted"]),
+        messages,
         terminal,
         records,
         referenced,
@@ -401,6 +458,15 @@ def verify(
             fields,
             "rollback-attempt-not-reported",
             f"terminal_status={terminal_status}",
+        )
+
+    if fields["required_terminal_evidence_sequence"] and not fields["terminal_evidence_sequence_matched"]:
+        required_rendered = ">".join(fields["required_terminal_evidence_sequence"])
+        observed_rendered = ">".join(fields["observed_terminal_evidence_sequence"])
+        return EXIT_VERIFICATION_FAILED, fail_result(
+            fields,
+            "terminal-evidence-sequence-mismatch",
+            f"required={required_rendered} observed={observed_rendered}",
         )
 
     minimum_count = fields["minimum_terminal_referenced_evidence_count"]
