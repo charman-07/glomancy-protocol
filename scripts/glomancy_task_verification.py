@@ -52,6 +52,44 @@ def profile_validator() -> Any:
     return validator_for(PROFILE_SCHEMA, build_store())
 
 
+def terminal_outcome_requirements(
+    profile: dict[str, Any],
+) -> tuple[list[str], dict[str, list[str]], list[str]]:
+    policy = profile.get("terminal_outcome_policy")
+    if not isinstance(policy, dict):
+        return [], {}, []
+
+    allowed_statuses = policy.get("allowed_statuses", [])
+    if not isinstance(allowed_statuses, list):
+        raise VerificationError("terminal outcome allowed_statuses must be an array")
+
+    raw_by_status = policy.get("required_evidence_types_by_status", {})
+    if not isinstance(raw_by_status, dict):
+        raise VerificationError("terminal outcome evidence requirements must be an object")
+    by_status: dict[str, list[str]] = {}
+    for status in sorted(raw_by_status):
+        values = raw_by_status[status]
+        if not isinstance(status, str) or not isinstance(values, list):
+            raise VerificationError("terminal outcome evidence requirements are malformed")
+        by_status[status] = sorted(str(value) for value in values)
+
+    rollback_statuses = policy.get("require_rollback_attempted_for_statuses", [])
+    if not isinstance(rollback_statuses, list):
+        raise VerificationError("rollback-attempt status requirements must be an array")
+
+    return sorted(str(value) for value in allowed_statuses), by_status, sorted(
+        str(value) for value in rollback_statuses
+    )
+
+
+def validate_profile_semantics(profile: dict[str, Any]) -> None:
+    allowed_statuses, _by_status, _rollback_statuses = terminal_outcome_requirements(profile)
+    if profile.get("require_success") is True and allowed_statuses and "succeeded" not in allowed_statuses:
+        raise VerificationError(
+            "require_success=true conflicts with terminal_outcome_policy.allowed_statuses excluding succeeded"
+        )
+
+
 def load_profile(path: Path) -> dict[str, Any]:
     if not path.is_file():
         raise VerificationError(f"profile file does not exist: {path}")
@@ -69,6 +107,7 @@ def load_profile(path: Path) -> dict[str, Any]:
             f"profile schema validation failed: keyword={first.validator!r} "
             f"path={location}: {first.message}"
         )
+    validate_profile_semantics(value)
     return value
 
 
@@ -171,6 +210,7 @@ def base_result_fields(
     terminal_kind: str | None = None
     terminal_status: str | None = None
     read_back_verified: bool | None = None
+    rollback_attempted: bool | None = None
     if terminal is not None:
         kind = terminal.get("kind")
         payload = terminal.get("payload")
@@ -180,8 +220,13 @@ def base_result_fields(
             terminal_status = status if isinstance(status, str) else None
             flag = payload.get("read_back_verified")
             read_back_verified = flag if isinstance(flag, bool) else None
+            rollback_flag = payload.get("rollback_attempted")
+            rollback_attempted = rollback_flag if isinstance(rollback_flag, bool) else None
 
     minimum_count, minimum_type_counts, maximum_unreferenced = evidence_coverage_requirements(profile)
+    allowed_statuses, by_status, rollback_statuses = terminal_outcome_requirements(profile)
+    status_required_types = by_status.get(terminal_status or "", [])
+    rollback_attempt_required = terminal_status in rollback_statuses if terminal_status is not None else False
     unreferenced_count = max(len(records) - len(referenced), 0)
 
     return {
@@ -195,6 +240,7 @@ def base_result_fields(
         "terminal_kind": terminal_kind,
         "terminal_status": terminal_status,
         "read_back_verified": read_back_verified,
+        "rollback_attempted": rollback_attempted,
         "snapshot_required": bool(profile["require_context_snapshot_match"]),
         "snapshot_match": snapshot_match,
         "require_success": bool(profile["require_success"]),
@@ -203,6 +249,9 @@ def base_result_fields(
         "minimum_terminal_referenced_evidence_count": minimum_count,
         "minimum_terminal_referenced_evidence_type_counts": minimum_type_counts,
         "maximum_unreferenced_evidence_count": maximum_unreferenced,
+        "allowed_terminal_statuses": allowed_statuses,
+        "terminal_required_evidence_types": status_required_types,
+        "rollback_attempt_required": rollback_attempt_required,
         "observed_evidence_type_counts": evidence_type_counts(records),
         "terminal_referenced_evidence_type_counts": evidence_type_counts(referenced),
         "evidence_count": len(records),
@@ -240,7 +289,6 @@ def verify(
     if terminal is not None:
         referenced, unknown = terminal_referenced_evidence(terminal, records)
         if unknown:
-            # Canonical session conformance should have rejected this already.
             raise VerificationError("canonical session accepted an unknown terminal evidence reference")
 
     fields = base_result_fields(
@@ -270,10 +318,7 @@ def verify(
 
     if profile["require_context_snapshot_match"]:
         if snapshot_path is None:
-            return (
-                EXIT_VERIFICATION_FAILED,
-                fail_result(fields, "context-snapshot-required"),
-            )
+            return EXIT_VERIFICATION_FAILED, fail_result(fields, "context-snapshot-required")
         try:
             snapshot_document = snapshot_cli.load_snapshot(snapshot_path)
             snapshot_errors, duplicate_index = snapshot_cli.validate_snapshot_document(snapshot_document)
@@ -300,12 +345,10 @@ def verify(
             safe_detail = snapshot_reason
             if snapshot_detail:
                 safe_detail += f" {snapshot_detail}"
-            return (
-                EXIT_VERIFICATION_FAILED,
-                fail_result(fields, "context-snapshot-mismatch", safe_detail),
+            return EXIT_VERIFICATION_FAILED, fail_result(
+                fields, "context-snapshot-mismatch", safe_detail
             )
     elif snapshot_path is not None:
-        # Optional snapshots are not silently treated as verified unless the profile requires them.
         fields["snapshot_match"] = None
 
     terminal_payload = terminal.get("payload")
@@ -314,13 +357,18 @@ def verify(
 
     terminal_status = terminal_payload.get("status")
     if profile["require_success"] and terminal_status != "succeeded":
-        return (
-            EXIT_VERIFICATION_FAILED,
-            fail_result(
-                fields,
-                "terminal-status-not-succeeded",
-                f"terminal_status={terminal_status}",
-            ),
+        return EXIT_VERIFICATION_FAILED, fail_result(
+            fields,
+            "terminal-status-not-succeeded",
+            f"terminal_status={terminal_status}",
+        )
+
+    allowed_statuses = fields["allowed_terminal_statuses"]
+    if allowed_statuses and terminal_status not in allowed_statuses:
+        return EXIT_VERIFICATION_FAILED, fail_result(
+            fields,
+            "terminal-status-not-allowed",
+            f"terminal_status={terminal_status} allowed={','.join(allowed_statuses)}",
         )
 
     referenced_counts = evidence_type_counts(referenced)
@@ -330,24 +378,37 @@ def verify(
         if referenced_counts.get(evidence_type, 0) == 0
     ]
     if missing_types:
-        return (
-            EXIT_VERIFICATION_FAILED,
-            fail_result(
-                fields,
-                "required-evidence-type-missing",
-                "missing_types=" + ",".join(missing_types),
-            ),
+        return EXIT_VERIFICATION_FAILED, fail_result(
+            fields,
+            "required-evidence-type-missing",
+            "missing_types=" + ",".join(missing_types),
+        )
+
+    status_missing_types = [
+        evidence_type
+        for evidence_type in fields["terminal_required_evidence_types"]
+        if referenced_counts.get(evidence_type, 0) == 0
+    ]
+    if status_missing_types:
+        return EXIT_VERIFICATION_FAILED, fail_result(
+            fields,
+            "terminal-status-evidence-type-missing",
+            f"terminal_status={terminal_status} missing_types={','.join(status_missing_types)}",
+        )
+
+    if fields["rollback_attempt_required"] and terminal_payload.get("rollback_attempted") is not True:
+        return EXIT_VERIFICATION_FAILED, fail_result(
+            fields,
+            "rollback-attempt-not-reported",
+            f"terminal_status={terminal_status}",
         )
 
     minimum_count = fields["minimum_terminal_referenced_evidence_count"]
     if len(referenced) < minimum_count:
-        return (
-            EXIT_VERIFICATION_FAILED,
-            fail_result(
-                fields,
-                "terminal-evidence-count-below-minimum",
-                f"required_minimum={minimum_count} observed={len(referenced)}",
-            ),
+        return EXIT_VERIFICATION_FAILED, fail_result(
+            fields,
+            "terminal-evidence-count-below-minimum",
+            f"required_minimum={minimum_count} observed={len(referenced)}",
         )
 
     minimum_type_counts = fields["minimum_terminal_referenced_evidence_type_counts"]
@@ -361,33 +422,25 @@ def verify(
             f"{evidence_type}:required={required_count}:observed={observed_count}"
             for evidence_type, required_count, observed_count in deficient_type_counts
         )
-        return (
-            EXIT_VERIFICATION_FAILED,
-            fail_result(fields, "terminal-evidence-type-count-below-minimum", detail),
+        return EXIT_VERIFICATION_FAILED, fail_result(
+            fields, "terminal-evidence-type-count-below-minimum", detail
         )
 
     maximum_unreferenced = fields["maximum_unreferenced_evidence_count"]
     unreferenced_count = fields["unreferenced_evidence_count"]
     if maximum_unreferenced is not None and unreferenced_count > maximum_unreferenced:
-        return (
-            EXIT_VERIFICATION_FAILED,
-            fail_result(
-                fields,
-                "unreferenced-evidence-count-exceeds-maximum",
-                f"maximum={maximum_unreferenced} observed={unreferenced_count}",
-            ),
+        return EXIT_VERIFICATION_FAILED, fail_result(
+            fields,
+            "unreferenced-evidence-count-exceeds-maximum",
+            f"maximum={maximum_unreferenced} observed={unreferenced_count}",
         )
 
     if profile["require_read_back_verified"]:
         if terminal.get("kind") != "task.result" or terminal_payload.get("read_back_verified") is not True:
-            return (
-                EXIT_VERIFICATION_FAILED,
-                fail_result(fields, "read-back-flag-not-set"),
-            )
+            return EXIT_VERIFICATION_FAILED, fail_result(fields, "read-back-flag-not-set")
         if referenced_counts.get("read-back", 0) == 0:
-            return (
-                EXIT_VERIFICATION_FAILED,
-                fail_result(fields, "read-back-evidence-not-referenced"),
+            return EXIT_VERIFICATION_FAILED, fail_result(
+                fields, "read-back-evidence-not-referenced"
             )
 
     fields["verified"] = True
