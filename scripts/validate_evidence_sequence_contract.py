@@ -15,6 +15,7 @@ from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[1]
 TOOL = ROOT / "scripts" / "glomancy_task_verification.py"
+BUNDLE_TOOL = ROOT / "scripts" / "glomancy_verification_bundle.py"
 OUTPUT_SCHEMA = ROOT / "conformance" / "v1" / "task-verification-output.schema.json"
 PROFILE = ROOT / "verification" / "v1" / "examples" / "strict-restoration-sequence.json"
 ROLLED_BACK_SESSION = (
@@ -54,11 +55,19 @@ def build_sequence_session(
         raise ContractError("rolled-back transcript messages must be an array")
 
     evidence_index = next(
-        (index for index, message in enumerate(messages) if isinstance(message, dict) and message.get("kind") == "evidence.record"),
+        (
+            index
+            for index, message in enumerate(messages)
+            if isinstance(message, dict) and message.get("kind") == "evidence.record"
+        ),
         None,
     )
     terminal_index = next(
-        (index for index, message in enumerate(messages) if isinstance(message, dict) and message.get("kind") == "task.error"),
+        (
+            index
+            for index, message in enumerate(messages)
+            if isinstance(message, dict) and message.get("kind") == "task.error"
+        ),
         None,
     )
     if evidence_index is None or terminal_index is None:
@@ -74,7 +83,7 @@ def build_sequence_session(
         message = copy.deepcopy(template)
         evidence_id = f"51000000-0000-4000-8000-{offset:012d}"
         message_id = f"52000000-0000-4000-8000-{offset:012d}"
-        timestamp = f"2026-09-15T10:00:0{5 + offset}Z"
+        timestamp = f"2026-09-15T10:00:{5 + offset:02d}Z"
         message["message_id"] = message_id
         message["sent_at"] = timestamp
         payload = message.get("payload")
@@ -89,6 +98,7 @@ def build_sequence_session(
         evidence_ids.append(evidence_id)
 
     terminal = copy.deepcopy(messages[terminal_index])
+    terminal["sent_at"] = "2026-09-15T10:00:20Z"
     terminal_payload = terminal.get("payload")
     if not isinstance(terminal_payload, dict):
         raise ContractError("task.error payload must be an object")
@@ -147,6 +157,30 @@ def run_case(
     return payload
 
 
+def run_bundle(arguments: list[str], name: str) -> dict[str, Any]:
+    completed = subprocess.run(
+        [sys.executable, str(BUNDLE_TOOL), *arguments, "--json"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise ContractError(
+            f"{name}: bundle command failed with exit {completed.returncode}; "
+            f"stdout={completed.stdout!r} stderr={completed.stderr!r}"
+        )
+    if completed.stderr.strip():
+        raise ContractError(f"{name}: bundle JSON mode unexpectedly wrote stderr")
+    try:
+        payload = json.loads(completed.stdout.strip())
+    except json.JSONDecodeError as exc:
+        raise ContractError(f"{name}: bundle stdout is not one JSON object: {exc}") from exc
+    if not isinstance(payload, dict) or payload.get("ok") is not True:
+        raise ContractError(f"{name}: bundle output must report ok=true")
+    return payload
+
+
 def main() -> int:
     try:
         output_schema = load_json(OUTPUT_SCHEMA)
@@ -170,6 +204,28 @@ def main() -> int:
                 raise ContractError("ordered-sequence: observed sequence mismatch")
             if ordered_result.get("terminal_evidence_sequence_matched") is not True:
                 raise ContractError("ordered-sequence: matched must be true")
+
+            bundle_dir = directory / "ordered-bundle"
+            run_bundle(
+                [
+                    "create",
+                    "--profile",
+                    str(PROFILE),
+                    "--transcript",
+                    str(ordered),
+                    "--out-dir",
+                    str(bundle_dir),
+                ],
+                "ordered-sequence-bundle-create",
+            )
+            run_bundle(["verify", str(bundle_dir)], "ordered-sequence-bundle-verify")
+            bundled_result = load_json(bundle_dir / "verification-result.json")
+            if not isinstance(bundled_result, dict):
+                raise ContractError("ordered-sequence bundle result must be an object")
+            if bundled_result.get("required_terminal_evidence_sequence") != ["read-back", "rollback"]:
+                raise ContractError("ordered-sequence bundle lost required sequence")
+            if bundled_result.get("terminal_evidence_sequence_matched") is not True:
+                raise ContractError("ordered-sequence bundle replay must preserve matched=true")
 
             reversed_session = write_json(
                 directory,
@@ -218,7 +274,7 @@ def main() -> int:
                 raise ContractError("ordered-subsequence: observed sequence mismatch")
 
         print(
-            "evidence sequence contract passed: ordered match, reversed rejection, "
+            "evidence sequence contract passed: ordered match, bundle replay, reversed rejection, "
             "unlinked evidence exclusion, and ordered-subsequence semantics"
         )
         return 0
