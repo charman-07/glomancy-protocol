@@ -25,6 +25,14 @@
       },
       "uniqueItems": true
     },
+    "evidenceTypeSequence": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "string",
+        "enum": ["log", "screenshot", "asset-registry", "read-back", "build", "test", "diff", "rollback"]
+      }
+    },
     "evidenceTypeCountMap": {
       "type": "object",
       "propertyNames": {
@@ -71,6 +79,9 @@
         "allowed_terminal_statuses",
         "terminal_required_evidence_types",
         "rollback_attempt_required",
+        "required_terminal_evidence_sequence",
+        "observed_terminal_evidence_sequence",
+        "terminal_evidence_sequence_matched",
         "observed_evidence_type_counts",
         "terminal_referenced_evidence_type_counts",
         "evidence_count",
@@ -108,6 +119,9 @@
         "allowed_terminal_statuses": { "$ref": "#/$defs/terminalStatusList" },
         "terminal_required_evidence_types": { "$ref": "#/$defs/evidenceTypeList" },
         "rollback_attempt_required": { "type": "boolean" },
+        "required_terminal_evidence_sequence": { "$ref": "#/$defs/evidenceTypeSequence" },
+        "observed_terminal_evidence_sequence": { "$ref": "#/$defs/evidenceTypeSequence" },
+        "terminal_evidence_sequence_matched": { "type": "boolean" },
         "observed_evidence_type_counts": { "$ref": "#/$defs/evidenceTypeCountMap" },
         "terminal_referenced_evidence_type_counts": { "$ref": "#/$defs/evidenceTypeCountMap" },
         "evidence_count": { "type": "integer", "minimum": 0, "maximum": 256 },
