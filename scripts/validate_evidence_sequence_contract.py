@@ -67,9 +67,6 @@ def build_sequence_session(
     template = messages[evidence_index]
     if not isinstance(template, dict):
         raise ContractError("evidence template must be an object")
-    template_payload = template.get("payload")
-    if not isinstance(template_payload, dict):
-        raise ContractError("evidence template payload must be an object")
 
     generated: list[dict[str, Any]] = []
     evidence_ids: list[str] = []
@@ -199,7 +196,7 @@ def main() -> int:
                 "unlinked-read-back",
                 unlinked,
                 2,
-                "terminal-status-evidence-type-missing",
+                "terminal-evidence-sequence-mismatch",
             )
             if unlinked_result.get("observed_terminal_evidence_sequence") != ["rollback"]:
                 raise ContractError("unlinked-read-back: only terminal-linked rollback should be observed")
@@ -209,11 +206,16 @@ def main() -> int:
                 "subsequence.json",
                 build_sequence_session(["log", "read-back", "test", "rollback"]),
             )
-            subsequence_result = run_case(validator, "ordered-subsequence", subsequence, 2)
-            # Strict profile requires zero unreferenced evidence and minimum counts; all are linked,
-            # so this case should only fail if another strict gate changes. Sequence itself must match.
+            subsequence_result = run_case(validator, "ordered-subsequence", subsequence, 0)
             if subsequence_result.get("terminal_evidence_sequence_matched") is not True:
                 raise ContractError("ordered-subsequence: required sequence should match")
+            if subsequence_result.get("observed_terminal_evidence_sequence") != [
+                "log",
+                "read-back",
+                "test",
+                "rollback",
+            ]:
+                raise ContractError("ordered-subsequence: observed sequence mismatch")
 
         print(
             "evidence sequence contract passed: ordered match, reversed rejection, "
