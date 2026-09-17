@@ -30,6 +30,9 @@ jobs:
       - name: Validate task verification output contract
         run: python3 scripts/validate_task_verification_contract.py
 
+      - name: Validate outcome-specific verification contract
+        run: python3 scripts/validate_outcome_verification_contract.py
+
       - name: Validate deterministic verification bundle contract
         run: python3 scripts/validate_verification_bundle_contract.py
 
@@ -47,12 +50,19 @@ jobs:
           context/v1/examples/context-snapshot.json
           --json
 
-      - name: Smoke-test task verification profile
+      - name: Smoke-test successful task verification profile
         run: >-
           python3 scripts/glomancy_task_verification.py
           verification/v1/examples/strict-read-back.json
           transcripts/v1/accepted/approval-gated-success-with-evidence.json
           --snapshot context/v1/examples/context-snapshot.json
+          --json
+
+      - name: Smoke-test rolled-back task verification profile
+        run: >-
+          python3 scripts/glomancy_task_verification.py
+          verification/v1/examples/strict-rollback.json
+          transcripts/v1/accepted/approved-write-then-rolled-back.json
           --json
 
       - name: Smoke-test deterministic verification bundle
@@ -63,6 +73,13 @@ jobs:
             --profile verification/v1/examples/strict-read-back.json \
             --transcript transcripts/v1/accepted/approval-gated-success-with-evidence.json \
             --snapshot context/v1/examples/context-snapshot.json \
-            --out-dir "$tmp_dir/bundle" \
+            --out-dir "$tmp_dir/success-bundle" \
             --json
-          python3 scripts/glomancy_verification_bundle.py verify "$tmp_dir/bundle" --json
+          python3 scripts/glomancy_verification_bundle.py verify "$tmp_dir/success-bundle" --json
+
+          python3 scripts/glomancy_verification_bundle.py create \
+            --profile verification/v1/examples/strict-rollback.json \
+            --transcript transcripts/v1/accepted/approved-write-then-rolled-back.json \
+            --out-dir "$tmp_dir/rollback-bundle" \
+            --json
+          python3 scripts/glomancy_verification_bundle.py verify "$tmp_dir/rollback-bundle" --json
