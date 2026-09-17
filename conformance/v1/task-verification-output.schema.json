@@ -9,6 +9,14 @@
     { "$ref": "#/$defs/configurationError" }
   ],
   "$defs": {
+    "terminalStatusList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["succeeded", "failed", "cancelled", "rolled_back"]
+      },
+      "uniqueItems": true
+    },
     "evidenceTypeList": {
       "type": "array",
       "items": {
@@ -51,6 +59,7 @@
         "terminal_kind",
         "terminal_status",
         "read_back_verified",
+        "rollback_attempted",
         "snapshot_required",
         "snapshot_match",
         "require_success",
@@ -59,6 +68,9 @@
         "minimum_terminal_referenced_evidence_count",
         "minimum_terminal_referenced_evidence_type_counts",
         "maximum_unreferenced_evidence_count",
+        "allowed_terminal_statuses",
+        "terminal_required_evidence_types",
+        "rollback_attempt_required",
         "observed_evidence_type_counts",
         "terminal_referenced_evidence_type_counts",
         "evidence_count",
@@ -74,8 +86,9 @@
         "detail": { "type": ["string", "null"] },
         "session_accepted": { "type": "boolean" },
         "terminal_kind": { "type": ["string", "null"], "enum": ["task.result", "task.error", null] },
-        "terminal_status": { "type": ["string", "null"] },
+        "terminal_status": { "type": ["string", "null"], "enum": ["succeeded", "failed", "cancelled", "rolled_back", null] },
         "read_back_verified": { "type": ["boolean", "null"] },
+        "rollback_attempted": { "type": ["boolean", "null"] },
         "snapshot_required": { "type": "boolean" },
         "snapshot_match": { "type": ["boolean", "null"] },
         "require_success": { "type": "boolean" },
@@ -92,6 +105,9 @@
           "minimum": 0,
           "maximum": 256
         },
+        "allowed_terminal_statuses": { "$ref": "#/$defs/terminalStatusList" },
+        "terminal_required_evidence_types": { "$ref": "#/$defs/evidenceTypeList" },
+        "rollback_attempt_required": { "type": "boolean" },
         "observed_evidence_type_counts": { "$ref": "#/$defs/evidenceTypeCountMap" },
         "terminal_referenced_evidence_type_counts": { "$ref": "#/$defs/evidenceTypeCountMap" },
         "evidence_count": { "type": "integer", "minimum": 0, "maximum": 256 },
