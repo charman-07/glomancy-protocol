@@ -1,0 +1,34 @@
+{
+  "profile_version": "1.0.0",
+  "require_success": false,
+  "require_context_snapshot_match": false,
+  "require_read_back_verified": false,
+  "required_evidence_types": [],
+  "evidence_coverage": {
+    "minimum_terminal_referenced_evidence_count": 2,
+    "minimum_terminal_referenced_evidence_type_counts": {
+      "read-back": 1,
+      "rollback": 1
+    },
+    "maximum_unreferenced_evidence_count": 0
+  },
+  "terminal_outcome_policy": {
+    "allowed_statuses": [
+      "rolled_back"
+    ],
+    "required_evidence_types_by_status": {
+      "rolled_back": [
+        "rollback"
+      ]
+    },
+    "require_rollback_attempted_for_statuses": [
+      "rolled_back"
+    ]
+  },
+  "evidence_sequence": {
+    "required_terminal_evidence_sequence": [
+      "read-back",
+      "rollback"
+    ]
+  }
+}
